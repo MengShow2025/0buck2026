@@ -53,7 +53,10 @@ trigger_test_order.py
 *.json
 *.png
 !vercel.json
+!frontend/vercel.json
 !frontend/package.json
 !backend/package.json
 !frontend/package-lock.json
 !backend/package-lock.json
+!frontend/tsconfig.json
+!frontend/tsconfig.node.json
