@@ -405,3 +405,71 @@ class RewardsService:
                 "description": tx.description
             } for tx in txs
         ]
+
+    def record_referral(self, invitee_id: int, referral_code: str):
+        """
+        Record the relationship between inviter and invitee.
+        """
+        inviter = self.db.query(UserExt).filter_by(referral_code=referral_code).first()
+        if not inviter:
+            print(f"Referral code {referral_code} not found.")
+            return False
+            
+        if inviter.customer_id == invitee_id:
+            print("User cannot invite themselves.")
+            return False
+            
+        # Check if relationship already exists
+        existing = self.db.query(ReferralRelationship).filter_by(invitee_id=invitee_id).first()
+        if existing:
+            return True
+            
+        rel = ReferralRelationship(
+            inviter_id=inviter.customer_id,
+            invitee_id=invitee_id,
+            expire_at=datetime.now() + timedelta(days=730) # 2-year rolling volume
+        )
+        self.db.add(rel)
+        self.db.commit()
+        print(f"Recorded referral: {inviter.customer_id} -> {invitee_id}")
+        return True
+
+    def process_referral_commissions(self, invitee_id: int, order_id: int, reward_base: Decimal):
+        """
+        Calculate and payout commissions to the inviter based on their level/type.
+        """
+        rel = self.db.query(ReferralRelationship).filter_by(invitee_id=invitee_id).first()
+        if not rel:
+            return
+            
+        inviter = self.db.query(UserExt).filter_by(customer_id=rel.inviter_id).first()
+        if not inviter:
+            return
+            
+        # Payout logic based on inviter type
+        if inviter.user_type == 'kol':
+            # Founding KOL: 15% one-time bonus on first purchase
+            # Check if this is the first purchase of the invitee
+            order_count = self.db.query(func.count(CheckinPlan.id)).filter_by(user_id=invitee_id).scalar()
+            
+            if order_count <= 1: # The current order is the first one
+                rate = Decimal(str(inviter.kol_one_time_rate / 100))
+                type_desc = "KOL Founding Bonus (15%)"
+            else:
+                rate = Decimal(str(inviter.kol_long_term_rate / 100))
+                type_desc = "KOL Long-term Reward (3%)"
+        else:
+            # Regular Tiers
+            level_info = self.get_user_level(inviter.customer_id)
+            rate = level_info['rate']
+            type_desc = f"Referral Commission ({level_info['level']})"
+            
+        commission_amount = reward_base * rate
+        self.update_wallet_balance(
+            inviter.customer_id,
+            commission_amount,
+            'referral',
+            order_id,
+            f"{type_desc} for Order {order_id} by Invitee {invitee_id}"
+        )
+        print(f"Payout commission: {commission_amount} to {inviter.customer_id}")

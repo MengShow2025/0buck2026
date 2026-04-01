@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "framework": "nextjs",
+  "framework": "vite",
   "rootDirectory": "frontend",
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "outputDirectory": ".next",
+  "outputDirectory": "dist",
   "env": {
     "NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN": "shop.0buck.com",
     "NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN": ""
