@@ -7,24 +7,18 @@ export const getApiUrl = (path: string): string => {
   // Ensure path starts with a slash
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   
-  // Production: Always use relative path to leverage Vercel Proxy
-  const isProd = import.meta.env.PROD;
-  if (isProd) {
-    const base = 'https://zerobuck-api.onrender.com/api';
-    const subPath = normalizedPath.startsWith('/api') ? normalizedPath.substring(4) : normalizedPath;
-    return `${base}${subPath}`;
-  }
-
-  // Development: Use VITE_BACKEND_URL if available
+  // v3.4.6: Leverage Vercel Proxy (configured in vercel.json) for both Prod and Dev
+  // This avoids CORS issues entirely and simplifies deployment.
   const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || '';
+  
   if (backendUrl) {
-    // If backendUrl already includes /api, don't duplicate it
+    // Development: Use VITE_BACKEND_URL if provided
     if (backendUrl.endsWith('/api') && normalizedPath.startsWith('/api')) {
       return `${backendUrl}${normalizedPath.substring(4)}`;
     }
     return `${backendUrl}${normalizedPath.startsWith('/api') ? normalizedPath : `/api${normalizedPath}`}`;
   }
 
-  // Fallback to relative
+  // Production or Fallback: Always use relative path to leverage Vercel Proxy
   return normalizedPath.startsWith('/api') ? normalizedPath : `/api${normalizedPath}`;
 };

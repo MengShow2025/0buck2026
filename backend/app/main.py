@@ -34,13 +34,25 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="0Buck Backend", version="3.4")
 
 # Set up CORS
-origins = settings.ALLOWED_ORIGINS.split(",")
+# Ensure origins are clean and include production domains
+raw_origins = settings.ALLOWED_ORIGINS.split(",")
+origins = [o.strip() for o in raw_origins if o.strip()]
+
+# Add production domains if not already there
+prod_domains = ["https://0buck.com", "https://www.0buck.com", "https://zerobuck.vercel.app"]
+for domain in prod_domains:
+    if domain not in origins:
+        origins.append(domain)
+
+logger.info(f"CORS Origins configured: {origins}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 

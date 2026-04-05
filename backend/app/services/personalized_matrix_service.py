@@ -20,8 +20,16 @@ class PersonalizedMatrixService:
 
     def __init__(self, db: Session):
         self.db = db
-        genai.configure(api_key=settings.GOOGLE_API_KEY)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        if settings.GOOGLE_API_KEY:
+            try:
+                genai.configure(api_key=settings.GOOGLE_API_KEY)
+                self.model = genai.GenerativeModel('gemini-1.5-flash')
+            except Exception as e:
+                logger.error(f"Gemini configuration failed: {e}")
+                self.model = None
+        else:
+            logger.warning("GOOGLE_API_KEY not found in settings, Gemini features disabled.")
+            self.model = None
 
     async def get_personalized_discovery(self, user_id: int, limit: int = 10) -> Dict[str, Any]:
         """
@@ -29,10 +37,15 @@ class PersonalizedMatrixService:
         based on user LTM facts.
         """
         # 1. Fetch Top 3 LTM facts to use as search query
-        facts = self.db.query(UserMemoryFact).filter(
-            UserMemoryFact.user_id == user_id,
-            UserMemoryFact.is_archived == False
-        ).order_by(UserMemoryFact.confidence.desc()).limit(3).all()
+        facts = []
+        try:
+            facts = self.db.query(UserMemoryFact).filter(
+                UserMemoryFact.user_id == user_id,
+                UserMemoryFact.is_archived == False
+            ).order_by(UserMemoryFact.confidence.desc()).limit(3).all()
+        except Exception as e:
+            logger.error(f"Failed to fetch user facts: {e}")
+            facts = []
 
         search_query = " ".join([f"{f.key}: {f.value}" for f in facts]) if facts else "popular trending products"
         
@@ -47,19 +60,35 @@ class PersonalizedMatrixService:
             
         if not products:
             # Fallback to DB products if vector search is empty or failed
-            db_products = self.db.query(Product).filter(Product.is_active == True).limit(limit).all()
-            products = [{"id": p.id, "title": p.title_en, "price": p.sale_price, "image": p.images[0] if p.images else ""} for p in db_products]
+            try:
+                db_products = self.db.query(Product).filter(Product.is_active == True).limit(limit).all()
+                products = []
+                for p in db_products:
+                    # Safely handle images (check for None and empty list)
+                    image_url = ""
+                    if p.images and isinstance(p.images, list) and len(p.images) > 0:
+                        image_url = p.images[0]
+                    
+                    products.append({
+                        "id": p.id, 
+                        "title": p.title_en or p.title_zh or "Unknown Product", 
+                        "price": p.sale_price or 0.0, 
+                        "image": image_url
+                    })
+            except Exception as e:
+                logger.error(f"DB fallback products failed: {e}")
+                products = []
 
         # 3. Generate Personalized Greeting (The Easter Egg)
         greeting = ""
         best_match = None
-        if products and facts:
+        if products and facts and self.model:
             best_match = products[0]
             greeting = await self._generate_greeting(user_id, best_match, facts)
 
         return {
             "products": products,
-            "butler_greeting": greeting,
+            "butler_greeting": greeting or f"Boss, I've found a great deal just for you!",
             "highlight_index": 0 if best_match else -1,
             "persona_id": self._get_user_persona_id(user_id)
         }

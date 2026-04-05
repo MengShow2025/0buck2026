@@ -6,6 +6,9 @@ from app.db.session import get_db
 from app.services.personalized_matrix_service import PersonalizedMatrixService
 from app.schemas.products import DiscoveryResponse
 
+import logging
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 @router.get("/discovery", response_model=DiscoveryResponse)
@@ -19,4 +22,5 @@ async def get_discovery_matrix(user_id: Optional[int] = None, db: Session = Depe
         result = await service.get_personalized_discovery(user_id or 1)
         return result
     except Exception as e:
+        logger.error(f"Discovery Matrix Error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
