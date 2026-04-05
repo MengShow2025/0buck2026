@@ -112,6 +112,35 @@ export default function SquareView({
   onRetry
 }: SquareViewProps) {
   const { t } = useTranslation();
+  const [tickerProducts, setTickerProducts] = useState<any[]>([]);
+  const [moments, setMoments] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [tickerRes, socialRes, statsRes] = await Promise.all([
+          fetch(getApiUrl('/v1/system/ticker')),
+          fetch(getApiUrl('/v1/social/activities')),
+          fetch(getApiUrl('/v1/system/stats'))
+        ]);
+        
+        if (tickerRes.ok) setTickerProducts(await tickerRes.json());
+        if (socialRes.ok) setMoments(await socialRes.json());
+        if (statsRes.ok) setStats(await statsRes.json());
+      } catch (e) {
+        console.error('Failed to fetch square data:', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const CURRENT_TICKER_PRODUCTS = tickerProducts.length > 0 ? tickerProducts : TICKER_PRODUCTS;
+  const CURRENT_MOMENTS = moments.length > 0 ? moments : MOCK_MOMENTS;
 
   // v3.4.4: Ensure connection trigger on mount
   useEffect(() => {
@@ -197,7 +226,7 @@ export default function SquareView({
       {/* Scrolling Product Ticker */}
       <div className="border-b border-white/5 py-2 overflow-hidden bg-zinc-950/50">
         <div className="ticker-scroll flex whitespace-nowrap gap-12 px-8">
-          {[...TICKER_PRODUCTS, ...TICKER_PRODUCTS].map((p, idx) => (
+          {[...CURRENT_TICKER_PRODUCTS, ...CURRENT_TICKER_PRODUCTS].map((p, idx) => (
             <div key={idx} className="flex items-center gap-3 cursor-pointer group" onClick={() => onProductClick && onProductClick(p)}>
               <div className="w-6 h-6 bg-zinc-800 rounded-md overflow-hidden border border-white/5 group-hover:border-primary/50 transition-colors">
                 <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />

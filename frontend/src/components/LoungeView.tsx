@@ -49,6 +49,7 @@ import {
 } from 'stream-chat-react';
 import BAPAttachmentRenderer from './BAPAttachmentRenderer';
 import StreamGuard from './StreamGuard';
+import { getApiUrl } from '../utils/api';
 
 interface LoungeViewProps {
   onRequireAuth?: (action: () => void) => void;
@@ -153,6 +154,29 @@ export default function LoungeView({
     const saved = localStorage.getItem('lounge_moments');
     return saved ? JSON.parse(saved) : MOCK_MOMENTS;
   });
+  const [isLoadingActivities, setIsLoadingActivities] = useState(false);
+
+  // Fetch real activities on mount
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        setIsLoadingActivities(true);
+        const url = getApiUrl('/v1/social/activities');
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) {
+            setMoments(data);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch real activities:', e);
+      } finally {
+        setIsLoadingActivities(false);
+      }
+    };
+    fetchActivities();
+  }, []);
   const [notes, setNotes] = useState<any[]>(() => {
     const saved = localStorage.getItem('lounge_notes');
     return saved ? JSON.parse(saved) : MOCK_NOTES;
