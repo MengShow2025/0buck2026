@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -112,8 +112,16 @@ export default function SquareView({
   onRetry
 }: SquareViewProps) {
   const { t } = useTranslation();
+
+  // v3.4.4: Ensure connection trigger on mount
+  useEffect(() => {
+    if (!isChatReady && !isConnecting && onRetry) {
+      onRetry();
+    }
+  }, [isChatReady, isConnecting, onRetry]);
+
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState('voting'); // Default to voting/wishing well
+  const [activeTab, setActiveTab] = useState<'voting' | 'group_buys' | 'seeding' | 'chat'>('voting');
   const [activeChannel, setActiveChannel] = useState<any>(null);
   const itemsPerPage = 25; // 5 rows * 5 columns
 

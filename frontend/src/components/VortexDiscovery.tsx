@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { getApiUrl } from '../utils/api';
 import { 
   Zap, 
   Sparkles, 
@@ -42,7 +43,8 @@ const VortexDiscovery: React.FC<{ userId: number }> = ({ userId }) => {
   const fetchDiscovery = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/v1/products/discovery?user_id=${userId}`);
+      const url = getApiUrl(`/v1/products/discovery?user_id=${userId}`);
+      const response = await fetch(url);
       const result = await response.json();
       setData(result);
       // Show greeting after a short delay for dramatic effect

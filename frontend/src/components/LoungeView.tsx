@@ -134,6 +134,15 @@ export default function LoungeView({
   onRetry
 }: LoungeViewProps) {
   const { t } = useTranslation();
+  
+  // v3.4.4: Ensure connection trigger on mount
+  useEffect(() => {
+    if (!isChatReady && !isConnecting && onRetry) {
+      console.log('[LoungeView] Triggering auto-connect...');
+      onRetry();
+    }
+  }, [isChatReady, isConnecting, onRetry]);
+
   const [isAlertExpanded, setIsAlertExpanded] = useState(true);
   const [activeChatId, setActiveChatId] = useState<string>('Lounge Group_1');
   const [activeChannel, setActiveChannel] = useState<any>(null);
@@ -239,25 +248,8 @@ export default function LoungeView({
   // Custom Channel Preview to handle selection
   const CustomChannelPreview = (props: any) => {
     const { channel, setActiveChannel: setStreamActiveChannel } = props;
-    // Custom Empty State for Channel List
-  const CustomEmptyState = () => (
-    <div className="p-6 text-center space-y-4">
-      <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto">
-        <MessageSquare size={20} className="text-zinc-600" />
-      </div>
-      <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest leading-relaxed">
-        {t('lounge.no_channels_found')}
-      </p>
-      <button 
-        onClick={() => window.location.reload()}
-        className="text-[9px] text-primary font-black uppercase tracking-widest hover:underline"
-      >
-        Retry Neural Uplink
-      </button>
-    </div>
-  );
-
-  return (
+    
+    return (
       <div 
         onClick={() => {
           setStreamActiveChannel(channel);
@@ -275,6 +267,23 @@ export default function LoungeView({
       </div>
     );
   };
+
+  const CustomEmptyState = () => (
+    <div className="p-6 text-center space-y-4">
+      <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto">
+        <MessageSquare size={20} className="text-zinc-600" />
+      </div>
+      <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest leading-relaxed">
+        {t('lounge.no_channels_found')}
+      </p>
+      <button 
+        onClick={() => onRetry?.()}
+        className="text-[9px] text-primary font-black uppercase tracking-widest hover:underline"
+      >
+        Retry Neural Uplink
+      </button>
+    </div>
+  );
 
   // Friends Management State
   const [allFriends, setAllFriends] = useState(ALL_FRIENDS);

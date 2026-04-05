@@ -9,13 +9,14 @@ from app.schemas.products import DiscoveryResponse
 router = APIRouter()
 
 @router.get("/discovery", response_model=DiscoveryResponse)
-async def get_discovery_matrix(user_id: int, db: Session = Depends(get_db)):
+async def get_discovery_matrix(user_id: Optional[int] = None, db: Session = Depends(get_db)):
     """
     v3.2 Vortex Predictive Discovery: Returns 2x5 matrix with personalized greeting.
     """
     try:
         service = PersonalizedMatrixService(db)
-        result = await service.get_personalized_discovery(user_id)
+        # Use default ID 1 for guests to avoid error
+        result = await service.get_personalized_discovery(user_id or 1)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-
-const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || '';
+import { getApiUrl } from '../utils/api';
 
 export interface RewardStatus {
   user_id: number;
@@ -51,7 +50,8 @@ export function useRewards(userId: number | null) {
     if (!userId) return;
     setIsLoading(true);
     try {
-      const res = await axios.get(`${BACKEND_URL}/api/v1/rewards/status/${userId}`);
+      const url = getApiUrl(`/v1/rewards/status/${userId}`);
+      const res = await axios.get(url);
       setStatus(res.data);
       setError(null);
     } catch (err: any) {
@@ -65,7 +65,8 @@ export function useRewards(userId: number | null) {
   const checkIn = useCallback(async (planId: string) => {
     if (!userId) return;
     try {
-      const res = await axios.post(`${BACKEND_URL}/api/v1/rewards/checkin`, {
+      const url = getApiUrl('/v1/rewards/checkin');
+      const res = await axios.post(url, {
         user_id: userId,
         plan_id: planId
       });
@@ -80,7 +81,8 @@ export function useRewards(userId: number | null) {
   const redeemPoints = useCallback(async (orderId: number, phaseId: number) => {
     if (!userId) return;
     try {
-      const res = await axios.post(`${BACKEND_URL}/api/v1/butler/points/redeem/${userId}`, {
+      const url = getApiUrl(`/v1/butler/points/redeem/${userId}`);
+      const res = await axios.post(url, {
         order_id: orderId,
         phase_id: phaseId
       });

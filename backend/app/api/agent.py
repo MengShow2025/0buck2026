@@ -81,40 +81,43 @@ async def create_session(request: SessionCreate, db: Session = Depends(get_db)):
     """
     session_id = f"sess_{uuid.uuid4()}"
     
-    # Save to persistent storage
-    new_session = AISession(
-        session_id=session_id,
-        user_id=request.user_id,
-        metadata_json={"created_via": "api"}
-    )
-    db.add(new_session)
-    db.commit()
+    # v3.4.4: Selective Persistence - only save sessions for registered users (numeric IDs)
+    is_registered_user = request.user_id.isdigit()
     
-    # Generate Stream Chat token and join global channels
+    if is_registered_user:
+        new_session = AISession(
+            session_id=session_id,
+            user_id=int(request.user_id),
+            metadata_json={"created_via": "api"}
+        )
+        db.add(new_session)
+        db.commit()
+    else:
+        print(f"[VCC] Guest Session Created: {session_id} (No DB persistence)")
+    
+    # Generate Stream Chat token
     try:
         chat_token = stream_chat_service.generate_user_token(request.user_id)
         chat_api_key = stream_chat_service.get_api_key()
         
-        # v3.4 VCC: Ensure user is a member of global platform channels
-        global_channels = ["global_commerce", "global_square", "global_lounge"]
-        for c_id in global_channels:
-            try:
-                channel = stream_chat_service.server_client.channel("messaging", c_id)
-                channel.add_members([request.user_id])
-            except Exception as channel_err:
-                print(f"Error joining global channel {c_id}: {channel_err}")
-                
+        # v3.4.5: Optimization - Do not block the session creation with member additions
+        # We return the token immediately and let the frontend handle channel joining
+        # or use a background task for platform-level membership
+        
+        return SessionResponse(
+            session_id=session_id,
+            chat_token=chat_token,
+            chat_api_key=chat_api_key,
+            status="active"
+        )
     except Exception as e:
         print(f"Error generating chat token: {e}")
-        chat_token = ""
-        chat_api_key = ""
-        
-    return SessionResponse(
-        session_id=session_id, 
-        user_id=request.user_id,
-        chat_token=chat_token,
-        chat_api_key=chat_api_key
-    )
+        return SessionResponse(
+            session_id=session_id,
+            chat_token="",
+            chat_api_key="",
+            status="error"
+        )
 
 @router.post("/product_search")
 async def product_search(request: ProductSearchRequest):

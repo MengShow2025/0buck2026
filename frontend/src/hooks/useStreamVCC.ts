@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { StreamChat } from 'stream-chat';
 import axios from 'axios';
 
+import { getApiUrl } from '../utils/api';
+
 const API_KEY = (import.meta as any).env?.VITE_STREAM_API_KEY || '';
-const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || '';
 
 export function useStreamVCC(isAuthenticated: boolean, currentUser: any) {
   const [chatClient] = useState(() => {
@@ -23,24 +24,25 @@ export function useStreamVCC(isAuthenticated: boolean, currentUser: any) {
     setIsConnecting(true);
     try {
       if (isAuthenticated && currentUser?.id) {
+        const userIdStr = currentUser.id.toString();
         // Scene A: Authenticated Member
-        console.log('[VCC] Requesting session token from backend...');
-        const res = await axios.post(`${BACKEND_URL}/api/v1/agent/session`, 
-          { user_id: currentUser.id },
-          { timeout: 10000 }
+        console.log('[VCC] Requesting session token from backend for user:', userIdStr);
+        const res = await axios.post(getApiUrl('/v1/agent/session'), 
+          { user_id: userIdStr },
+          { timeout: 30000 }
         );
         const chatToken = res.data.chat_token;
         console.log('[VCC] Token received, connecting user...');
 
         await chatClient.connectUser(
           {
-            id: currentUser.id,
+            id: userIdStr,
             name: currentUser.name || currentUser.email?.split('@')[0] || 'Member',
-            image: currentUser.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.id}`
+            image: currentUser.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userIdStr}`
           },
           chatToken
         );
-        console.log(`[VCC] Connected as member: ${currentUser.id}`);
+        console.log(`[VCC] Connected as member: ${userIdStr}`);
       } else {
         // Scene B: Guest Explorer
         let guestId = localStorage.getItem('0buck_guest_id');
@@ -64,14 +66,14 @@ export function useStreamVCC(isAuthenticated: boolean, currentUser: any) {
         console.log(`[VCC] Connected as guest: ${guestId}`);
       }
       
-      // Scene C: Auto-Join Global Channels
+      // Scene C: Auto-Join Global Channels (Parallel)
       const globalChannels = [
         { id: 'global_square', name: 'SQUARE BROADCAST' },
         { id: 'global_lounge', name: 'SOCIAL LOUNGE' },
         { id: 'global_commerce', name: 'COMMERCE HUB' }
       ];
 
-      for (const chan of globalChannels) {
+      await Promise.all(globalChannels.map(async (chan) => {
         try {
           console.log(`[VCC] Joining ${chan.id}...`);
           const channel = chatClient.channel('messaging', chan.id, {
@@ -79,10 +81,11 @@ export function useStreamVCC(isAuthenticated: boolean, currentUser: any) {
             platform_role: 'global'
           });
           await channel.watch();
+          console.log(`[VCC] Joined ${chan.id}`);
         } catch (chanErr) {
           console.warn(`[VCC] Failed to join ${chan.id}:`, chanErr);
         }
-      }
+      }));
 
       setIsChatReady(true);
     } catch (err) {
