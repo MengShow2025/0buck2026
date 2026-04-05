@@ -52,6 +52,10 @@ api_router = APIRouter(prefix=settings.API_V1_STR)
 async def root():
     return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
 
+@api_router.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
 @api_router.post("/sync/1688/{product_id}")
 async def sync_1688_product(product_id: str, db: Session = Depends(get_db)):
     sync_1688 = SupplyChainService(db)

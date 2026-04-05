@@ -1,30 +1,30 @@
-# 使用官方 Python 3.9 瘦镜像作为基础
+# v3.4.7: 0Buck Backend Industrial Dockerfile
 FROM python:3.9-slim
 
-# 设置工作目录
+# Set working directory
 WORKDIR /app
 
-# 安装系统依赖（如 gcc 等，用于编译某些 Python 库）
+# Prevent Python from writing .pyc files and enable unbuffered logging
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制依赖文件
+# Install Python dependencies
 COPY requirements.txt .
-
-# 安装 Python 依赖
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制后端所有代码
+# Copy application code
 COPY . .
 
-# 设置环境变量
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-
-# 暴露 FastAPI 默认端口
+# Expose port (Railway will override this with $PORT)
 EXPOSE 8000
 
-# 启动命令：使用 uvicorn 运行，并开启 4 个工作进程以提高并发性能
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# Command to run the application
+# We use 0.0.0.0 to allow external connections in the container
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
