@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, useEffect } from 'react';
+import axios from 'axios';
 import { CartItem, SecurePayPayload, ViewType, Product } from './types';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
@@ -36,6 +37,8 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentView, setCurrentView] = useState<ViewType>('login');
+  const [isUserTyping, setIsUserTyping] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // v3.4.3: useStreamVCC Hook for lazy initialization
   const { chatClient, isChatReady, isConnecting, connect, disconnect } = useStreamVCC(isAuthenticated, currentUser);
@@ -49,6 +52,7 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedMerchant, setSelectedMerchant] = useState<any>(null);
   const [agentName, setAgentName] = useState('');
+  const [previousView, setPreviousView] = useState<ViewType>('prime');
 
   // Lazy Initialization Trigger (v3.4.3)
   useEffect(() => {
@@ -72,17 +76,29 @@ export default function App() {
     }
   }, [deviceType]);
 
-  // Auto-login timeout for unauthenticated users on the login page or welcome page
+  // Auto-login/auto-enter timeout for unauthenticated users
   useEffect(() => {
-    if (!isAuthenticated && (currentView === 'login' || showWelcome)) {
+    // If user is authenticated, or typing on login page, or it's not the initial state, don't auto-enter
+    if (isAuthenticated || isUserTyping) return;
+
+    if (currentView === 'login' || showWelcome) {
       const timer = setTimeout(() => {
         setShowWelcome(false);
-        setCurrentView('chat'); // Auto-enter to AI Butler as guest
-      }, 8000);
+        if (currentView === 'login') {
+          setCurrentView('chat'); // Auto-enter to AI Butler as guest
+        }
+      }, 5000); // Updated to 5 seconds as per Boss request
       
       return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, currentView, showWelcome]);
+  }, [isAuthenticated, currentView, showWelcome, isUserTyping]);
+
+  // Reset typing state when view changes
+  useEffect(() => {
+    if (currentView !== 'login') {
+      setIsUserTyping(false);
+    }
+  }, [currentView]);
 
   const agentDisplayName = useMemo(() => {
     const name = agentName.trim();
@@ -146,11 +162,35 @@ export default function App() {
                     quantity: params.quantity || 1,
                     referrer_id: message?.user?.id // v3.4.4: Pass message sender as referrer for distribution
                   });
-                  setSecurePayBackView(currentView); // Return to whichever social view we were in
+                  setSecurePayBackView(currentView); // Return to whichever social view we were insetSecurePayBackView(currentView);
                   setCurrentView('secure-pay');
                 });
+              } else if (action === 'VIEW_PRODUCT') {
+                setSelectedProduct(params as Product);
+                setPreviousView(currentView);
+                setCurrentView('product-detail');
               } else if (action === 'VOTE') {
                 // Trigger C2M Vote logic
+                axios.post(`${(import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:8000'}/api/v1/c2m/vote`, {
+                  user_id: currentUser?.id,
+                  wish_id: params.wish_id
+                }).then(() => alert('Vote registered!'))
+                  .catch((err: any) => console.error('Vote failed:', err));
+              } else if (action === 'JOIN_GROUP') {
+                requireAuth(() => {
+                  setSecurePayPayload({
+                    type: 'single',
+                    id: params.product_id,
+                    name: params.product_name,
+                    price: params.price,
+                    image: params.product_image,
+                    quantity: 1,
+                    referrer_id: message?.user?.id,
+                    group_share_code: params.share_code // v3.4.4: Mark as group buy entry
+                  });
+                  setSecurePayBackView(currentView);
+                  setCurrentView('secure-pay');
+                });
               }
             }} 
           />
@@ -163,7 +203,14 @@ export default function App() {
   const renderView = () => {
     switch (currentView) {
       case 'login':
-        return <LoginView onLogin={handleLogin} onGoRegister={() => setCurrentView('register')} onGuestAccess={() => { setShowWelcome(false); setCurrentView('chat'); }} />;
+        return (
+          <LoginView 
+            onLogin={handleLogin} 
+            onGoRegister={() => setCurrentView('register')} 
+            onGuestAccess={() => { setShowWelcome(false); setCurrentView('chat'); }} 
+            onInteraction={() => setIsUserTyping(true)}
+          />
+        );
       case 'register':
         return <RegisterView onRegister={handleLogin} onGoLogin={() => setCurrentView('login')} onGuestAccess={() => { setShowWelcome(false); setCurrentView('chat'); }} />;
       case 'checkin':
@@ -171,6 +218,7 @@ export default function App() {
       case 'prime':
         return <PrimeView onProductClick={(product) => {
           setSelectedProduct(product);
+          setPreviousView('prime');
           setCurrentView('product-detail');
         }} onMerchantClick={(merchant) => {
           setSelectedMerchant(merchant);
@@ -185,6 +233,7 @@ export default function App() {
           }} 
           onProductClick={(product) => {
             setSelectedProduct(product);
+            setPreviousView('square');
             setCurrentView('product-detail');
           }}
           chatClient={chatClient}
@@ -196,7 +245,7 @@ export default function App() {
         return selectedProduct ? (
           <ProductDetailView 
             product={selectedProduct} 
-            onBack={() => setCurrentView('prime')} 
+            onBack={() => setCurrentView(previousView)} 
             cartItemsCount={cartItems.length}
             onAddToCart={() => {
               requireAuth(() => {
@@ -231,6 +280,7 @@ export default function App() {
           />
         ) : <PrimeView onProductClick={(product) => {
           setSelectedProduct(product);
+          setPreviousView('prime');
           setCurrentView('product-detail');
         }} onMerchantClick={(merchant) => {
           setSelectedMerchant(merchant);
@@ -243,19 +293,29 @@ export default function App() {
             onBack={() => setCurrentView('prime')}
             onProductClick={(product) => {
               setSelectedProduct(product);
+              setPreviousView('merchant-detail');
               setCurrentView('product-detail');
             }}
           />
         ) : <SquareView onRequireAuth={requireAuth} onMerchantClick={(merchant) => {
           setSelectedMerchant(merchant);
           setCurrentView('merchant-detail');
+        }} onProductClick={(product) => {
+          setSelectedProduct(product);
+          setPreviousView('square');
+          setCurrentView('product-detail');
         }} />;
       case 'explore':
-        return <ReferralView isAuthenticated={isAuthenticated} />;
+        return <ReferralView isAuthenticated={isAuthenticated} currentUser={currentUser} />;
       case 'chat':
         return (
           <AIButlerView 
             agentName={agentDisplayName} 
+            onProductClick={(product) => {
+              setSelectedProduct(product);
+              setPreviousView('chat');
+              setCurrentView('product-detail');
+            }}
             onBuyNow={(item: any) => {
               requireAuth(() => {
                 setSecurePayPayload({
@@ -295,6 +355,7 @@ export default function App() {
             onRequireAuth={requireAuth} 
             onProductClick={(product) => {
               setSelectedProduct(product);
+              setPreviousView('circle');
               setCurrentView('product-detail');
             }} 
             chatClient={chatClient}
@@ -314,12 +375,19 @@ export default function App() {
             onRequireAuth={requireAuth} 
             onProductClick={(product) => {
               setSelectedProduct(product);
+              setPreviousView('activity');
               setCurrentView('product-detail');
             }}
           />
         );
       case 'secure-pay':
-        return <SecurePayView payload={securePayPayload} onBack={() => setCurrentView(securePayBackView)} />;
+        return (
+          <SecurePayView 
+            payload={securePayPayload} 
+            onBack={() => setCurrentView(securePayBackView)}
+            currentUser={currentUser}
+          />
+        );
       case 'cart':
         return (
           <StashView
@@ -367,6 +435,7 @@ export default function App() {
             }}
             onProductClick={(product) => {
               setSelectedProduct(product);
+              setPreviousView('cart');
               setCurrentView('product-detail');
             }}
           />
@@ -379,6 +448,7 @@ export default function App() {
           agentName={agentName}
           onAgentNameChange={setAgentName}
           deviceType={deviceType}
+          onMenuClick={() => setIsSidebarOpen(true)}
         />;
       default:
         return (
@@ -430,6 +500,8 @@ export default function App() {
         return { title: t('nav.square'), subtitle: t('square.subtitle') };
       case 'me':
         return { hideHeader: true, showSearch: false };
+      case 'product-detail':
+        return { hideHeader: true };
       default:
         return { title: currentView.charAt(0).toUpperCase() + currentView.slice(1) };
     }
@@ -465,9 +537,19 @@ export default function App() {
               isAuthenticated={isAuthenticated} 
               onLoginClick={() => { setAuthMode('login'); setShowShowAuthModal(true); }} 
               cartItemsCount={cartItems.length}
+              isOpen={isSidebarOpen}
+              onClose={() => setIsSidebarOpen(false)}
             />
-            <main className="ml-20 h-screen flex flex-col relative overflow-hidden">
-              <TopBar {...getHeaderProps()} currentView={currentView} onViewChange={setCurrentView} isAuthenticated={isAuthenticated} onUserClick={() => setCurrentView('me')} cartItemsCount={cartItems.length} />
+            <main className="lg:ml-20 h-screen flex flex-col relative overflow-hidden">
+              <TopBar 
+                {...getHeaderProps()} 
+                currentView={currentView} 
+                onViewChange={setCurrentView} 
+                isAuthenticated={isAuthenticated} 
+                onUserClick={() => setCurrentView('me')} 
+                cartItemsCount={cartItems.length} 
+                onMenuClick={() => setIsSidebarOpen(true)}
+              />
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar">
                 <AnimatePresence mode="wait">
                   <motion.div

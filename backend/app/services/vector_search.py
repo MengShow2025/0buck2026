@@ -2,11 +2,20 @@ import os
 from typing import List, Dict, Any, Optional
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
-from backend.app.core.config import settings
+from app.core.config import settings
 
 class VectorSearchService:
     def __init__(self):
-        self.client = QdrantClient(host="localhost", port=6333) # 默认配置
+        try:
+            # 优先尝试连接本地 Qdrant 容器，失败则回退到内存模式
+            self.client = QdrantClient(host="localhost", port=6333, timeout=2) 
+            self.client.get_collections() # 测试连接
+            self.mode = "server"
+        except Exception:
+            print("⚠️ Qdrant 容器未运行，正在切换到内存模式 (:memory:)。生产环境建议使用 Docker 部署 Qdrant。")
+            self.client = QdrantClient(location=":memory:")
+            self.mode = "memory"
+            
         self.collection_name = "products_1688"
         self._ensure_collection()
 

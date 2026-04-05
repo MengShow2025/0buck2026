@@ -4,17 +4,17 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, distinct
 from decimal import Decimal
 from zoneinfo import ZoneInfo
-from backend.app.models.rewards import (
+from app.models.rewards import (
     PointSource, PointTransaction, AIUsageQuota, Points, RenewalCard
 )
-from backend.app.models.ledger import (
+from app.models.ledger import (
     UserExt, Wallet, WalletTransaction, CheckinPlan, CheckinLog, ReferralRelationship, GroupBuyCampaign, Order
 )
 
 class RewardsService:
     def __init__(self, db: Session):
         self.db = db
-        from backend.app.services.config_service import ConfigService
+        from app.services.config_service import ConfigService
         self.config_service = ConfigService(db)
 
     def _generate_v3_plan_config(self) -> List[dict]:
@@ -368,6 +368,12 @@ class RewardsService:
                 # Logic to trigger actual refund via Shopify would go here
                 print(f"Group Buy Success! Order {order_id} marked for refund.")
             self.db.commit()
+            
+            # v3.4 Social Automation: Broadcast Success
+            from app.services.social_automation import SocialAutomationService
+            import asyncio
+            social = SocialAutomationService(self.db)
+            asyncio.create_task(social.notify_group_buy_update(str(campaign.id)))
 
     def join_group_buy(self, order_id: int, share_code: str):
         """
@@ -386,12 +392,18 @@ class RewardsService:
         campaign.current_count += 1
         self.db.commit()
         
+        # v3.4 Social Automation: Notify Update
+        from app.services.social_automation import SocialAutomationService
+        import asyncio
+        social = SocialAutomationService(self.db)
+        asyncio.create_task(social.notify_group_buy_update(str(campaign.id)))
+        
         # Check if this increment triggered success
         self.check_group_buy_success(campaign.owner_order_id)
         return True
 
     def award_points(self, user_id: int, amount: int, source: PointSource):
-        from backend.app.services.finance_engine import earn_points
+        from app.services.finance_engine import earn_points
         earn_points(self.db, user_id, source, amount)
 
     def redeem_renewal_card(self, customer_id: int, plan_id: str) -> dict:
@@ -501,7 +513,7 @@ class RewardsService:
         v3.0 Consolidated Referral & KOL Commission Logic.
         Uses FinanceEngine to calculate the exact amount based on tiers and status.
         """
-        from backend.app.services.finance_engine import FinanceEngine
+        from app.services.finance_engine import FinanceEngine
         finance = FinanceEngine(self.db)
         
         # Calculate amount based on v3.0 logic (15% KOL bonus, 1.5%-3% Tiers)

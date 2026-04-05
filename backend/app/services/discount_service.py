@@ -2,8 +2,8 @@
 import shopify
 from datetime import datetime
 from sqlalchemy.orm import Session
-from backend.app.models.ledger import AvailableCoupon
-from backend.app.core.config import settings
+from app.models.ledger import AvailableCoupon
+from app.core.config import settings
 
 class DiscountSyncService:
     def __init__(self, db: Session):

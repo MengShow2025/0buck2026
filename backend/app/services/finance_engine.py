@@ -5,9 +5,9 @@ from decimal import Decimal
 from typing import Dict, Any, Optional
 import uuid
 
-from backend.app.models.rewards import PointTransaction, AIUsageQuota, Points, PointSource
-from backend.app.models.ledger import UserExt, CheckinPlan
-from backend.app.services.config_service import ConfigService
+from app.models.rewards import PointTransaction, AIUsageQuota, Points, PointSource
+from app.models.ledger import UserExt, CheckinPlan
+from app.services.config_service import ConfigService
 
 # Constants for Points Engine
 DAILY_POINT_CAP = 150
@@ -168,9 +168,9 @@ class FinanceEngine:
         return earn_points(self.db, user_id, source, amount)
 
     def redeem_renewal_card(self, user_id: int, order_id: str, phase_id: int) -> (bool, str):
-        from backend.app.services.rewards import RewardsService
+        from app.services.rewards import RewardsService
         rewards = RewardsService(self.db)
-        from backend.app.models.ledger import CheckinPlan
+        from app.models.ledger import CheckinPlan
         # Try finding by order_id (casted to int)
         try:
             order_id_int = int(order_id)

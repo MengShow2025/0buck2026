@@ -62,6 +62,21 @@ export default function ProductDetailView({ product, onBack, onAddToCart, onBuyN
       <style>{`
         .glass-panel { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes marquee {
+          0% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
+        }
+        .animate-marquee {
+          animation: marquee 30s linear infinite;
+          display: flex;
+          align-items: center;
+          gap: 3rem;
+          width: max-content;
+        }
+        .marquee-container:hover .animate-marquee,
+        .marquee-container:active .animate-marquee {
+          animation-play-state: paused;
+        }
       `}</style>
 
       {/* TopAppBar */}
@@ -87,40 +102,85 @@ export default function ProductDetailView({ product, onBack, onAddToCart, onBuyN
           </div>
         </div>
         {/* IM Mode Activity Banner */}
-        <div className="bg-[#af3000]/10 border-t border-white/5 py-2 px-6 flex items-center justify-start gap-8 overflow-hidden">
-          <div className="flex items-center gap-3 whitespace-nowrap animate-pulse">
-            <span className="flex h-2 w-2 rounded-full bg-[#af3000]"></span>
-            <p className="text-[10px] font-black text-[#af3000] tracking-widest uppercase">Live: 14 Suppliers bidding on similar items right now</p>
-          </div>
-          <div className="hidden sm:flex items-center gap-4 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full">
+        <div className="bg-[#af3000]/10 border-t border-white/5 py-2 px-6 overflow-hidden marquee-container cursor-help h-10 flex items-center">
+          <div className="animate-marquee whitespace-nowrap">
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <span className="flex h-2 w-2 rounded-full bg-[#af3000]"></span>
+              <p className="text-[10px] font-black text-[#af3000] tracking-widest uppercase">Live: 14 Suppliers bidding on similar items right now</p>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full flex-shrink-0">
               <img className="h-4 w-4 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHNXfHnCCAXRPWuPN71Cij0sN9pnFZUtn4rDLeYCvH7qjgUQsSvH8rpIVr_m1sM4ZiFw2cCDOb5UKcLlzwb8E81j1HEU570MevxymMv5zY9Ish5DxKV3L-zOBwEc62p4Ygk6hdohQqJPpl3kfcDx33qDQ9PjHPitoxK7oh-gOTZQcqo51ADzMV60LDisr6OkqCH4HJtN2NilClgY08ujXFjOUOEzf_l7wH483yldRR8QH1ipgm3m-i51UijCBsakx1PyE6-qufdxpQ" alt="User" />
               <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Prime Member secured -15% Bulk Discount</span>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <span className="flex h-2 w-2 rounded-full bg-[#af3000]"></span>
+              <p className="text-[10px] font-black text-[#af3000] tracking-widest uppercase">NEW INVENTORY: HIGH-GRADE SEMICONDUCTORS AVAILABLE</p>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <span className="flex h-2 w-2 rounded-full bg-[#af3000]"></span>
+              <p className="text-[10px] font-black text-[#af3000] tracking-widest uppercase">SUPPLIER VERIFIED: SHENZHEN QUANTUM PRECISION</p>
+            </div>
+            {/* Duplicate for seamless loop */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <span className="flex h-2 w-2 rounded-full bg-[#af3000]"></span>
+              <p className="text-[10px] font-black text-[#af3000] tracking-widest uppercase">Live: 14 Suppliers bidding on similar items right now</p>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <main className="pt-[116px] md:pt-[130px] pb-24 px-6 max-w-7xl mx-auto flex flex-col gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-start">
           {/* Left Column: Media Gallery */}
-          <div className="lg:col-span-7 space-y-8">
+          <div className="lg:col-span-7 flex flex-col gap-2">
             <div className={`relative rounded-3xl overflow-hidden group shadow-2xl ${isDark ? 'bg-zinc-900 border border-white/5' : 'bg-zinc-200 border border-black/5'}`}>
-              <motion.img 
-                key={selectedImage}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                alt="Product Hero" 
-                className="w-full aspect-square object-cover transform group-hover:scale-105 transition-transform duration-700" 
-                src={thumbnails[selectedImage]} 
-              />
-              <div className="absolute bottom-6 left-6 flex gap-3">
+              <AnimatePresence mode="wait">
+                <motion.img 
+                  key={selectedImage}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  onDragEnd={(_, info) => {
+                    const swipeThreshold = 50;
+                    if (info.offset.x < -swipeThreshold) {
+                      // Next image
+                      setSelectedImage((prev) => (prev + 1) % thumbnails.length);
+                    } else if (info.offset.x > swipeThreshold) {
+                      // Previous image
+                      setSelectedImage((prev) => (prev - 1 + thumbnails.length) % thumbnails.length);
+                    }
+                  }}
+                  alt="Product Hero" 
+                  className="w-full aspect-square object-cover transform cursor-grab active:cursor-grabbing" 
+                  src={thumbnails[selectedImage]} 
+                />
+              </AnimatePresence>
+
+              {/* PC Navigation Arrows */}
+              <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 pointer-events-none">
+                <button 
+                  onClick={() => setSelectedImage((prev) => (prev - 1 + thumbnails.length) % thumbnails.length)}
+                  className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white pointer-events-auto opacity-0 group-hover:opacity-100 transition-all hover:bg-primary/80 hidden lg:flex"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button 
+                  onClick={() => setSelectedImage((prev) => (prev + 1) % thumbnails.length)}
+                  className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white pointer-events-auto opacity-0 group-hover:opacity-100 transition-all hover:bg-primary/80 hidden lg:flex"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="absolute bottom-6 left-6 flex gap-3 pointer-events-none">
                 <span className="px-4 py-2 glass-panel bg-white/10 text-white rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10">In Stock</span>
                 <span className="px-4 py-2 glass-panel bg-[#af3000]/20 text-[#af3000] rounded-full text-[10px] font-black uppercase tracking-widest border border-[#af3000]/30">Prime Exclusive</span>
               </div>
             </div>
             
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-5 gap-3 md:gap-4">
               {thumbnails.map((thumb, idx) => (
                 <button 
                   key={idx}
@@ -141,7 +201,7 @@ export default function ProductDetailView({ product, onBack, onAddToCart, onBuyN
             {/* Market Sentiment Section */}
             <section 
               onClick={() => setShowReviewsModal(true)}
-              className={`mt-16 rounded-[2rem] p-8 border cursor-pointer hover:border-[#af3000]/30 transition-all ${isDark ? 'bg-zinc-900/50 border-white/5' : 'bg-white border-black/5 shadow-xl'}`}
+              className={`rounded-[2rem] p-8 border cursor-pointer hover:border-[#af3000]/30 transition-all ${isDark ? 'bg-zinc-900/50 border-white/5' : 'bg-white border-black/5 shadow-xl'}`}
             >
               <div className="flex items-end justify-between mb-8">
                 <div>
@@ -192,9 +252,9 @@ export default function ProductDetailView({ product, onBack, onAddToCart, onBuyN
           </div>
 
           {/* Right Column: Info/Buying */}
-          <div className="lg:col-span-5 space-y-8">
-            <div className="sticky top-40 space-y-8">
-              <div>
+          <div className="lg:col-span-5 flex flex-col gap-2">
+            <div className="sticky top-40 flex flex-col gap-2">
+              <div className={`p-8 rounded-[2.5rem] border ${isDark ? 'bg-zinc-900/50 border-white/5' : 'bg-white border-black/5 shadow-xl'}`}>
                 <div className="flex items-center gap-3 mb-4">
                   <span className="px-2 py-0.5 bg-[#af3000]/10 text-[#af3000] rounded text-[10px] font-black uppercase tracking-widest border border-[#af3000]/20">New Arrival</span>
                   <span className="text-zinc-500 text-[10px] font-black tracking-widest uppercase">SKU: 0B-PRIME-77X</span>

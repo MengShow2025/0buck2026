@@ -43,7 +43,7 @@ export default function StashView({ items, onUpdateQuantity, onRemoveItem, onGoT
   }, [items]);
 
   return (
-    <section className="flex-1 min-h-0 px-12 py-10">
+    <section className="flex-1 min-h-0 px-4 md:px-12 py-4 md:py-10">
       <div className="max-w-6xl mx-auto space-y-10">
         <div className="flex items-center justify-between">
           <div>

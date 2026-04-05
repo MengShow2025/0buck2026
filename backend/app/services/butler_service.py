@@ -5,11 +5,11 @@ from datetime import datetime
 import google.generativeai as genai
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from backend.app.core.config import settings
-from backend.app.core.security import encrypt_api_key, decrypt_api_key
-from backend.app.core.quota_manager import check_and_update_quota
-from backend.app.models.butler import UserButlerProfile, UserMemoryFact, UserMemorySemantic, PersonaTemplate
-from backend.app.models import SystemConfig
+from app.core.config import settings
+from app.core.security import encrypt_api_key, decrypt_api_key
+from app.core.quota_manager import check_and_update_quota
+from app.models.butler import UserButlerProfile, UserMemoryFact, UserMemorySemantic, PersonaTemplate
+from app.models import SystemConfig
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -89,7 +89,7 @@ class ButlerService:
         v3.3.1 C2M Wishing Well Guidance:
         Provides the AI with context about similar wishes and crowdfunding potential.
         """
-        from backend.app.services.c2m_service import C2MService
+        from app.services.c2m_service import C2MService
         c2m = C2MService(self.db)
         
         similar_wishes = await c2m.find_similar_wishes(last_message)

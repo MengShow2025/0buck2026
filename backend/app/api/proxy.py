@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Request, Header, HTTPException, Depends
 from sqlalchemy.orm import Session
-from backend.app.db.session import get_db
-from backend.app.services.rewards import RewardsService
+from app.db.session import get_db
+from app.services.rewards import RewardsService
 import hmac
 import hashlib
-from backend.app.core.config import settings
+from app.core.config import settings
 
 router = APIRouter()
 

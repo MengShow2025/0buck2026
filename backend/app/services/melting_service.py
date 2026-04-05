@@ -3,11 +3,11 @@ import asyncio
 from datetime import datetime
 from decimal import Decimal
 from sqlalchemy.orm import Session
-from backend.app.db.session import SessionLocal
-from backend.app.models.product import Product
-from backend.app.services.supply_chain import SupplyChainService
-from backend.app.services.sync_shopify import SyncShopifyService
-from backend.app.services.config_service import ConfigService
+from app.db.session import SessionLocal
+from app.models.product import Product
+from app.services.supply_chain import SupplyChainService
+from app.services.sync_shopify import SyncShopifyService
+from app.services.config_service import ConfigService
 
 class MeltingService:
     def __init__(self, db: Session):

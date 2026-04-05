@@ -5,24 +5,29 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 import json
 import asyncio
-from backend.app.core.config import settings
-from backend.app.db.session import get_db
-from backend.app.services.supply_chain import SupplyChainService
-from backend.app.services.sync_shopify import SyncShopifyService
-from backend.app.api.webhooks import router as webhooks_router
-from backend.app.api.admin import router as admin_router
-from backend.app.api.proxy import router as proxy_router
-from backend.app.api.agent import router as agent_router
-from backend.app.api.butler import router as butler_router
-from backend.app.api.rewards import router as rewards_router
-from backend.app.api.products import router as products_router
-from backend.app.api.stream import router as stream_router
-from backend.app.services.rewards import RewardsService
-from backend.app.services.stream_chat import stream_chat_service
+from app.core.config import settings
+from app.db.session import get_db
+from app.services.supply_chain import SupplyChainService
+from app.services.sync_shopify import SyncShopifyService
+from app.api.webhooks import router as webhooks_router
+from app.api.admin import router as admin_router
+from app.api.proxy import router as proxy_router
+from app.api.agent import router as agent_router
+from app.api.butler import router as butler_router
+from app.api.rewards import router as rewards_router
+from app.api.products import router as products_router
+from app.api.stream import router as stream_router
+from app.services.rewards import RewardsService
+from app.services.stream_chat import stream_chat_service
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="0Buck Backend", version="3.4")
 

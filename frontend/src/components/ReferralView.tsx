@@ -1,26 +1,42 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import { useDeviceType } from '../hooks/useDeviceType';
 import { 
   Copy, Share2, Users, Gift, ArrowRight, CheckCircle2,
   Menu, ShoppingCart, Activity, CreditCard, Star, 
   BarChart2, Gavel, Bot, Megaphone, Image as ImageIcon,
-  QrCode, Send, ShieldCheck
+  QrCode, Send, ShieldCheck, Loader2, Crown, Fingerprint
 } from 'lucide-react';
-import ChatInput from './ChatInput';
+import { motion } from 'motion/react';
+import { useRewards, RewardStatus } from '../hooks/useRewards';
 
 interface ReferralViewProps {
   isAuthenticated?: boolean;
+  currentUser?: any;
 }
 
-export default function ReferralView({ isAuthenticated = false }: ReferralViewProps) {
+export default function ReferralView({ isAuthenticated = false, currentUser }: ReferralViewProps) {
   const { t } = useTranslation();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+  const deviceType = useDeviceType();
   
-  // For demonstration, we use a toggle to switch between Normal User and Talent views.
-  // In a real app, this would be determined by the user's role from the backend.
-  const [isTalent, setIsTalent] = useState(isAuthenticated);
+  const { status, isLoading } = useRewards(currentUser?.id ? parseInt(currentUser.id) : null);
+  
+  // Local view mode override (for mobile toggling)
+  const [viewMode, setViewMode] = useState<'talent' | 'user' | null>(null);
+
+  // Determine if user is KOL/Talent based on real backend data OR manual override
+  const isTalent = viewMode === 'talent' || (viewMode === null && status?.user_type === 'kol');
+
+  if (isLoading && !status) {
+    return (
+      <div className="h-full flex items-center justify-center bg-black">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className={`h-full overflow-y-auto selection:bg-primary/30 selection:text-primary ${isDark ? 'bg-[#0a0a0a] text-[#f5f5f5]' : 'bg-[#fff8f6] text-[#271814]'}`}>
@@ -30,39 +46,71 @@ export default function ReferralView({ isAuthenticated = false }: ReferralViewPr
         .terminal-glow { text-shadow: 0 0 10px rgba(255, 92, 40, 0.4); }
       `}</style>
       
-      {/* Debug Toggle for Review */}
-      <div className="fixed bottom-4 left-24 z-50 bg-black/80 backdrop-blur border border-white/10 p-2 rounded-xl flex gap-2">
-        <button 
-          onClick={() => setIsTalent(false)}
-          className={`px-3 py-1 text-[10px] font-bold rounded ${!isTalent ? 'bg-primary text-white' : 'text-zinc-500 hover:text-white'}`}
-        >
-          {t('referral.normal_user')}
-        </button>
-        <button 
-          onClick={() => setIsTalent(true)}
-          className={`px-3 py-1 text-[10px] font-bold rounded ${isTalent ? 'bg-primary text-white' : 'text-zinc-500 hover:text-white'}`}
-        >
-          {t('referral.talent')}
-        </button>
-      </div>
+      {!isAuthenticated && (
+        <div className="fixed top-[72px] left-1/2 -translate-x-1/2 z-[100] bg-zinc-950/20 backdrop-blur-2xl border border-white/10 px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-[0_8px_32px_0_rgba(0,0,0,0.8)] whitespace-nowrap min-w-[280px] text-center">
+          Sign in to access full ledger
+        </div>
+      )}
 
-      {isTalent ? <TalentReferralView isDark={isDark} /> : <UserReferralView isDark={isDark} />}
+      {isTalent ? <TalentReferralView isDark={isDark} status={status} /> : <UserReferralView isDark={isDark} status={status} />}
+
+      {/* Draggable View Toggle (Mobile Floating) */}
+      {deviceType === 'h5' && (
+        <motion.div 
+          drag
+          dragConstraints={{ left: -100, right: 100, top: -400, bottom: 50 }}
+          whileDrag={{ scale: 1.1, zIndex: 100 }}
+          className="fixed bottom-28 left-6 z-[60] flex flex-col gap-3 p-1 bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl touch-none"
+        >
+          <button 
+            onClick={() => setViewMode('talent')}
+            className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center transition-all active:scale-90 ${
+              isTalent 
+                ? 'bg-gradient-to-tr from-primary to-orange-400 text-white shadow-lg shadow-primary/30' 
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            <Crown className="w-5 h-5" />
+            <span className="text-[7px] font-black uppercase mt-0.5 tracking-tighter">Talent</span>
+          </button>
+          
+          <div className="h-px w-6 mx-auto bg-white/5"></div>
+          
+          <button 
+            onClick={() => setViewMode('user')}
+            className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center transition-all active:scale-90 ${
+              !isTalent 
+                ? 'bg-gradient-to-tr from-primary to-orange-400 text-white shadow-lg shadow-primary/30' 
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            <Fingerprint className="w-5 h-5" />
+            <span className="text-[7px] font-black uppercase mt-0.5 tracking-tighter">Member</span>
+          </button>
+        </motion.div>
+      )}
     </div>
   );
 }
 
-function UserReferralView({ isDark }: { isDark: boolean }) {
+function UserReferralView({ isDark, status }: { isDark: boolean, status: RewardStatus | null }) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
+  const referralCode = status?.referral_code || 'GUEST-ACCESS';
+  const balance = status?.wallet?.available || 0;
+  const inviteCount = status?.level?.invitees || 0;
+  const conversionRate = inviteCount > 0 ? '14%' : '0%'; // Mock conversion for now
+
   const handleCopy = () => {
-    navigator.clipboard.writeText('ZERO-8829-BULL');
+    const link = `${window.location.origin}/?ref=${referralCode}`;
+    navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="pt-8 pb-24 px-6 max-w-[1600px] mx-auto grid grid-cols-12 gap-6 font-body">
+    <div className="pt-4 md:pt-8 pb-24 px-6 max-w-[1600px] mx-auto grid grid-cols-12 gap-6 font-body">
       {/* Left Column: Main Dashboard */}
       <div className="col-span-12 lg:col-span-9 space-y-6">
         
@@ -79,7 +127,7 @@ function UserReferralView({ isDark }: { isDark: boolean }) {
             </div>
             <div className="flex flex-col items-end gap-2">
               <span className={`text-xs font-mono ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>{t('referral.total_assets')}</span>
-              <div className="text-5xl font-black slashed-zero tracking-tighter">Ø14,204.50</div>
+              <div className="text-5xl font-black slashed-zero tracking-tighter">Ø{balance.toFixed(2)}</div>
               <div className="text-primary font-mono text-sm">{t('referral.this_week')}</div>
             </div>
           </div>
@@ -98,7 +146,7 @@ function UserReferralView({ isDark }: { isDark: boolean }) {
             </div>
             <div className="flex items-end gap-12 mt-8">
               <div>
-                <div className="text-4xl font-black slashed-zero mb-1">842</div>
+                <div className="text-4xl font-black slashed-zero mb-1">{inviteCount}</div>
                 <div className={`text-[10px] font-mono uppercase tracking-widest ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>{t('referral.active_nodes')}</div>
               </div>
               <div className="flex-1 h-24 flex items-end gap-1 pb-2">
@@ -110,7 +158,7 @@ function UserReferralView({ isDark }: { isDark: boolean }) {
                 <div className="w-full bg-primary h-5/6 rounded-t-sm"></div>
               </div>
               <div>
-                <div className="text-4xl font-black text-primary mb-1">14%</div>
+                <div className="text-4xl font-black text-primary mb-1">{conversionRate}</div>
                 <div className={`text-[10px] font-mono uppercase tracking-widest ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>{t('referral.conversion_rate')}</div>
               </div>
             </div>
@@ -119,10 +167,10 @@ function UserReferralView({ isDark }: { isDark: boolean }) {
           {/* Invite Hub / QR Code */}
           <div className={`rounded-3xl p-8 text-white flex flex-col items-center justify-center text-center ${isDark ? 'bg-primary/20 border border-primary/30' : 'bg-gradient-to-br from-primary/80 to-primary/60 backdrop-blur-xl border border-primary/20 shadow-lg shadow-primary/10'}`}>
             <div className="bg-white p-4 rounded-2xl mb-6 shadow-xl shadow-primary/20">
-              <img alt="Referral QR Code" className="w-24 h-24" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAibJXGqa6XhuH872LZHo-P93XlbZXSmzLr5YdeTdEyypfVFhMSiblsD6xRSaKgELWKZfqv1b3zZC6hpU8Ta9SvW7gcCjEEaEGL60nZhjEii9pBawMsAPXwmik5hBTXE2SHR11p1kvWJ-nKK5dvM8gmpIRaLB8OgrbyRPbNM8ZMrLp60SHIrEZU_Cv3fZQ6tlGR3RVCXwGQP97zz7tq8FsOFXQ4Hx9bg6ybvK41tzNaJrG1CVQLDOhPzmjnLorZnYoubMxIfrk5t0fu"/>
+              <QrCode className="w-24 h-24 text-black" />
             </div>
             <h3 className="font-headline text-lg font-extrabold uppercase mb-2">Invite_Legacy</h3>
-            <code className="bg-black/20 px-3 py-1 rounded-lg text-sm font-mono mb-6">ZERO-8829-BULL</code>
+            <code className="bg-black/20 px-3 py-1 rounded-lg text-sm font-mono mb-6 truncate max-w-full block">{referralCode}</code>
             <button onClick={handleCopy} className="w-full py-3 bg-white text-primary font-bold rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2">
               {copied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               {copied ? 'COPIED!' : 'COPY LINK'}
@@ -137,53 +185,31 @@ function UserReferralView({ isDark }: { isDark: boolean }) {
             <button className="text-primary font-mono text-xs uppercase tracking-widest hover:underline">View_All_Logs</button>
           </div>
           <div className="space-y-4">
-            <div className={`rounded-2xl p-5 flex items-center justify-between group transition-colors ${isDark ? 'bg-[#110a08] hover:bg-[#1e1412]' : 'bg-white hover:bg-orange-50'}`}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <Gift className="w-6 h-6" />
+            {status?.transactions && status.transactions.length > 0 ? (
+              status.transactions.map((tx) => (
+                <div key={tx.id} className={`rounded-2xl p-5 flex items-center justify-between group transition-colors ${isDark ? 'bg-[#110a08] hover:bg-[#1e1412]' : 'bg-white hover:bg-orange-50'}`}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                      {tx.type === 'referral' ? <Users className="w-6 h-6" /> : <Gift className="w-6 h-6" />}
+                    </div>
+                    <div>
+                      <p className="font-bold capitalize">{tx.type} Reward</p>
+                      <p className={`text-xs font-mono ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>
+                        {new Date(tx.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-black text-primary">+Ø{tx.amount.toFixed(2)}</div>
+                    <div className={`text-[10px] uppercase font-mono ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>Status: {tx.status}</div>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold">Referral Commission: Node_4412</p>
-                  <p className={`text-xs font-mono ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>HASH: 0x992...f21 • 12:44 PM</p>
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-12 text-zinc-500 font-mono text-sm uppercase tracking-widest">
+                No transaction logs detected in local buffer.
               </div>
-              <div className="text-right">
-                <div className="font-black text-primary">+Ø120.00</div>
-                <div className={`text-[10px] uppercase font-mono ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>Status: Settled</div>
-              </div>
-            </div>
-
-            <div className={`rounded-2xl p-5 flex items-center justify-between group transition-colors ${isDark ? 'bg-[#110a08] hover:bg-[#1e1412]' : 'bg-white hover:bg-orange-50'}`}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#76d1ff]/10 flex items-center justify-center text-[#76d1ff]">
-                  <Star className="w-6 h-6 fill-current" />
-                </div>
-                <div>
-                  <p className="font-bold">Monthly Tier Bonus: ELITE_LVL4</p>
-                  <p className={`text-xs font-mono ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>HASH: 0x441...a82 • 09:15 AM</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="font-black">+Ø500.00</div>
-                <div className={`text-[10px] uppercase font-mono ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>Status: Settled</div>
-              </div>
-            </div>
-
-            <div className={`rounded-2xl p-5 flex items-center justify-between group transition-colors opacity-80 ${isDark ? 'bg-[#110a08] hover:bg-[#1e1412]' : 'bg-white hover:bg-orange-50'}`}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#464747]/30 flex items-center justify-center text-[#a0a0a0]">
-                  <Users className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="font-bold">Network Spillover: Tier_3_Node</p>
-                  <p className={`text-xs font-mono ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>HASH: 0x112...b99 • Yesterday</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="font-black">+Ø15.40</div>
-                <div className={`text-[10px] uppercase font-mono ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>Status: Pending</div>
-              </div>
-            </div>
+            )}
           </div>
         </section>
       </div>
@@ -201,39 +227,25 @@ function UserReferralView({ isDark }: { isDark: boolean }) {
               <div className="flex items-center gap-3">
                 <span className="font-mono text-primary font-bold">01</span>
                 <div className="w-8 h-8 rounded-full bg-primary/20 overflow-hidden">
-                  <img alt="Rank 1" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB2-zPY_fpeSkP3FF9xdZUh6mn5zLnwi5jpbiSF0-RDydYJMUuU1dxxxKWsJZZGveNkyDZDFxzmaLkpeNaGkiRMWShWF8aAJMdkuj45TCGV0z5GMx2kuh3V712VIRyYiVlP1QBde1-tWNaEz2--ZG-UonEz3pGKANL7T-jdMV_rbKQybHZemY1QGF8tR8uXd-kCpDI61IjA0-9Vjadndn1EdPFpd-UAig4vs5UcKyo1sYK49AICCMrBMQ-dNQHaUEmrT50G1qOGBMf"/>
+                  <img alt="Rank 1" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Whale"/>
                 </div>
                 <span className="text-sm font-bold">X_WHALE</span>
               </div>
               <span className="text-xs font-mono slashed-zero">Ø8.2M</span>
             </div>
-            <div className="flex items-center justify-between border-b border-primary/10 pb-4">
-              <div className="flex items-center gap-3">
-                <span className={`font-mono font-bold ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>02</span>
-                <div className="w-8 h-8 rounded-full bg-neutral-800"></div>
-                <span className="text-sm font-bold">BULL_RUN</span>
-              </div>
-              <span className="text-xs font-mono slashed-zero">Ø5.1M</span>
-            </div>
-            <div className="flex items-center justify-between border-b border-primary/10 pb-4">
-              <div className="flex items-center gap-3">
-                <span className={`font-mono font-bold ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>03</span>
-                <div className="w-8 h-8 rounded-full bg-neutral-800"></div>
-                <span className="text-sm font-bold">DARK_MOD</span>
-              </div>
-              <span className="text-xs font-mono slashed-zero">Ø4.9M</span>
-            </div>
             {/* User Self Row */}
-            <div className="flex items-center justify-between bg-primary/10 p-3 rounded-xl border border-primary/20">
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-primary font-bold">14</span>
-                <div className="w-8 h-8 rounded-full bg-primary overflow-hidden border-2 border-primary">
-                  <img alt="You" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvhKJ7ps9AletnPXeD-SOVJJGV80NCk7Ixk5vf_lAuYf_FOseZ--bO0Uf8j2otBOxlouA0evLhZDr8xSsbW0kqBnBEt3tOEI7RJLiQ2rnhVP5LeYerN1T0yc3RmDBCxmZg94pKTP0NITe5gTx9HKrxc_FhhfSPA6dLFIa3C1Z1Wx1sF3jznoVNtweK8WmpGegDG4VrZPacRL_tk8sGi4z7f73cDxN2OgQ4hkLYfR4_PwbBIwqpbyYKyrYtJf3VT8q3F05VN7iILTOn"/>
+            {status && (
+              <div className="flex items-center justify-between bg-primary/10 p-3 rounded-xl border border-primary/20">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-primary font-bold">YOU</span>
+                  <div className="w-8 h-8 rounded-full bg-primary overflow-hidden border-2 border-primary">
+                    <img alt="You" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${status.user_id}`}/>
+                  </div>
+                  <span className="text-sm font-bold uppercase">{status.user_tier}</span>
                 </div>
-                <span className="text-sm font-bold">YOU</span>
+                <span className="text-xs font-mono font-bold text-primary">Ø{balance.toFixed(1)}K</span>
               </div>
-              <span className="text-xs font-mono font-bold text-primary">Ø14.2K</span>
-            </div>
+            )}
           </div>
           <button className={`w-full mt-6 py-2 text-xs font-mono uppercase tracking-widest hover:text-primary transition-colors ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>Expand_Ranking_Data</button>
         </section>
@@ -243,17 +255,17 @@ function UserReferralView({ isDark }: { isDark: boolean }) {
           <div className="absolute inset-0 opacity-10 pointer-events-none">
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary via-transparent to-transparent"></div>
           </div>
-          <h3 className={`text-xs font-mono uppercase mb-4 tracking-widest ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>Power_Level</h3>
+          <h3 className={`text-xs font-mono uppercase mb-4 tracking-widest ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>Tier_Status</h3>
           <div className="relative z-10">
             <div className="flex items-end justify-between mb-2">
-              <span className="text-3xl font-black">LVL 4</span>
-              <span className="text-primary font-mono text-xs">88% TO LVL 5</span>
+              <span className="text-3xl font-black uppercase">{status?.user_tier || 'SILVER'}</span>
+              <span className="text-primary font-mono text-xs">{(status?.dist_rate || 0.015) * 100}% REWARD</span>
             </div>
             <div className="w-full bg-neutral-900 h-2 rounded-full overflow-hidden">
-              <div className="bg-primary h-full w-[88%]" style={{ boxShadow: '0 0 15px rgba(255,92,40,0.5)' }}></div>
+              <div className="bg-primary h-full w-[33%]" style={{ boxShadow: '0 0 15px rgba(255,92,40,0.5)' }}></div>
             </div>
             <p className={`text-[10px] mt-3 leading-relaxed ${isDark ? 'text-[#e3beb4]' : 'text-stone-500'}`}>
-              Refer 2 more users to unlock <span className="font-bold">DIAMOND_NODE</span> privileges.
+              Your current distribution rate is <span className="font-bold text-primary">{(status?.dist_rate || 0.015) * 100}%</span>. Level up to Gold for 2.0%.
             </p>
           </div>
         </section>
@@ -262,11 +274,13 @@ function UserReferralView({ isDark }: { isDark: boolean }) {
   );
 }
 
-function TalentReferralView({ isDark }: { isDark: boolean }) {
+function TalentReferralView({ isDark, status }: { isDark: boolean, status: RewardStatus | null }) {
   const [inputValue, setInputValue] = useState('');
+  const distRate = ((status?.dist_rate || 0.015) * 100).toFixed(1);
+  const fanRate = ((status?.fan_rate || 0.05) * 100).toFixed(1);
 
   return (
-    <div className="pt-8 pb-28 px-6 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 font-body">
+    <div className="pt-4 md:pt-8 pb-28 px-6 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 font-body">
       {/* IM Group Mode Header / Hero Section */}
       <section className={`md:col-span-12 p-8 rounded-3xl overflow-hidden relative border border-white/5 ${isDark ? 'bg-[#111111]' : 'bg-orange-50'}`}>
         <div className="absolute top-0 right-0 w-1/2 h-full opacity-20 mix-blend-screen pointer-events-none">
@@ -276,11 +290,11 @@ function TalentReferralView({ isDark }: { isDark: boolean }) {
           <div className="flex items-center gap-3 mb-4">
             <span className="bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase">IM Group Priority</span>
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            <span className="text-neutral-500 text-xs font-mono">NODE_772_STABLE</span>
+            <span className="text-neutral-500 text-xs font-mono">NODE_{status?.user_id || '772'}_STABLE</span>
           </div>
-          <h2 className="font-headline text-5xl font-extrabold tracking-tighter mb-2 terminal-glow uppercase">Talent <span className="text-primary italic">Recruit</span> Dashboard</h2>
+          <h2 className="font-headline text-5xl font-extrabold tracking-tighter mb-2 terminal-glow uppercase">Talent <span className="text-primary italic">Partner</span> Dashboard</h2>
           <p className="text-neutral-400 font-body max-w-xl text-lg leading-relaxed">
-            Welcome to the high-performance ledger. Manage your network nodes, track real-time commission flow, and deploy optimized referral assets.
+            Negotiated Rates: <span className="text-white font-bold">{distRate}% One-time</span> / <span className="text-white font-bold">{fanRate}% Long-term</span>.
           </p>
         </div>
       </section>

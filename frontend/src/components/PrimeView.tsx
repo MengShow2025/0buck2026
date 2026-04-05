@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import { useDeviceType } from '../hooks/useDeviceType';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, ChevronRight, ChevronLeft, LayoutGrid, List, Star, 
@@ -181,14 +182,34 @@ const MOCK_MERCHANTS = [
   }
 ];
 
-const CATEGORIES = ['Microchips', 'Tactical Gear', 'Medical Robotics', 'Bio-Polymers', 'Quantum Sensors', 'Aerospace Parts'];
+const CATEGORIES = [
+  'Microchips', 'Tactical Gear', 'Medical Robotics', 
+  'Bio-Polymers', 'Quantum Sensors', 'Aerospace Parts',
+  'Industrial AI', 'Nano-Fibers', 'Satellite Links',
+  'Energy Storage', 'Subsea Cables', 'Graphene Tech'
+];
 
 export default function PrimeView({ onProductClick, onMerchantClick }: { onProductClick?: (product: Product) => void, onMerchantClick?: (merchant: any) => void }) {
   const { t } = useTranslation();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+  const deviceType = useDeviceType();
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 25; // 5 rows * 5 columns
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const totalPages = Math.ceil(ALL_SUPPLIERS.length / itemsPerPage);
   
@@ -202,29 +223,71 @@ export default function PrimeView({ onProductClick, onMerchantClick }: { onProdu
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
-      <div className="max-w-[1800px] mx-auto p-8 space-y-12">
-        <section className="mb-12">
-          <div className={`backdrop-blur-xl rounded-[2rem] p-12 relative overflow-hidden border ${isDark ? 'bg-zinc-900/60 border-primary/15' : 'bg-surface-container-low border-outline-variant/30'}`}>
-            <div className={`absolute -top-24 -right-24 w-96 h-96 ${isDark ? 'bg-primary/20' : 'bg-primary/10'} blur-[100px] rounded-full`}></div>
+      <div className="max-w-[1800px] mx-auto p-4 md:p-8 flex flex-col gap-2">
+        <section className={`transition-all duration-300 ${isSearchFocused ? 'relative z-[100]' : 'relative z-10'}`}>
+          <div className={`backdrop-blur-xl rounded-[2rem] p-12 relative border ${isDark ? 'bg-zinc-900/60 border-primary/15' : 'bg-surface-container-low border-outline-variant/30'}`}>
+            {/* Background Glow (Clipped by inner container) */}
+            <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
+              <div className={`absolute -top-24 -right-24 w-96 h-96 ${isDark ? 'bg-primary/20' : 'bg-primary/10'} blur-[100px] rounded-full`}></div>
+            </div>
+            
             <div className="relative z-10 flex flex-col items-center text-center">
-              <h2 className={`font-headline text-5xl font-black mb-6 tracking-tight ${isDark ? 'text-white' : 'text-on-surface'}`}>
+              <h2 className={`font-headline text-3xl md:text-5xl font-black mb-4 tracking-tight ${isDark ? 'text-white' : 'text-on-surface'}`}>
                 {t('prime.source_title')} <span className="text-primary">{t('prime.source_highlight')}</span>
               </h2>
-              <div className="w-full max-w-2xl relative">
+              <div className="w-full max-w-2xl relative" ref={searchRef}>
                 <input
-                  className={`w-full backdrop-blur-md rounded-2xl py-5 px-14 text-lg transition-all ${isDark ? 'bg-zinc-900/50 border-white/10 text-white placeholder-white/20 focus:border-primary/50' : 'bg-surface-container-high border-outline-variant/50 text-on-surface placeholder:text-on-surface-variant/40 focus:border-primary/40'} border focus:ring-0`}
+                  className={`w-full backdrop-blur-md rounded-2xl py-4 md:py-5 px-12 md:px-14 text-sm md:text-lg transition-all ${isDark ? 'bg-zinc-900/50 border-white/10 text-white placeholder-white/20 focus:border-primary/50' : 'bg-surface-container-high border-outline-variant/50 text-on-surface placeholder:text-on-surface-variant/40 focus:border-primary/40'} border focus:ring-0`}
                   placeholder={t('prime.search_placeholder')}
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
                 />
-                <Search className={`absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? 'text-white/40' : 'text-on-surface-variant'}`} />
-                <button className="absolute right-3 top-1/2 -translate-y-1/2 bg-gradient-to-br from-primary to-primary-container text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-[0_0_20px_rgba(255,92,40,0.4)] transition-all">
+                <Search className={`absolute left-4 md:left-5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 ${isDark ? 'text-white/40' : 'text-on-surface-variant'}`} />
+                <button className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-gradient-to-br from-primary to-primary-container text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl font-bold text-xs md:text-base hover:shadow-[0_0_20px_rgba(255,92,40,0.4)] transition-all">
                   {t('prime.command')}
                 </button>
+
+                {/* Mobile Search Dropdown Options (Reverted to Absolute Dropdown) */}
+                <AnimatePresence>
+                  {isSearchFocused && deviceType === 'h5' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      className={`absolute top-full left-0 right-0 mt-3 p-2 rounded-2xl border shadow-2xl z-[100] backdrop-blur-2xl max-h-[300px] overflow-y-auto no-scrollbar ${isDark ? 'bg-zinc-900/95 border-white/10' : 'bg-white/95 border-black/5'}`}
+                    >
+                      <div className="flex flex-col gap-1">
+                        {CATEGORIES.map((cat, i) => (
+                          <motion.button
+                            key={cat}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.03 }}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setSearchQuery(cat);
+                              setIsSearchFocused(false);
+                            }}
+                            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-left group ${isDark ? 'hover:bg-white/5 text-zinc-400 hover:text-white' : 'hover:bg-black/5 text-zinc-500 hover:text-black'}`}
+                          >
+                            <div className="w-1 h-1 rounded-full bg-primary/40 group-hover:bg-primary transition-colors" />
+                            <span className="text-xs font-bold tracking-tight">{cat}</span>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              <div className="flex flex-wrap justify-center gap-3 mt-8">
+
+              {/* Desktop Tag Cloud (Hidden on Mobile Search Focus) */}
+              <div className={`flex flex-wrap justify-center gap-3 mt-8 ${deviceType === 'h5' ? 'hidden' : 'flex'}`}>
                 {CATEGORIES.map((cat) => (
                   <span
                     key={cat}
+                    onClick={() => setSearchQuery(cat)}
                     className={`px-4 py-1.5 rounded-full text-xs font-medium border cursor-pointer transition-colors ${isDark ? 'bg-zinc-800 text-white/60 hover:text-white border-white/5 hover:border-white/10' : 'bg-surface-container text-on-surface-variant hover:text-on-surface border-outline-variant/50 hover:border-outline'}`}
                   >
                     {cat}
@@ -324,7 +387,15 @@ export default function PrimeView({ onProductClick, onMerchantClick }: { onProdu
                         className="flex flex-col gap-2 group/item cursor-pointer min-w-0"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (onMerchantClick) onMerchantClick(supplier);
+                          if (onProductClick) {
+                            onProductClick({
+                              id: p.id,
+                              name: p.name,
+                              price: p.price,
+                              image: p.image || '',
+                              description: ''
+                            } as Product);
+                          }
                         }}
                       >
                         <div className="aspect-square w-full rounded-xl bg-zinc-900 overflow-hidden border border-white/5 relative flex-shrink-0 shadow-lg">

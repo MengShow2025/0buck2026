@@ -3,8 +3,8 @@ from decimal import Decimal
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from backend.app.models.butler import AIContribution
-from backend.app.services.config_service import ConfigService
+from app.models.butler import AIContribution
+from app.services.config_service import ConfigService
 
 class RewardEngine:
     def __init__(self, db: Session):

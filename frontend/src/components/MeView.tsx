@@ -6,7 +6,7 @@ import {
   Calendar, TrendingUp, History, Share2, Eye, Settings,
   Shield, Lock, Globe, Book, LogOut, User, ChevronRight,
   Sparkles, ArrowRight, Bell, MessageSquare, Users, Mail,
-  Palette, Smartphone, EyeOff, Trash2
+  Palette, Smartphone, EyeOff, Trash2, Menu
 } from 'lucide-react';
 
 const LANGUAGES = [
@@ -29,7 +29,8 @@ export default function MeView({
   onLogout, 
   agentName,
   onAgentNameChange,
-  deviceType = 'web'
+  deviceType = 'web',
+  onMenuClick
 }: { 
   isAuthenticated: boolean; 
   onLoginClick: () => void; 
@@ -37,6 +38,7 @@ export default function MeView({
   agentName: string;
   onAgentNameChange: (name: string) => void;
   deviceType?: string;
+  onMenuClick?: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const { resolvedTheme } = useTheme();
@@ -52,7 +54,17 @@ export default function MeView({
 
   if (!isAuthenticated) {
     return (
-      <div className={`h-full flex flex-col items-center justify-center p-6 ${isDark ? 'bg-[#0a0a0a] text-[#e5e5e5]' : 'bg-[#fff8f6] text-[#271814]'}`}>
+      <div className={`h-full flex flex-col items-center justify-center p-6 relative ${isDark ? 'bg-[#0a0a0a] text-[#e5e5e5]' : 'bg-[#fff8f6] text-[#271814]'}`}>
+        {onMenuClick && deviceType === 'h5' && (
+           <button 
+             onClick={onMenuClick}
+             className={`absolute top-6 left-6 w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+               isDark ? 'bg-white/5 border border-white/10 text-zinc-400 hover:text-primary' : 'bg-black/5 border border-black/10 text-zinc-600 hover:text-primary'
+             }`}
+           >
+             <Menu className="w-5 h-5" />
+           </button>
+         )}
         <div className="w-24 h-24 rounded-full bg-zinc-900/50 border border-white/5 flex items-center justify-center mb-6 shadow-2xl">
           <User className="w-12 h-12 text-zinc-500" />
         </div>
@@ -81,6 +93,16 @@ export default function MeView({
         {/* Header */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
+            {onMenuClick && deviceType === 'h5' && (
+              <button 
+                onClick={onMenuClick}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                  isDark ? 'bg-white/5 border border-white/10 text-zinc-400 hover:text-primary' : 'bg-black/5 border border-black/10 text-zinc-600 hover:text-primary'
+                }`}
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            )}
             <div className="relative group cursor-pointer" onClick={() => {
               const fileInput = document.createElement('input');
               fileInput.type = 'file';

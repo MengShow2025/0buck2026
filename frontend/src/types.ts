@@ -91,6 +91,7 @@ export interface SecurePayPayload {
   shippingPostalCode?: string;
   referrer_id?: string | number; // v3.4.4: Distribution referrer
   inviter_id?: string | number;  // v3.4.4: Invitation inviter
+  group_share_code?: string;     // v3.4.4: Group buy join code
 }
 
 export interface Conversation {

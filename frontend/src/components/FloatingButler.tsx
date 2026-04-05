@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Product } from '../types';
 import ChatInput from './ChatInput';
 import BongoCat from './BongoCat';
+import { useDeviceType } from '../hooks/useDeviceType';
 
 interface Message {
   id: string;
@@ -13,6 +14,7 @@ interface Message {
 }
 
 export default function FloatingButler({ onProductClick }: { onProductClick?: (product: Product) => void }) {
+  const deviceType = useDeviceType();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -227,7 +229,7 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
           >
             {/* The Bongo Cat Character replacing the button */}
             <div className="relative">
-              <div className="w-16 h-16 bg-zinc-900 border-2 border-[#FF5C00]/50 rounded-2xl shadow-2xl shadow-primary/40 flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:scale-110 group-hover:border-[#FF5C00]">
+              <div className={`${deviceType === 'h5' ? 'w-12 h-12' : 'w-16 h-16'} bg-zinc-900 border-2 border-[#FF5C00]/50 rounded-2xl shadow-2xl shadow-primary/40 flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:scale-110 group-hover:border-[#FF5C00]`}>
                 <BongoCat isTyping={true} className="w-full h-full" />
               </div>
               {/* Optional Notification Badge */}

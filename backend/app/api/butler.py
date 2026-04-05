@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, Request
 from sqlalchemy.orm import Session
-from backend.app.db.session import get_db
-from backend.app.services.butler_ops import ButlerOpsService, butler_tools_dispatcher
-from backend.app.services.finance_engine import FinanceEngine
-from backend.app.services.butler_service import ButlerService
+from app.db.session import get_db
+from app.services.butler_ops import ButlerOpsService, butler_tools_dispatcher
+from app.services.finance_engine import FinanceEngine
+from app.services.butler_service import ButlerService
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import httpx
 import asyncio
-from backend.app.core.config import settings
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -100,12 +100,12 @@ async def proxy_minimax_chat(request: MinimaxChatRequest):
                     history = request.messages + [{"role": "assistant", "content": ai_content}]
                     
                     # Use a new DB session for background task
-                    from backend.app.db.session import SessionLocal
+                    from app.db.session import SessionLocal
                     def background_learning(hist, uid):
                         db = SessionLocal()
                         try:
                             # Use reflection service for C2M/Fact extraction
-                            from backend.app.services.reflection_service import run_butler_learning
+                            from app.services.reflection_service import run_butler_learning
                             asyncio.run(run_butler_learning(hist, uid, db))
                         finally:
                             db.close()
@@ -146,7 +146,7 @@ async def redeem_renewal(user_id: int, order_id: str = Body(...), phase_id: int 
 @router.post("/checkin/{user_id}")
 async def process_checkin(user_id: int, plan_id: str = Body(...), db: Session = Depends(get_db)):
     """Process a daily check-in."""
-    from backend.app.services.rewards import RewardsService
+    from app.services.rewards import RewardsService
     rewards = RewardsService(db)
     result = rewards.process_checkin(user_id, plan_id)
     if result["status"] == "error":

@@ -2,8 +2,8 @@
 import json
 from typing import Any, Optional
 from sqlalchemy.orm import Session
-from backend.app.models.ledger import SystemConfig
-from backend.app.core.config import settings
+from app.models.ledger import SystemConfig
+from app.core.config import settings
 
 class ConfigService:
     _cache = {}

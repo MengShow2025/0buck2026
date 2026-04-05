@@ -4,10 +4,10 @@ import json
 import logging
 import asyncio
 
-from backend.app.db.session import get_db
-from backend.app.services.stream_chat import stream_chat_service
-from backend.app.services.agent import agent_executor
-from backend.app.services.reflection_service import run_butler_learning
+from app.db.session import get_db
+from app.services.stream_chat import stream_chat_service
+from app.services.agent import agent_executor
+from app.services.reflection_service import run_butler_learning
 from langchain_core.messages import HumanMessage
 
 router = APIRouter()
@@ -102,7 +102,7 @@ async def process_ai_response(user_id: str, channel_type: str, channel_id: str, 
                 channel_type=channel_type,
                 channel_id=channel_id,
                 card_type="0B_PRODUCT_GRID",
-                data={"products": search_results[:5], "butler_comment": last_msg.content},
+                data={"products": search_results[:10], "butler_comment": last_msg.content},
                 targeted_user_id=user_id if channel_type == "social" else None # Private Projection
             )
         else:
@@ -114,7 +114,7 @@ async def process_ai_response(user_id: str, channel_type: str, channel_id: str, 
         # This will extract facts like 'user likes purple' and save to 0Buck DB
         history = [{"role": "user", "content": content}, {"role": "assistant", "content": last_msg.content}]
         # run_butler_learning requires a Session, so we use SessionLocal for the background task
-        from backend.app.db.session import SessionLocal
+        from app.db.session import SessionLocal
         def background_reflection(hist, uid):
             db = SessionLocal()
             try:

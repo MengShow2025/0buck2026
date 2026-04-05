@@ -7,9 +7,9 @@ import google.generativeai as genai
 import json
 from datetime import datetime
 
-from backend.app.core.config import settings
-from backend.app.models.butler import UserMemoryFact, UserButlerProfile, AIUsageStats
-from backend.app.db.session import SessionLocal
+from app.core.config import settings
+from app.models.butler import UserMemoryFact, UserButlerProfile, AIUsageStats
+from app.db.session import SessionLocal
 
 logger = logging.getLogger(__name__)
 

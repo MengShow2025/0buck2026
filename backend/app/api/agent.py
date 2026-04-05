@@ -6,12 +6,12 @@ import json
 import asyncio
 from typing import List, Dict, Any, Optional
 
-from backend.app.schemas.agent import ChatRequest, ChatResponse, SessionCreate, SessionResponse, ProductSearchRequest
-from backend.app.services.agent import agent_executor
-from backend.app.services.vector_search import vector_search_service
-from backend.app.services.stream_chat import stream_chat_service
-from backend.app.models.ledger import AISession
-from backend.app.db.session import get_db
+from app.schemas.agent import ChatRequest, ChatResponse, SessionCreate, SessionResponse, ProductSearchRequest
+from app.services.agent import agent_executor
+from app.services.vector_search import vector_search_service
+from app.services.stream_chat import stream_chat_service
+from app.models.ledger import AISession
+from app.db.session import get_db
 from sqlalchemy.orm import Session
 from langchain_core.messages import HumanMessage
 

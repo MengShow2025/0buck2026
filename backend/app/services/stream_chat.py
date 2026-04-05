@@ -1,5 +1,5 @@
 from stream_chat import StreamChat
-from backend.app.core.config import settings
+from app.core.config import settings
 from typing import List, Dict, Any
 
 class StreamChatService:
@@ -34,7 +34,7 @@ class StreamChatService:
         v3.4 VCC: Create or update a channel for Social, Commerce, or Concierge.
         """
         channel = self.server_client.channel(channel_type, channel_id)
-        channel.create(created_by_id="0buck_system")
+        channel.create(user_id="0buck_system")
         
         update_data = {"name": name}
         if extra_data:

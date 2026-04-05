@@ -6,14 +6,14 @@ from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel
 
-from backend.app.db.session import get_db
-from backend.app.models import UserExt, Wallet, CheckinPlan, SystemConfig
-from backend.app.models.butler import UserButlerProfile, AIContribution, ShadowIDMapping, PersonaTemplate, AIUsageStats, UserMemoryFact
-from backend.app.models.ledger import AvailableCoupon, Order, SourcingOrder
-from backend.app.models.product import Product
-from backend.app.models.c2m import UserWish, DemandInsight, OrderCustomization
-from backend.app.services.discount_service import DiscountSyncService
-from backend.app.services.c2m_service import C2MService
+from app.db.session import get_db
+from app.models import UserExt, Wallet, CheckinPlan, SystemConfig
+from app.models.butler import UserButlerProfile, AIContribution, ShadowIDMapping, PersonaTemplate, AIUsageStats, UserMemoryFact
+from app.models.ledger import AvailableCoupon, Order, SourcingOrder
+from app.models.product import Product
+from app.models.c2m import UserWish, DemandInsight, OrderCustomization
+from app.services.discount_service import DiscountSyncService
+from app.services.c2m_service import C2MService
 
 router = APIRouter()
 
@@ -115,7 +115,7 @@ def get_ai_rules(db: Session = Depends(get_db)):
 @router.post("/config/global")
 def update_global_config(data: GlobalConfigUpdate, db: Session = Depends(get_db)):
     """Update v3.0/v3.1 global strategy settings (markup, threshold, budget, etc.)"""
-    from backend.app.services.config_service import ConfigService
+    from app.services.config_service import ConfigService
     config = ConfigService(db)
     config.set(data.key, data.value)
     return {"status": "success", "key": data.key, "value": data.value}
@@ -123,7 +123,7 @@ def update_global_config(data: GlobalConfigUpdate, db: Session = Depends(get_db)
 @router.get("/config/reward-rates")
 def get_reward_rates(db: Session = Depends(get_db)):
     """v3.4.5 Get current reward rates from SystemConfig"""
-    from backend.app.services.config_service import ConfigService
+    from app.services.config_service import ConfigService
     config = ConfigService(db)
     return {
         "silver_rate": config.get("silver_rate", 0.015),
@@ -139,7 +139,7 @@ def get_reward_rates(db: Session = Depends(get_db)):
 @router.post("/config/reward-rates")
 def update_reward_rates(data: RewardRatesUpdate, db: Session = Depends(get_db)):
     """v3.4.5 Update reward rates in SystemConfig"""
-    from backend.app.services.config_service import ConfigService
+    from app.services.config_service import ConfigService
     config = ConfigService(db)
     for key, value in data.dict().items():
         config.set(key, value, description=f"Reward rate for {key}")
@@ -413,7 +413,7 @@ def adjust_reward_plan(plan_id: str, days: int, status: str = None, db: Session 
 @router.post("/wallet/adjust")
 def adjust_wallet(user_id: int, amount: float, reason: str, db: Session = Depends(get_db)):
     """Manual adjustment for user wallet balance"""
-    from backend.app.services.rewards import RewardsService
+    from app.services.rewards import RewardsService
     rewards = RewardsService(db)
     rewards.update_wallet_balance(user_id, Decimal(str(amount)), "admin_adjustment", None, reason)
     return {"status": "success", "message": f"已为用户 {user_id} 调整余额: {amount}"}
@@ -422,7 +422,7 @@ def adjust_wallet(user_id: int, amount: float, reason: str, db: Session = Depend
 
 @router.get("/notion/product-pool")
 async def get_notion_product_pool():
-    from backend.app.services.notion import NotionService
+    from app.services.notion import NotionService
     notion = NotionService()
     try:
         return await notion.get_product_pool()
@@ -431,9 +431,9 @@ async def get_notion_product_pool():
 
 @router.post("/notion/sync-approved")
 async def sync_approved_products(db: Session = Depends(get_db)):
-    from backend.app.services.notion import NotionService
-    from backend.app.services.supply_chain import SupplyChainService
-    from backend.app.services.sync_shopify import SyncShopifyService
+    from app.services.notion import NotionService
+    from app.services.supply_chain import SupplyChainService
+    from app.services.sync_shopify import SyncShopifyService
     
     notion = NotionService()
     sc_service = SupplyChainService(db)
@@ -501,7 +501,7 @@ def update_insight_action(insight_id: int, action: str, db: Session = Depends(ge
 @router.get("/ids/audit-queue")
 async def get_ids_audit_queue():
     """v3.0 Fetch candidates from Notion that are '待审核' or '分析中'"""
-    from backend.app.services.notion import NotionService
+    from app.services.notion import NotionService
     notion = NotionService()
     all_products = await notion.get_product_pool()
     # Filter for candidates that haven't been approved yet
@@ -511,9 +511,9 @@ async def get_ids_audit_queue():
 @router.post("/ids/approve")
 async def approve_ids_product(name: str, db: Session = Depends(get_db)):
     """v3.0 Approve a product: Update Notion status and sync to Shopify"""
-    from backend.app.services.notion import NotionService
-    from backend.app.services.supply_chain import SupplyChainService
-    from backend.app.services.sync_shopify import SyncShopifyService
+    from app.services.notion import NotionService
+    from app.services.supply_chain import SupplyChainService
+    from app.services.sync_shopify import SyncShopifyService
     
     notion = NotionService()
     sc_service = SupplyChainService(db)

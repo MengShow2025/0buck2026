@@ -1,7 +1,7 @@
 import httpx
 import json
 from typing import Dict, Any, List, Optional
-from backend.app.core.config import settings
+from app.core.config import settings
 
 class NotionService:
     def __init__(self, token: Optional[str] = None):

@@ -197,7 +197,7 @@ export default function SquareView({
       </div>
 
       {/* Content Area */}
-      <main className="pt-12 pb-12 px-6 max-w-[1800px] mx-auto min-h-screen">
+      <main className="pt-4 pb-12 px-6 max-w-[1800px] mx-auto min-h-screen">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full items-start">
           
           {/* Left Sidebar Navigation */}

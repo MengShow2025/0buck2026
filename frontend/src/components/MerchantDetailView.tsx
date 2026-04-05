@@ -50,6 +50,49 @@ export default function MerchantDetailView({ onBack, onProductClick, merchant }:
     catalogPage * ITEMS_PER_PAGE
   );
 
+  const RatingAnalytics = (
+    <div 
+      onClick={() => setShowReviewsModal(true)}
+      className="bg-zinc-900/50 rounded-3xl p-8 border border-white/5 cursor-pointer hover:border-primary/50 transition-all duration-300 group"
+    >
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="text-2xl font-extrabold font-headline tracking-tighter uppercase group-hover:text-primary transition-colors">Rating Analytics</h3>
+        <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest group-hover:text-white transition-colors flex items-center gap-1">
+          View All <ArrowLeft className="w-3 h-3 rotate-180" />
+        </span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="space-y-4">
+          <div className="text-5xl font-headline font-black text-orange-500">4.9<span className="text-lg text-zinc-600">/5.0</span></div>
+          <div className="flex gap-1">
+            <Star className="w-6 h-6 text-orange-500 fill-orange-500" />
+            <Star className="w-6 h-6 text-orange-500 fill-orange-500" />
+            <Star className="w-6 h-6 text-orange-500 fill-orange-500" />
+            <Star className="w-6 h-6 text-orange-500 fill-orange-500" />
+            <StarHalf className="w-6 h-6 text-orange-500 fill-orange-500" />
+          </div>
+          <p className="text-xs text-zinc-400">Based on 1,240 verified global trades</p>
+        </div>
+        <div className="col-span-2 space-y-3">
+          <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="bg-orange-500 h-full w-[94%]"></div>
+          </div>
+          <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+            <span>Quality of Build</span>
+            <span>94% Excellent</span>
+          </div>
+          <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="bg-orange-500 h-full w-[98%]"></div>
+          </div>
+          <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+            <span>Shipping Accuracy</span>
+            <span>98% Flawless</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="h-full overflow-y-auto bg-[#0a0a0a] text-white selection:bg-primary-container selection:text-white relative">
       <style>{`
@@ -57,8 +100,8 @@ export default function MerchantDetailView({ onBack, onProductClick, merchant }:
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
 
-      {/* Activity Ticker (Placed below TopBar) */}
-      <div className="fixed top-24 w-[calc(100%-5rem)] z-40 bg-primary/10 border-y border-primary/20 py-2 overflow-hidden whitespace-nowrap backdrop-blur-xl">
+      {/* Activity Ticker (Fixed below TopBar) */}
+      <div className="fixed top-[72px] md:top-24 left-0 right-0 w-full z-40 bg-primary/20 border-y border-primary/30 py-1 overflow-hidden whitespace-nowrap backdrop-blur-xl marquee-container cursor-help">
         <style>{`
           @keyframes marquee {
             0% { transform: translateX(100%); }
@@ -68,8 +111,13 @@ export default function MerchantDetailView({ onBack, onProductClick, merchant }:
             animation: marquee 20s linear infinite;
             display: inline-block;
           }
+          .marquee-container:hover .animate-marquee,
+          .marquee-container:active .animate-marquee {
+            animation-play-state: paused;
+          }
         `}</style>
         <div className="flex gap-12 animate-marquee text-[10px] font-bold tracking-widest uppercase text-white">
+          <span className="text-primary">● v3.4 OPTIMIZED</span>
           <span>NEW INVENTORY: HIGH-GRADE SEMICONDUCTORS AVAILABLE</span>
           <span>•</span>
           <span>PRICE ALERT: LOGISTICS TIER 1 DROP -4%</span>
@@ -80,7 +128,7 @@ export default function MerchantDetailView({ onBack, onProductClick, merchant }:
         </div>
       </div>
 
-      <main className="pt-36 pb-24 px-6 max-w-[1600px] mx-auto min-h-screen">
+      <main className="pt-10 md:pt-12 pb-24 px-6 max-w-[1600px] mx-auto min-h-screen">
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-8">
           
           {/* Left Sidebar: Merchant Identity */}
@@ -124,6 +172,11 @@ export default function MerchantDetailView({ onBack, onProductClick, merchant }:
                   <span className="text-white font-mono">2014</span>
                 </div>
               </div>
+            </div>
+
+            {/* Rating Analytics (Mobile Only - Moved here) */}
+            <div className="lg:hidden">
+              {RatingAnalytics}
             </div>
 
             <div className="bg-zinc-900/50 rounded-3xl p-6 border border-white/5">
@@ -258,48 +311,10 @@ export default function MerchantDetailView({ onBack, onProductClick, merchant }:
               )}
             </div>
 
-            {/* Analytics Section */}
-            <div 
-              onClick={() => setShowReviewsModal(true)}
-              className="bg-zinc-900/50 rounded-3xl p-8 border border-white/5 cursor-pointer hover:border-primary/50 transition-all duration-300 group"
-            >
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-2xl font-extrabold font-headline tracking-tighter uppercase group-hover:text-primary transition-colors">Rating Analytics</h3>
-                <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest group-hover:text-white transition-colors flex items-center gap-1">
-                  View All Reviews <ArrowLeft className="w-3 h-3 rotate-180" />
-                </span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="space-y-4">
-                  <div className="text-5xl font-headline font-black text-orange-500">4.9<span className="text-lg text-zinc-600">/5.0</span></div>
-                  <div className="flex gap-1">
-                    <Star className="w-6 h-6 text-orange-500 fill-orange-500" />
-                    <Star className="w-6 h-6 text-orange-500 fill-orange-500" />
-                    <Star className="w-6 h-6 text-orange-500 fill-orange-500" />
-                    <Star className="w-6 h-6 text-orange-500 fill-orange-500" />
-                    <StarHalf className="w-6 h-6 text-orange-500 fill-orange-500" />
-                  </div>
-                  <p className="text-xs text-zinc-400">Based on 1,240 verified global trades</p>
-                </div>
-                <div className="col-span-2 space-y-3">
-                  <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="bg-orange-500 h-full w-[94%]"></div>
-                  </div>
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-                    <span>Quality of Build</span>
-                    <span>94% Excellent</span>
-                  </div>
-                  <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="bg-orange-500 h-full w-[98%]"></div>
-                  </div>
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-                    <span>Shipping Accuracy</span>
-                    <span>98% Flawless</span>
-                  </div>
-                </div>
-              </div>
+            {/* Rating Analytics (Desktop Only) */}
+            <div className="hidden lg:block">
+              {RatingAnalytics}
             </div>
-
           </section>
         </div>
       </main>

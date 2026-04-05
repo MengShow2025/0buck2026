@@ -4,7 +4,7 @@ import string
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Any
 from sqlalchemy.orm import Session
-from backend.app.models.butler import ShadowIDMapping
+from app.models.butler import ShadowIDMapping
 
 class ShieldService:
     def __init__(self, db: Session):

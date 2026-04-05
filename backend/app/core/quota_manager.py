@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.orm import Session
-from backend.app.db.session import SessionLocal
-from backend.app.models import AIUsageQuota
+from app.db.session import SessionLocal
+from app.models import AIUsageQuota
 
-from backend.app.models.butler import UserButlerProfile
+from app.models.butler import UserButlerProfile
 
 # Limits as per requirements
 DAILY_LIMIT = 1.0   # $1

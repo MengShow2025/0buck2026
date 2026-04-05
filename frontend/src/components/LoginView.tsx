@@ -6,13 +6,25 @@ interface LoginViewProps {
   onLogin: (email: string) => void;
   onGoRegister: () => void;
   onGuestAccess?: () => void;
+  onInteraction?: () => void;
   isModal?: boolean;
 }
 
-export default function LoginView({ onLogin, onGoRegister, onGuestAccess, isModal = false }: LoginViewProps) {
+export default function LoginView({ onLogin, onGoRegister, onGuestAccess, onInteraction, isModal = false }: LoginViewProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [staySignedIn, setStaySignedIn] = useState(true);
+  
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (onInteraction) onInteraction();
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (onInteraction) onInteraction();
+  };
+
   const isContinueDisabled = useMemo(() => email.trim().length === 0 || password.trim().length === 0, [email, password]);
 
   const backgroundElements = (
@@ -80,7 +92,8 @@ export default function LoginView({ onLogin, onGoRegister, onGuestAccess, isModa
                 placeholder="operator@0buck.network" 
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
+                onFocus={onInteraction}
               />
             </div>
           </div>
@@ -96,7 +109,8 @@ export default function LoginView({ onLogin, onGoRegister, onGuestAccess, isModa
                 placeholder="••••••••••••" 
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
+                onFocus={onInteraction}
               />
             </div>
           </div>

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, JSON, BigInteger, Float
 from sqlalchemy.sql import func
-from backend.app.models.product import Base
+from app.models.product import Base
 
 class UserWish(Base):
     """

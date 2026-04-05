@@ -241,7 +241,7 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#050505] relative h-full overflow-hidden selection:bg-primary/30 font-['Inter'] items-center p-8">
+    <div className="flex-1 flex flex-col bg-[#050505] relative h-full overflow-hidden selection:bg-primary/30 font-['Inter'] items-center p-2 sm:p-8">
       <style>{`
         .glass-effect { backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -266,23 +266,23 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
       <div className="w-full max-w-6xl flex-1 flex flex-col bg-zinc-950/40 border border-zinc-800/60 rounded-[3rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] glass-effect relative z-10">
         
         {/* Integrated Product Scroller (Top of Terminal) */}
-        <section className="h-24 bg-zinc-900/20 border-b border-zinc-800/30 flex-shrink-0 flex flex-col justify-center overflow-hidden">
+        <section className="h-12 sm:h-24 bg-zinc-900/20 border-b border-zinc-800/30 flex-shrink-0 flex flex-col justify-center overflow-hidden">
           <div className="w-full overflow-hidden relative group/scroller-top">
             <div className="animate-scroll-left flex gap-4 px-10">
               {[...products, ...products].map((product, idx) => (
                 <div 
                   key={`${product.id}-${idx}`} 
                   onClick={() => onProductClick?.(product as Product)}
-                  className="flex-shrink-0 flex items-center gap-3 bg-zinc-900/40 border border-white/5 p-2 rounded-xl pr-4 cursor-pointer hover:border-[#FF5C00]/30 transition-all group/item shadow-lg"
+                  className="flex-shrink-0 flex items-center gap-2 sm:gap-3 bg-zinc-900/40 border border-white/5 p-1 sm:p-2 rounded-lg sm:rounded-xl pr-3 sm:pr-4 cursor-pointer hover:border-[#FF5C00]/30 transition-all group/item shadow-lg"
                 >
                   <img 
                     alt={product.name} 
-                    className="w-14 h-14 object-cover rounded-lg group-hover/item:scale-105 transition-transform" 
+                    className="w-7 h-7 sm:w-14 h-14 object-cover rounded-md sm:rounded-lg group-hover/item:scale-105 transition-transform" 
                     src={product.image} 
                   />
                   <div>
-                    <p className="text-[10px] font-bold text-zinc-400 group-hover/item:text-white uppercase tracking-tighter transition-colors max-w-[120px] truncate">{product.name}</p>
-                    <p className="text-[#FF5C00] font-black text-sm">{product.price}</p>
+                    <p className="text-[8px] sm:text-[10px] font-bold text-zinc-400 group-hover/item:text-white uppercase tracking-tighter transition-colors max-w-[80px] sm:max-w-[120px] truncate">{product.name}</p>
+                    <p className="text-[#FF5C00] font-black text-[10px] sm:text-sm">{product.price}</p>
                   </div>
                 </div>
               ))}
@@ -291,7 +291,7 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
         </section>
 
         {/* Activity Banner */}
-        <div className="bg-zinc-900/20 border-b border-zinc-800/20 px-10 py-3 flex items-center justify-between flex-shrink-0">
+        <div className="hidden sm:flex bg-zinc-900/20 border-b border-zinc-800/20 px-10 py-3 items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
@@ -303,19 +303,11 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
             <div className="h-4 w-px bg-zinc-800/50"></div>
             <p className="text-[11px] text-zinc-600 italic">Analyzing global markets for Vanguard Chronograph stock levels...</p>
           </div>
-          <button 
-            onClick={handleClearChat}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-lg hover:bg-white/5 text-zinc-600 hover:text-zinc-400 transition-all group"
-            title="Clear History"
-          >
-            <Trash2 size={12} className="group-hover:text-red-500 transition-colors" />
-            <span className="text-[9px] font-black uppercase tracking-widest">Reset Memory</span>
-          </button>
         </div>
 
         {/* Chat Interface Scroll Area */}
-        <div className="flex-1 overflow-y-auto p-10 space-y-12 no-scrollbar scroll-smooth">
-          <div className="max-w-4xl mx-auto space-y-12">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-10 space-y-8 sm:space-y-12 no-scrollbar scroll-smooth">
+          <div className="max-w-5xl mx-auto space-y-8 sm:space-y-12">
             {isNaming ? (
               <div className="flex flex-col items-center justify-center h-[50vh] text-center gap-8">
                 <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center relative">
@@ -336,36 +328,36 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
 
                 {messages.map((message) => (
                   <div key={message.id} className={`flex w-full ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`flex gap-4 max-w-[85%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className={`flex gap-2 sm:gap-4 w-full sm:max-w-[85%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                       {/* Avatar */}
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
                         message.type === 'user' 
                           ? 'bg-zinc-800 border border-zinc-700' 
                           : 'bg-[#FF5C00]/10 border border-[#FF5C00]/20'
                       }`}>
                         {message.type === 'user' 
-                          ? <User className="w-5 h-5 text-zinc-400" /> 
-                          : <Bot className="w-5 h-5 text-[#FF5C00]" />
+                          ? <User className="w-4 h-4 sm:w-5 h-5 text-zinc-400" /> 
+                          : <Bot className="w-4 h-4 sm:w-5 h-5 text-[#FF5C00]" />
                         }
                       </div>
                       
                       {/* Message Bubble Column */}
-                      <div className={`flex flex-col gap-2 ${message.type === 'user' ? 'items-end' : 'items-start'}`}>
-                        <div className={`group relative p-[1px] rounded-2xl transition-all duration-500 ${
+                      <div className={`flex flex-col gap-1 sm:gap-2 flex-1 ${message.type === 'user' ? 'items-end' : 'items-start'}`}>
+                        <div className={`group relative p-[1px] rounded-xl sm:rounded-2xl transition-all duration-500 w-full sm:w-auto ${
                           message.type === 'user' 
                             ? 'bg-gradient-to-br from-[#FF5C00]/30 to-transparent' 
                             : 'bg-gradient-to-br from-zinc-800/50 to-transparent'
                         }`}>
-                          <div className={`rounded-[0.95rem] transition-all flex flex-col overflow-hidden ${
+                          <div className={`rounded-[0.7rem] sm:rounded-[0.95rem] transition-all flex flex-col overflow-hidden ${
                             message.type === 'user' 
                               ? 'bg-[#050505] text-zinc-200 border border-[#FF5C00]/10 shadow-[0_0_40px_rgba(255,92,0,0.05)]' 
                               : 'bg-zinc-900/40 text-zinc-300 border border-zinc-800/50 shadow-xl'
                           }`}>
-                            <div className="p-4 flex flex-col gap-3 min-w-[120px]">
-                              {message.content && <p className="text-sm leading-relaxed font-medium">{message.content}</p>}
+                            <div className="p-2 sm:p-4 flex flex-col gap-2 sm:gap-3 min-w-[100px]">
+                              {message.content && <p className="text-[12px] sm:text-sm leading-relaxed font-medium">{message.content}</p>}
                               
                               {message.bapData && (
-                                <div className="mt-2">
+                                <div className="mt-1 sm:mt-2">
                                   <BAPAttachmentRenderer 
                                     type={message.bapData.type} 
                                     data={message.bapData.data} 
@@ -378,6 +370,8 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
                                           image: params.image,
                                           description: ''
                                         } as Product);
+                                      } else if (action === 'VIEW_PRODUCT') {
+                                        onProductClick?.(params as Product);
                                       }
                                     }}
                                   />
@@ -387,7 +381,7 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
                           </div>
                         </div>
 
-                        <span className={`text-[9px] text-zinc-600 px-1 font-bold uppercase tracking-widest`}>
+                        <span className={`text-[8px] sm:text-[9px] text-zinc-600 px-1 font-bold uppercase tracking-widest`}>
                           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {message.type === 'user' ? 'Delivered' : 'Butler Concierge'}
                         </span>
                       </div>
@@ -401,12 +395,13 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
         </div>
 
         {/* Rich Input (Bottom of Terminal) */}
-        <footer className="p-10 bg-zinc-950/40 border-t border-zinc-800/30 flex-shrink-0">
+        <footer className="p-4 sm:p-10 bg-zinc-950/40 border-t border-zinc-800/30 flex-shrink-0">
           <div className="max-w-4xl mx-auto relative">
             <ChatInput 
               value={inputValue}
               onChange={setInputValue}
               onSubmit={handleSendMessage}
+              onClear={handleClearChat}
               placeholder={isNaming ? "Assign designation..." : "Query the Luminous Ledger..."}
               compact={false}
             />

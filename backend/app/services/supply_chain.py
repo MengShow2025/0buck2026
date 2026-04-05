@@ -4,11 +4,11 @@ from decimal import Decimal
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
-from backend.app.models.product import Product, Supplier
-from backend.app.core.config import settings
-from backend.app.core.logistics import find_closest_warehouse
-from backend.app.services.finance_engine import calculate_final_price
-from backend.app.services.config_service import ConfigService
+from app.models.product import Product, Supplier
+from app.core.config import settings
+from app.core.logistics import find_closest_warehouse
+from app.services.finance_engine import calculate_final_price
+from app.services.config_service import ConfigService
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 import logging
@@ -134,7 +134,7 @@ class SupplyChainService:
         3. Audit: Supplier verification (Strength merchant, 48h ship, etc.).
         4. Populate 20 products daily to Notion for Boss audit.
         """
-        from backend.app.services.notion import NotionService
+        from app.services.notion import NotionService
         notion = NotionService()
         
         # Fetch dynamic markup from Admin Config
@@ -251,7 +251,7 @@ class SupplyChainService:
         3. Match with 1688 source and check profit.
         4. Populate Notion with [SPY] tag and IDS_SPY strategy.
         """
-        from backend.app.services.notion import NotionService
+        from app.services.notion import NotionService
         notion = NotionService()
         
         print("🚀 Starting Spy Mode (间谍模式) Engine...")
@@ -411,8 +411,8 @@ class SupplyChainService:
 
     async def trigger_sourcing(self, order_id: int, line_items: List[Dict[str, Any]], auto_fulfill: bool = False):
         import shopify
-        from backend.app.core.config import settings
-        from backend.app.models.ledger import SourcingOrder
+        from app.core.config import settings
+        from app.models.ledger import SourcingOrder
         
         print(f"🚀 Triggering v3.1 Sourcing for Order: {order_id} (Auto-Fulfill: {auto_fulfill})")
         
@@ -522,7 +522,7 @@ class SupplyChainService:
         """
         v3.1 'Pick one, populate all' core engine (Vendor Penetration).
         """
-        from backend.app.services.notion import NotionService
+        from app.services.notion import NotionService
         notion = NotionService()
         
         markup_key = "GLOBAL_PROFIT_MARKUP"

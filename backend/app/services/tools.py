@@ -2,10 +2,10 @@ import os
 import httpx
 from typing import List, Dict, Any, Optional
 from langchain_core.tools import tool
-from backend.app.core.config import settings
-from backend.app.db.session import SessionLocal
-from backend.app.models.product import Product
-from backend.app.services.shield_service import ShieldService
+from app.core.config import settings
+from app.db.session import SessionLocal
+from app.models.product import Product
+from app.services.shield_service import ShieldService
 
 @tool
 def trigger_wishing_well(user_id: int, description: str):
@@ -20,7 +20,7 @@ def trigger_wishing_well(user_id: int, description: str):
     import asyncio
     db = SessionLocal()
     try:
-        from backend.app.services.c2m_service import C2MService
+        from app.services.c2m_service import C2MService
         c2m = C2MService(db)
         wish = asyncio.run(c2m.add_user_wish(user_id, description))
         return {
@@ -105,8 +105,8 @@ async def supply_library_search(query: str) -> List[Dict[str, Any]]:
         } for i in range(1, 4)
     ]
 
-from backend.app.models.butler import UserButlerProfile
-from backend.app.models.ledger import AvailableCoupon, CouponIssuanceAudit, SystemConfig
+from app.models.butler import UserButlerProfile
+from app.models.ledger import AvailableCoupon, CouponIssuanceAudit, SystemConfig
 import hashlib
 import time
 

@@ -3,10 +3,10 @@ import random
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
-from backend.app.models.butler import UserButlerProfile
-from backend.app.models.ledger import CheckinPlan
-from backend.app.models.product import Product
-from backend.app.models.rewards import Points
+from app.models.butler import UserButlerProfile
+from app.models.ledger import CheckinPlan
+from app.models.product import Product
+from app.models.rewards import Points
 
 
 class ButlerOpsService:

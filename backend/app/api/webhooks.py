@@ -1,17 +1,17 @@
 from fastapi import APIRouter, Request, Header, HTTPException, Depends
 from sqlalchemy.orm import Session
-from backend.app.db.session import get_db
-from backend.app.services.rewards import RewardsService
-from backend.app.services.supply_chain import SupplyChainService
-from backend.app.services.agent import run_agent
-from backend.app.services.whatsapp import send_whatsapp_message
-from backend.app.models.ledger import SystemConfig, Order
-from backend.app.models.product import Product
+from app.db.session import get_db
+from app.services.rewards import RewardsService
+from app.services.supply_chain import SupplyChainService
+from app.services.agent import run_agent
+from app.services.whatsapp import send_whatsapp_message
+from app.models.ledger import SystemConfig, Order
+from app.models.product import Product
 import hmac
 import hashlib
 import json
 from decimal import Decimal
-from backend.app.core.config import settings
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -146,6 +146,11 @@ async def orders_paid_webhook(
         print(f"Referral Code Detected: {referral_code}")
         rewards_service.record_referral(customer_id, referral_code)
         rewards_service.process_referral_commissions(customer_id, order_id, reward_base)
+    
+    # v3.4: Multi-channel Social Automation
+    from app.services.social_automation import SocialAutomationService
+    social_service = SocialAutomationService(db)
+    await social_service.notify_order_paid(order_id)
     
     # Logic: Trigger Supply Chain Sourcing
     sourcing_service = SupplyChainService(db)

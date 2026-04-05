@@ -4,8 +4,8 @@ import time
 import logging
 from datetime import datetime
 from typing import Dict, Any
-from backend.app.models.product import Product
-from backend.app.core.config import settings
+from app.models.product import Product
+from app.core.config import settings
 
 class SyncShopifyService:
     def __init__(self):
@@ -229,7 +229,7 @@ class SyncShopifyService:
                         if lv.get("price"):
                             # Apply the same logic as the main product
                             try:
-                                from backend.app.services.finance_engine import calculate_final_price
+                                from app.services.finance_engine import calculate_final_price
                                 multiplier = 4.0 if product.product_category_type == "PROFIT" else 2.0
                                 if not product.is_cashback_eligible:
                                     multiplier = 2.0

@@ -7,13 +7,13 @@ from langgraph.prebuilt import ToolNode
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
 
-from backend.app.services.tools import product_search, web_search, supply_library_search, get_order_status, search_coupons, update_butler_settings, trigger_wishing_well
-from backend.app.services.reward_engine import RewardEngine
-from backend.app.services.config_service import ConfigService
-from backend.app.services.butler_service import ButlerService
-from backend.app.services.reflection_service import run_butler_learning
-from backend.app.db.session import SessionLocal
-from backend.app.models.butler import UserButlerProfile
+from app.services.tools import product_search, web_search, supply_library_search, get_order_status, search_coupons, update_butler_settings, trigger_wishing_well
+from app.services.reward_engine import RewardEngine
+from app.services.config_service import ConfigService
+from app.services.butler_service import ButlerService
+from app.services.reflection_service import run_butler_learning
+from app.db.session import SessionLocal
+from app.models.butler import UserButlerProfile
 
 # Define the state of the agent
 class AgentState(TypedDict):
@@ -149,8 +149,8 @@ def create_agent_graph():
 # Instantiate the graph
 agent_executor = create_agent_graph()
 
-from backend.app.services.shield_service import ShieldService
-from backend.app.models.butler import AIUsageStats
+from app.services.shield_service import ShieldService
+from app.models.butler import AIUsageStats
 
 async def run_agent(content: str, user_id: int, session_id: str = "default"):
     """

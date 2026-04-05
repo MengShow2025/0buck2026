@@ -5,10 +5,10 @@ from typing import Any, Dict, List, Optional
 from decimal import Decimal
 from datetime import datetime
 
-from backend.app.db.session import get_db
-from backend.app.models.ledger import CheckinPlan, GroupBuyCampaign, Order
-from backend.app.services.rewards import RewardsService
-from backend.app.services.shopify_refunds import ShopifyRefundError, refund_order_full
+from app.db.session import get_db
+from app.models.ledger import CheckinPlan, GroupBuyCampaign, Order
+from app.services.rewards import RewardsService
+from app.services.shopify_refunds import ShopifyRefundError, refund_order_full
 
 
 router = APIRouter()
@@ -61,7 +61,7 @@ def rewards_status(user_id: int, db: Session = Depends(get_db)):
     level = rewards.get_user_level(user_id)
     user_ext = db.query(UserExt).filter_by(customer_id=user_id).first()
     
-    from backend.app.services.finance_engine import get_reward_rates
+    from app.services.finance_engine import get_reward_rates
     sys_rates = get_reward_rates(db)
 
     plans = db.query(CheckinPlan).filter(CheckinPlan.user_id == user_id).order_by(CheckinPlan.order_id.desc()).all()

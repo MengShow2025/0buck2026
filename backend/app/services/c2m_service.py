@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from backend.app.models.c2m import UserWish, DemandInsight, OrderCustomization
-from backend.app.models.butler import UserMemoryFact
-from backend.app.models.ledger import SystemConfig
-from backend.app.services.supply_chain import SupplyChainService
+from app.models.c2m import UserWish, DemandInsight, OrderCustomization
+from app.models.butler import UserMemoryFact
+from app.models.ledger import SystemConfig
+from app.services.supply_chain import SupplyChainService
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 import json
@@ -169,7 +169,7 @@ class C2MService:
         
         match_id = "840389952720" # Mock 1688 ID
         
-        from backend.app.services.notion import NotionService
+        from app.services.notion import NotionService
         notion = NotionService()
         
         await notion.add_product_to_pool({

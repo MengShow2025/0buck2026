@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 
 export default function ReferralUserMobile({ setCurrentView }: { setCurrentView: (view: string) => void }) {
   return (
@@ -141,6 +142,32 @@ export default function ReferralUserMobile({ setCurrentView }: { setCurrentView:
 <button className="fixed right-6 bottom-28 w-16 h-16 bg-gradient-to-tr from-orange-600 to-orange-400 rounded-full shadow-[0_8px_30px_rgb(255,92,40,0.4)] flex items-center justify-center z-50 active:scale-90 transition-transform">
 <span className="material-symbols-outlined text-white text-3xl" data-icon="smart_toy" style={{"fontVariationSettings":"'FILL' 1"}}>smart_toy</span>
 </button>
+
+{/* Draggable View Toggle */}
+<motion.div 
+  drag
+  dragConstraints={{ left: -100, right: 100, top: -400, bottom: 50 }}
+  whileDrag={{ scale: 1.1, zIndex: 100 }}
+  className="fixed bottom-28 left-6 z-50 flex flex-col gap-3 p-1 bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl touch-none"
+>
+  <button 
+    onClick={() => setCurrentView('referral_talent')}
+    className="w-12 h-12 bg-neutral-900 text-neutral-500 rounded-xl shadow-lg flex flex-col items-center justify-center active:scale-90 transition-all border border-white/10"
+  >
+    <span className="material-symbols-outlined text-lg">stars</span>
+    <span className="text-[7px] font-black uppercase mt-0.5 tracking-tighter">Talent</span>
+  </button>
+  
+  <div className="h-px w-6 mx-auto bg-white/5"></div>
+  
+  <button 
+    onClick={() => setCurrentView('referral_user')}
+    className="w-12 h-12 bg-orange-600 text-white rounded-xl shadow-lg flex flex-col items-center justify-center active:scale-90 transition-all shadow-orange-900/40"
+  >
+    <span className="material-symbols-outlined text-lg">person</span>
+    <span className="text-[7px] font-black uppercase mt-0.5 tracking-tighter">Member</span>
+  </button>
+</motion.div>
 {/*  BottomNavBar  */}
       {/* spacer for bottom nav */}
       <div className="h-10"></div>

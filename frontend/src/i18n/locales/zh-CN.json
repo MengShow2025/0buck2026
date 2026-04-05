@@ -319,7 +319,14 @@
     "break_in_detected": "检测到断签",
     "renewal_alert_desc": "您的每日连胜已中断 {{days}} 天。请立即激活续签卡以保护您的待返现金额。",
     "buy_renewal_card": "购买续签卡",
-    "dismiss": "忽略"
+    "dismiss": "忽略",
+    "group_buy_title": "拼团免单邀请",
+    "free_order_protocol": "1+3 免单协议已激活",
+    "group_progress": "拼团进度",
+    "remaining_invites": "还差 {{count}} 人即可免单",
+    "group_full": "拼团已完成",
+    "join_group_buy": "立即参团",
+    "group_completed": "拼团已结束"
   },
   "lounge": {
     "tab_messages": "消息",

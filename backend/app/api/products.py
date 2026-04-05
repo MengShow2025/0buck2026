@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
 
-from backend.app.db.session import get_db
-from backend.app.services.personalized_matrix_service import PersonalizedMatrixService
-from backend.app.schemas.products import DiscoveryResponse
+from app.db.session import get_db
+from app.services.personalized_matrix_service import PersonalizedMatrixService
+from app.schemas.products import DiscoveryResponse
 
 router = APIRouter()
 

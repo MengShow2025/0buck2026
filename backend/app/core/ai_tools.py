@@ -1,10 +1,10 @@
 import httpx
 from typing import Dict, Any, List, Optional
 from langchain_core.tools import tool
-from backend.app.core.config import settings
-from backend.app.services.rewards import RewardsService
-from backend.app.services.vector_search import vector_search_service
-from backend.app.db.session import SessionLocal # 假设后端已有此 session 工厂
+from app.core.config import settings
+from app.services.rewards import RewardsService
+from app.services.vector_search import vector_search_service
+from app.db.session import SessionLocal # 假设后端已有此 session 工厂
 
 # Shopify Config
 SHOPIFY_API_URL = f"https://{settings.SHOPIFY_SHOP_NAME}.myshopify.com/admin/api/2026-01"

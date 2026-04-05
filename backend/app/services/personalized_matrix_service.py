@@ -4,11 +4,11 @@ from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 import google.generativeai as genai
 
-from backend.app.core.config import settings
-from backend.app.models.butler import UserMemoryFact, UserButlerProfile, PersonaTemplate
-from backend.app.models import Product
-from backend.app.services.vector_search import vector_search_service
-from backend.app.services.butler_service import ButlerService
+from app.core.config import settings
+from app.models.butler import UserMemoryFact, UserButlerProfile, PersonaTemplate
+from app.models import Product
+from app.services.vector_search import vector_search_service
+from app.services.butler_service import ButlerService
 
 logger = logging.getLogger(__name__)
 
