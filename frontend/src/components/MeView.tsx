@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
@@ -89,7 +89,7 @@ export default function MeView({
     </div>
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     setDraftAgentName(agentName);
   }, [agentName]);
 
@@ -122,555 +122,515 @@ export default function MeView({
   }
 
   return (
-    <div className={`h-full overflow-y-auto selection:bg-primary selection:text-white ${isDark ? 'bg-[#0a0a0a] text-[#e5e5e5]' : 'bg-[#fff8f6] text-[#271814]'}`}>
-      <style>{`
-        .glass-panel { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .flip-card { background: #1a1a1a; padding: 4px 6px; border-radius: 4px; border-bottom: 2px solid #000; font-family: 'JetBrains Mono', monospace; }
-        .slashed-zero { font-variant-numeric: slashed-zero; }
-        .scroll-hide::-webkit-scrollbar { display: none; }
-      `}</style>
-      
-      <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8 pb-32">
-        {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            {onMenuClick && deviceType === 'h5' && (
-              <button 
-                onClick={onMenuClick}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                  isDark ? 'bg-white/5 border border-white/10 text-zinc-400 hover:text-primary' : 'bg-black/5 border border-black/10 text-zinc-600 hover:text-primary'
-                }`}
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-            )}
-            <div className="relative group cursor-pointer" onClick={() => {
-              const fileInput = document.createElement('input');
-              fileInput.type = 'file';
-              fileInput.accept = 'image/*';
-              fileInput.onchange = (e) => {
-                const file = (e.target as HTMLInputElement).files?.[0];
-                if (file) {
-                  // In a real app, this would upload the image
-                  alert('Avatar update simulation: ' + file.name);
-                }
-              };
-              fileInput.click();
-            }}>
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-primary/20 p-1 group-hover:border-primary transition-all duration-300 shadow-[0_0_20px_rgba(255,92,40,0.1)]">
-                <img 
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Julian" 
-                  alt="Julian Rossi" 
-                  className="w-full h-full object-cover bg-zinc-900 rounded-full"
-                />
-              </div>
-              <div className="absolute bottom-0 right-0 w-6 h-6 bg-primary rounded-full border-4 border-[#0a0a0a] flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
-                <Settings className="w-3 h-3 text-white" />
-              </div>
-            </div>
-            
-            <div>
-              <div className="flex items-center gap-2 text-primary mb-1">
-                <Terminal className="w-3 h-3 sm:w-4 h-4" />
-                <span className="text-[8px] sm:text-[10px] font-black tracking-[0.2em] sm:tracking-[0.3em] uppercase">{t('me.secure_terminal')}</span>
-              </div>
-              <h1 className="font-headline text-2xl sm:text-4xl font-extrabold tracking-tighter text-white flex items-center gap-2 sm:gap-3">
-                <input 
-                    type="text" 
-                    defaultValue="Julian Rossi"
-                    className="bg-transparent border-none outline-none focus:ring-0 focus:border-b focus:border-primary/50 transition-all p-0 w-full max-w-[150px] sm:max-w-[200px]"
-                  />
-                <button className="text-zinc-500 hover:text-primary transition-colors">
-                  <Settings className="w-3.5 h-3.5 sm:w-4 h-4" />
-                </button>
-              </h1>
-              <p className="text-[11px] sm:text-sm font-bold text-zinc-500 tracking-widest uppercase mt-1">Pro Member • Node ID: 8829-QX</p>
-            </div>
-          </div>
-        </header>
-
-        {/* Wallet Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Cash Wallet */}
-          <div className="glass-panel rounded-[2rem] p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Wallet className="w-16 h-16" />
-            </div>
-            <div className="relative z-10">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">{t('me.cash_balance')}</p>
-                  <h2 className="text-3xl font-headline font-black text-white mt-1">$12,480.<span className="text-zinc-500 text-xl">50</span></h2>
+    <div className="pt-2 sm:pt-8 pb-24 px-2 sm:px-8 max-w-[1600px] mx-auto space-y-4 sm:space-y-8 font-body">
+      {/* Header Section */}
+      <header className="glass-panel rounded-[1.5rem] sm:rounded-[2.5rem] p-4 sm:p-10 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] -mr-32 -mt-32 rounded-full"></div>
+        
+        <div className="relative z-10">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 sm:mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-[1.25rem] sm:rounded-[2rem] bg-zinc-900 border border-white/10 overflow-hidden p-1">
+                <div className="w-full h-full rounded-[1rem] sm:rounded-[1.75rem] bg-primary/10 flex items-center justify-center text-primary">
+                  <User className="w-7 h-7 sm:w-10 sm:h-10" />
                 </div>
-                <span className="px-2 py-1 bg-green-500/10 text-green-500 text-[10px] font-black rounded uppercase">USD</span>
               </div>
-              <div className="flex gap-2">
-                <button className="flex-1 py-2.5 bg-white/5 border border-white/5 hover:border-primary/50 transition-all rounded-xl text-[11px] sm:text-[10px] font-black text-zinc-300 uppercase tracking-widest">{t('me.details')}</button>
-                <button className="flex-1 py-2.5 bg-white/5 border border-white/5 hover:border-primary/50 transition-all rounded-xl text-[11px] sm:text-[10px] font-black text-zinc-300 uppercase tracking-widest">{t('me.withdraw')}</button>
-                <button 
-                  onClick={() => setShowRulesModal('renewal')}
-                  className="px-4 py-2.5 bg-white/5 border border-white/5 hover:bg-white/10 transition-all rounded-xl"
-                >
-                  <HelpCircle className="w-4 h-4 text-zinc-500" />
-                </button>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 text-primary mb-1">
+                  <Terminal className="w-3 h-3 sm:w-4 h-4" />
+                  <span className="text-[10px] sm:text-[10px] font-black tracking-[0.2em] sm:tracking-[0.3em] uppercase">{t('me.secure_terminal')}</span>
+                </div>
+                <h1 className="font-headline text-xl sm:text-4xl font-extrabold tracking-tighter text-white flex items-center gap-2 sm:gap-3">
+                  <input 
+                      type="text" 
+                      defaultValue="Julian Rossi"
+                      className="bg-transparent border-none outline-none focus:ring-0 focus:border-b focus:border-primary/50 transition-all p-0 w-full max-w-[120px] sm:max-w-[200px]"
+                    />
+                  <button className="text-zinc-500 hover:text-primary transition-colors">
+                    <Settings className="w-3.5 h-3.5 sm:w-4 h-4" />
+                  </button>
+                </h1>
+                <p className="text-[10px] sm:text-sm font-bold text-zinc-500 tracking-widest uppercase mt-1">Pro Member • Node ID: 8829-QX</p>
               </div>
             </div>
           </div>
 
-          {/* Points Wallet */}
-          <div className="glass-panel rounded-[2rem] p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Star className="w-16 h-16" />
-            </div>
-            <div className="relative z-10">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">{t('me.precision_points')}</p>
-                  <h2 className="text-3xl font-headline font-black text-primary mt-1">45,200 <span className="text-zinc-500 text-xl font-medium uppercase text-xs">0BK</span></h2>
-                </div>
-                <span className="px-2 py-1 bg-primary/10 text-primary text-[10px] font-black rounded uppercase">Tier 1</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
+            {/* Wallet Card 1: Cash */}
+            <div className="glass-panel rounded-[1.25rem] sm:rounded-[2rem] p-4 sm:p-6 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Wallet className="w-12 h-12 sm:w-16 sm:h-16" />
               </div>
-              <div className="flex gap-2">
-                <button className="flex-1 py-2.5 bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all rounded-xl text-[11px] sm:text-[10px] font-black text-primary uppercase tracking-widest">{t('me.details')}</button>
-                <button className="flex-1 py-2.5 bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all rounded-xl text-[11px] sm:text-[10px] font-black text-primary uppercase tracking-widest">{t('me.redeem')}</button>
-                <button 
-                  onClick={() => setShowRulesModal('points')}
-                  className="px-4 py-2.5 bg-white/5 border border-white/5 hover:bg-white/10 transition-all rounded-xl"
-                >
-                  <Info className="w-4 h-4 text-zinc-500" />
-                </button>
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-4 sm:mb-6">
+                  <div>
+                    <p className="text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-widest font-black">{t('me.cash_balance')}</p>
+                    <h2 className="text-2xl sm:text-3xl font-headline font-black text-white mt-1">$12,480.<span className="text-zinc-500 text-lg sm:text-xl">50</span></h2>
+                  </div>
+                  <span className="px-2 py-1 bg-green-500/10 text-green-500 text-[9px] sm:text-[10px] font-black rounded uppercase">USD</span>
+                </div>
+                <div className="flex gap-2">
+                  <button className="flex-1 py-2 sm:py-2.5 bg-white/5 border border-white/5 hover:border-primary/50 transition-all rounded-xl text-[10px] sm:text-[10px] font-black text-zinc-300 uppercase tracking-widest">{t('me.details')}</button>
+                  <button className="flex-1 py-2 sm:py-2.5 bg-white/5 border border-white/5 hover:border-primary/50 transition-all rounded-xl text-[10px] sm:text-[10px] font-black text-zinc-300 uppercase tracking-widest">{t('me.withdraw')}</button>
+                  <button 
+                    onClick={() => setShowRulesModal('renewal')}
+                    className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/5 border border-white/5 hover:bg-white/10 transition-all rounded-xl"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5 sm:w-4 h-4 text-zinc-500" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Wallet Card 2: Points */}
+            <div className="glass-panel rounded-[1.25rem] sm:rounded-[2rem] p-4 sm:p-6 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Star className="w-12 h-12 sm:w-16 sm:h-16" />
+              </div>
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-4 sm:mb-6">
+                  <div>
+                    <p className="text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-widest font-black">{t('me.precision_points')}</p>
+                    <h2 className="text-2xl sm:text-3xl font-headline font-black text-primary mt-1">45,200 <span className="text-zinc-500 text-sm sm:text-xl font-medium uppercase text-xs">0BK</span></h2>
+                  </div>
+                  <span className="px-2 py-1 bg-primary/10 text-primary text-[9px] sm:text-[10px] font-black rounded uppercase">Tier 1</span>
+                </div>
+                <div className="flex gap-2">
+                  <button className="flex-1 py-2 sm:py-2.5 bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all rounded-xl text-[10px] sm:text-[10px] font-black text-primary uppercase tracking-widest">{t('me.details')}</button>
+                  <button className="flex-1 py-2 sm:py-2.5 bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all rounded-xl text-[10px] sm:text-[10px] font-black text-primary uppercase tracking-widest">{t('me.redeem')}</button>
+                  <button 
+                    onClick={() => setShowRulesModal('points')}
+                    className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/5 border border-white/5 hover:bg-white/10 transition-all rounded-xl"
+                  >
+                    <Info className="w-3.5 h-3.5 sm:w-4 h-4 text-zinc-500" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </header>
 
-        {/* CRITICAL: SIGN-IN CASHBACK CARD */}
-        <section className="relative mt-8">
-          <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 to-orange-900/50 rounded-[3rem] blur opacity-25"></div>
-          <div className="relative glass-panel rounded-[3rem] p-8 border-primary/20 bg-black/40 overflow-hidden">
-            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
-              {/* Left: Streak & Countdown */}
-              <div className="lg:col-span-5 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(255,92,0,0.3)]">
-                    <Calendar className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-headline font-black text-white">{t('me.signin_cashback')}</h3>
-                    <p className="text-xs text-zinc-500 uppercase font-black tracking-widest">{t('me.phase_active')}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-end gap-4">
-                  <div>
-                    <p className="text-[10px] font-black text-zinc-500 uppercase mb-2">{t('me.current_streak')}</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-6xl font-black text-white tracking-tighter">12</span>
-                      <span className="text-zinc-500 font-bold">{t('me.days')}</span>
-                    </div>
-                  </div>
-                  <div className="flex-1 pb-2">
-                    <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden">
-                      <div className="h-full bg-primary w-[80%] shadow-[0_0_12px_rgba(255,92,0,0.5)]"></div>
-                    </div>
-                    <p className="text-[9px] text-zinc-600 mt-2 font-bold uppercase tracking-widest">{t('me.next_milestone')}</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center">
-                  <p className="text-[10px] font-black text-zinc-500 uppercase mb-4 tracking-[0.3em]">{t('me.phase_ends')}</p>
-                  <div className="flex justify-center items-start gap-4 h-16">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex gap-1">
-                        <FlipDigit value={Math.floor(timeLeft.days / 10)} />
-                        <FlipDigit value={timeLeft.days % 10} />
-                      </div>
-                      <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">{t('me.days')}</span>
-                    </div>
-                    <div className="text-2xl font-headline font-black text-zinc-800 pt-1">:</div>
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex gap-1">
-                        <FlipDigit value={Math.floor(timeLeft.hrs / 10)} />
-                        <FlipDigit value={timeLeft.hrs % 10} />
-                      </div>
-                      <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">{t('me.hrs')}</span>
-                    </div>
-                    <div className="text-2xl font-headline font-black text-zinc-800 pt-1">:</div>
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex gap-1">
-                        <FlipDigit value={Math.floor(timeLeft.min / 10)} />
-                        <FlipDigit value={timeLeft.min % 10} />
-                      </div>
-                      <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">{t('me.min')}</span>
-                    </div>
-                    <div className="text-2xl font-headline font-black text-zinc-800 pt-1">:</div>
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex gap-1">
-                        <FlipDigit value={Math.floor(timeLeft.sec / 10)} color="text-primary" />
-                        <FlipDigit value={timeLeft.sec % 10} color="text-primary" />
-                      </div>
-                      <span className="text-[9px] font-black text-primary uppercase tracking-widest">{t('me.sec') || 'SEC'}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: Rewards & Metrics */}
-              <div className="lg:col-span-7 flex flex-col justify-between">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-6 bg-white/5 rounded-3xl border border-white/5 relative group">
-                    <button 
-                      onClick={() => setShowRulesModal('rewards')}
-                      className="absolute top-4 right-4 p-1 hover:bg-white/5 rounded-full text-zinc-500 hover:text-white transition-colors"
-                    >
-                      <Info className="w-4 h-4" />
-                    </button>
-                    <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-1">{t('me.potential_reward')}</p>
-                    <p className="text-sm font-black text-white">$45.00</p>
-                    <button className="mt-4 w-full py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
-                      {t('me.signin')}
-                    </button>
-                  </div>
-                  <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10 relative group">
-                    <button 
-                      onClick={() => setShowRulesModal('rewards')}
-                      className="absolute top-4 right-4 p-1 hover:bg-primary/10 rounded-full text-zinc-500 hover:text-primary transition-colors"
-                    >
-                      <Info className="w-4 h-4" />
-                    </button>
-                    <p className="text-[10px] text-primary uppercase font-black tracking-widest mb-1">{t('me.total_reclaimed')}</p>
-                    <p className="text-sm font-black text-white">$1,240.65</p>
-                    <div className="mt-4 flex items-center gap-2 text-green-500">
-                      <TrendingUp className="w-4 h-4" />
-                      <span className="text-[10px] font-bold tracking-widest uppercase">{t('me.vs_phase')}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-3">{t('me.order_history')}</p>
-                  <div className="flex gap-2 overflow-x-auto pb-2 scroll-hide">
-                    {[
-                      { id: '#8821-ORD', amount: '$120.00', status: 'Verified', color: 'text-zinc-500' },
-                      { id: '#8845-ORD', amount: '$450.00', status: 'Verified', color: 'text-zinc-500' },
-                      { id: '#8901-ORD', amount: '$95.20', status: 'Pending', color: 'text-orange-500' }
-                    ].map((order, i) => (
-                      <div key={i} className="min-w-[140px] p-3 bg-white/5 rounded-2xl border border-white/5 flex flex-col gap-1">
-                        <span className="text-[10px] font-bold text-white">{order.id}</span>
-                        <span className="text-xs font-black text-primary">{order.amount}</span>
-                        <span className={`text-[9px] uppercase font-black tracking-widest ${order.color}`}>{order.status}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Order History Table (Restored & Optimized) */}
-        <section className="glass-panel rounded-[2.5rem] overflow-hidden mt-8">
-          <div className="p-6 flex justify-between items-center border-b border-white/5 bg-black/20">
+      {/* Stats Section */}
+      <div className="relative glass-panel rounded-[1.5rem] sm:rounded-[3rem] p-4 sm:p-8 border-primary/20 bg-black/40 overflow-hidden">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 relative z-10">
+          <div className="lg:col-span-5 space-y-6">
             <div className="flex items-center gap-3">
-              <History className="w-5 h-5 text-primary" />
-              <h3 className="font-headline font-bold text-white uppercase tracking-widest text-sm">{t('me.order_logs')}</h3>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-xl sm:rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(255,92,0,0.3)]">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg sm:text-xl font-headline font-black text-white">{t('me.signin_cashback')}</h3>
+                <p className="text-[10px] sm:text-xs text-zinc-500 uppercase font-black tracking-widest">{t('me.phase_active')}</p>
+              </div>
             </div>
-            <button className="text-[10px] font-black text-zinc-500 hover:text-white uppercase tracking-[0.2em] transition-colors">{t('me.export_logs')}</button>
-          </div>
-          <div className="overflow-hidden">
-            <table className="w-full text-left table-fixed border-collapse">
-              <thead className="bg-black/40">
-                <tr>
-                  <th className="w-[18%] px-1 sm:px-6 py-3 text-[9px] sm:text-[10px] font-black text-zinc-500 uppercase tracking-tighter whitespace-nowrap">{t('me.hash_id')}</th>
-                  <th className="w-[42%] px-1 sm:px-6 py-3 text-[9px] sm:text-[10px] font-black text-zinc-500 uppercase tracking-tighter whitespace-nowrap">{t('me.product')}</th>
-                  <th className="w-[25%] px-1 sm:px-6 py-3 text-[9px] sm:text-[10px] font-black text-zinc-500 uppercase tracking-tighter text-center whitespace-nowrap">{t('me.status')}</th>
-                  <th className="w-[15%] px-1 sm:px-6 py-3 text-[9px] sm:text-[10px] font-black text-zinc-500 uppercase tracking-tighter text-right whitespace-nowrap">{t('me.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {[
-                  { id: '0x892...fA2', name: 'Neural Key V2', type: 'Hardware', status: 'In Transit', statusType: 'primary', img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=100&h=100&fit=crop' },
-                  { id: '0x110...dB5', name: 'Cloud Node 1yr', type: 'Service', status: 'Delivered', statusType: 'success', icon: <Globe className="w-3 h-3 sm:w-5 h-5 text-zinc-600" /> }
-                ].map((order, idx) => (
-                  <tr key={idx} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-1 sm:px-6 py-3 font-mono text-[9px] sm:text-[11px] text-zinc-400 truncate">{order.id}</td>
-                    <td className="px-1 sm:px-6 py-3 overflow-hidden">
-                      <div className="flex items-center gap-1 sm:gap-3">
-                        <div className="w-5 h-5 sm:w-10 sm:h-10 rounded-md sm:rounded-xl bg-zinc-900 border border-white/10 overflow-hidden flex-shrink-0 hidden xs:block">
-                          {order.img ? (
-                            <img src={order.img} alt="Product" className="w-full h-full object-cover opacity-80" />
-                          ) : order.icon}
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-[10px] sm:text-xs font-bold text-white truncate">{order.name}</span>
-                          <span className="text-[8px] sm:text-[9px] text-zinc-500 uppercase font-bold truncate">{order.type}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-1 sm:px-6 py-3 text-center">
-                      <div className={`inline-flex items-center gap-0.5 sm:gap-2 px-1 sm:px-3 py-0.5 rounded-full border ${
-                        order.statusType === 'primary' ? 'bg-primary/10 border-primary/20' : 'bg-green-500/10 border-green-500/20'
-                      }`}>
-                        {order.statusType === 'primary' && <span className="w-0.5 h-0.5 sm:w-1.5 sm:h-1.5 rounded-full bg-primary animate-pulse"></span>}
-                        <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-tighter ${
-                          order.statusType === 'primary' ? 'text-primary' : 'text-green-500'
-                        }`}>{order.status}</span>
-                      </div>
-                    </td>
-                    <td className="px-1 sm:px-6 py-3 text-right">
-                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-1 sm:p-2 hover:bg-white/10 rounded-md sm:rounded-xl text-zinc-500 hover:text-white transition-all">
-                          <Share2 className="w-4 h-4" />
-                        </button>
-                        <button className="p-1 sm:p-2 hover:bg-white/10 rounded-md sm:rounded-xl text-zinc-500 hover:text-white transition-all">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
 
-        {/* Settings List */}
-        <section className="glass-panel rounded-[2.5rem] overflow-hidden mt-8">
-          <div className="flex flex-col">
-            <button onClick={() => setShowSettings(!showSettings)} className="flex items-center justify-between p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
-                  <Settings className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.app_settings')}</h4>
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.theme_prefs')}</p>
+            <div className="flex items-end gap-4">
+              <div>
+                <p className="text-[9px] sm:text-[10px] font-black text-zinc-500 uppercase mb-1 sm:mb-2">{t('me.current_streak')}</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl sm:text-6xl font-black text-white tracking-tighter">12</span>
+                  <span className="text-zinc-500 font-bold text-sm sm:text-base">{t('me.days')}</span>
                 </div>
               </div>
-              <ChevronRight className={`w-5 h-5 text-zinc-600 group-hover:text-primary transition-all ${showSettings ? 'rotate-90' : ''}`} />
-            </button>
+              <div className="flex-1 pb-2">
+                <div className="h-1.5 sm:h-2 w-full bg-zinc-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-primary w-[80%] shadow-[0_0_12px_rgba(255,92,0,0.5)]"></div>
+                </div>
+                <p className="text-[8px] sm:text-[9px] text-zinc-600 mt-2 font-bold uppercase tracking-widest">{t('me.next_milestone')}</p>
+              </div>
+            </div>
 
-            {/* Inline Settings Panel */}
-            {showSettings && (
-              <div className="p-6 bg-black/40 border-b border-white/5">
-                <div className="space-y-8">
-                  {/* Language Setting */}
-                  <div className="flex items-center justify-between px-2 py-1">
-                    <div className="flex flex-col">
-                      <span className="text-xs sm:text-[11px] font-black text-white uppercase tracking-widest">{t('settings.appearance')} / Language</span>
-                      <span className="text-[10px] font-bold text-zinc-500 tracking-tight opacity-80">Active: {LANGUAGES.find(l => l.code === i18n.language)?.name}</span>
+            <div className="flex flex-col items-center">
+              <p className="text-[9px] sm:text-[10px] font-black text-zinc-500 uppercase mb-3 sm:mb-4 tracking-[0.2em] sm:tracking-[0.3em]">{t('me.phase_ends')}</p>
+              <div className="flex justify-center items-start gap-3 sm:gap-4 h-14 sm:h-16">
+                <div className="flex flex-col items-center gap-1 sm:gap-2">
+                  <div className="flex gap-1">
+                    <FlipDigit value={Math.floor(timeLeft.days / 10)} />
+                    <FlipDigit value={timeLeft.days % 10} />
+                  </div>
+                  <span className="text-[7px] sm:text-[9px] font-black text-zinc-600 uppercase tracking-widest">{t('me.days')}</span>
+                </div>
+                <div className="text-xl sm:text-2xl font-headline font-black text-zinc-800 pt-1">:</div>
+                <div className="flex flex-col items-center gap-1 sm:gap-2">
+                  <div className="flex gap-1">
+                    <FlipDigit value={Math.floor(timeLeft.hrs / 10)} />
+                    <FlipDigit value={timeLeft.hrs % 10} />
+                  </div>
+                  <span className="text-[7px] sm:text-[9px] font-black text-zinc-600 uppercase tracking-widest">{t('me.hrs')}</span>
+                </div>
+                <div className="text-xl sm:text-2xl font-headline font-black text-zinc-800 pt-1">:</div>
+                <div className="flex flex-col items-center gap-1 sm:gap-2">
+                  <div className="flex gap-1">
+                    <FlipDigit value={Math.floor(timeLeft.min / 10)} />
+                    <FlipDigit value={timeLeft.min % 10} />
+                  </div>
+                  <span className="text-[7px] sm:text-[9px] font-black text-zinc-600 uppercase tracking-widest">{t('me.min')}</span>
+                </div>
+                <div className="text-xl sm:text-2xl font-headline font-black text-zinc-800 pt-1">:</div>
+                <div className="flex flex-col items-center gap-1 sm:gap-2">
+                  <div className="flex gap-1">
+                    <FlipDigit value={Math.floor(timeLeft.sec / 10)} color="text-primary" />
+                    <FlipDigit value={timeLeft.sec % 10} color="text-primary" />
+                  </div>
+                  <span className="text-[7px] sm:text-[9px] font-black text-primary uppercase tracking-widest">{t('me.sec')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-7 flex flex-col justify-between">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="p-4 sm:p-6 bg-white/5 rounded-[1.25rem] sm:rounded-3xl border border-white/5 relative group">
+                <button 
+                  onClick={() => setShowRulesModal('rewards')}
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1 hover:bg-white/5 rounded-full text-zinc-500 hover:text-white transition-colors"
+                >
+                  <Info className="w-3.5 h-3.5 sm:w-4 h-4" />
+                </button>
+                <p className="text-[9px] sm:text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-1">{t('me.potential_reward')}</p>
+                <p className="text-sm sm:text-sm font-black text-white">$45.00</p>
+                <button className="mt-3 sm:mt-4 w-full py-2 bg-primary text-white rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
+                  {t('me.signin')}
+                </button>
+              </div>
+              <div className="p-4 sm:p-6 bg-primary/5 rounded-[1.25rem] sm:rounded-3xl border border-primary/10 relative group">
+                <button 
+                  onClick={() => setShowRulesModal('rewards')}
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1 hover:bg-primary/10 rounded-full text-zinc-500 hover:text-primary transition-colors"
+                >
+                  <Info className="w-3.5 h-3.5 sm:w-4 h-4" />
+                </button>
+                <p className="text-[9px] sm:text-[10px] text-primary uppercase font-black tracking-widest mb-1">{t('me.total_reclaimed')}</p>
+                <p className="text-sm sm:text-sm font-black text-white">$1,240.65</p>
+                <div className="mt-3 sm:mt-4 flex items-center gap-1.5 sm:gap-2 text-green-500">
+                  <TrendingUp className="w-3 h-3 sm:w-4 h-4" />
+                  <span className="text-[8px] sm:text-[10px] font-bold tracking-widest uppercase">+12.4% vs Phase 03</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 sm:mt-6">
+              <p className="text-[9px] sm:text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-2 sm:mb-3">{t('me.order_history_phase')}</p>
+              <div className="flex gap-2 overflow-x-auto pb-2 scroll-hide">
+                {[
+                  { id: '#8821-ORD', amount: '$120.00', status: 'Verified', statusColor: 'text-primary' },
+                  { id: '#8845-ORD', amount: '$450.00', status: 'Verified', statusColor: 'text-primary' },
+                  { id: '#8901-ORD', amount: '$95.20', status: 'Pending', statusColor: 'text-orange-500' }
+                ].map((order, i) => (
+                  <div key={i} className="min-w-[120px] sm:min-w-[140px] p-2.5 sm:p-3 bg-white/5 rounded-xl sm:rounded-2xl border border-white/5 flex flex-col gap-0.5 sm:gap-1">
+                    <span className="text-[9px] sm:text-[10px] font-bold text-white">{order.id}</span>
+                    <span className="text-xs font-black text-primary">{order.amount}</span>
+                    <span className={`text-[8px] sm:text-[9px] uppercase font-black tracking-widest ${order.statusColor}`}>{order.status}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Order History Table (Restored & Optimized) */}
+      <section className="glass-panel rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden mt-4 sm:mt-8">
+        <div className="p-4 sm:p-6 flex justify-between items-center border-b border-white/5 bg-black/20">
+          <div className="flex items-center gap-3">
+            <History className="w-5 h-5 text-primary" />
+            <h3 className="font-headline font-bold text-white uppercase tracking-widest text-sm">{t('me.order_logs')}</h3>
+          </div>
+          <button className="text-[10px] font-black text-zinc-500 hover:text-white uppercase tracking-[0.2em] transition-colors">{t('me.export_logs')}</button>
+        </div>
+        <div className="overflow-hidden">
+          <table className="w-full text-left table-fixed border-collapse">
+            <thead className="bg-black/40">
+              <tr>
+                <th className="w-[18%] px-1 sm:px-6 py-3 text-[9px] sm:text-[10px] font-black text-zinc-500 uppercase tracking-tighter whitespace-nowrap">{t('me.hash_id')}</th>
+                <th className="w-[42%] px-1 sm:px-6 py-3 text-[9px] sm:text-[10px] font-black text-zinc-500 uppercase tracking-tighter whitespace-nowrap">{t('me.product')}</th>
+                <th className="w-[25%] px-1 sm:px-6 py-3 text-[9px] sm:text-[10px] font-black text-zinc-500 uppercase tracking-tighter text-center whitespace-nowrap">{t('me.status')}</th>
+                <th className="w-[15%] px-1 sm:px-6 py-3 text-[9px] sm:text-[10px] font-black text-zinc-500 uppercase tracking-tighter text-right whitespace-nowrap">{t('me.actions')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {[
+                { id: '0x892...fA2', name: 'Neural Key V2', type: 'Hardware', status: 'In Transit', statusType: 'primary', img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=100&h=100&fit=crop' },
+                { id: '0x110...dB5', name: 'Cloud Node 1yr', type: 'Service', status: 'Delivered', statusType: 'success', icon: <Globe className="w-3 h-3 sm:w-5 h-5 text-zinc-600" /> }
+              ].map((order, idx) => (
+                <tr key={idx} className="hover:bg-white/[0.02] transition-colors group">
+                  <td className="px-1 sm:px-6 py-3 font-mono text-[9px] sm:text-[11px] text-zinc-400 truncate">{order.id}</td>
+                  <td className="px-1 sm:px-6 py-3 overflow-hidden">
+                    <div className="flex items-center gap-1 sm:gap-3">
+                      <div className="w-5 h-5 sm:w-10 sm:h-10 rounded-md sm:rounded-xl bg-zinc-900 border border-white/10 overflow-hidden flex items-center justify-center flex-shrink-0 hidden xs:block">
+                        {order.img ? (
+                          <img src={order.img} alt="Product" className="w-full h-full object-cover opacity-80" />
+                        ) : order.icon}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] sm:text-xs font-bold text-white truncate">{order.name}</span>
+                        <span className="text-[8px] sm:text-[9px] text-zinc-500 uppercase font-bold truncate">{order.type}</span>
+                      </div>
                     </div>
-                    <div className="relative">
-                      <button 
-                        onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-                        className="bg-white/10 border border-white/10 rounded-xl px-6 py-4 pr-10 text-[16px] sm:text-[10px] font-bold text-primary outline-none hover:bg-white/15 transition-all min-w-[160px] text-center flex items-center justify-center gap-2"
-                      >
-                        <span>{LANGUAGES.find(l => l.code === i18n.language)?.flag}</span>
-                        <span>{LANGUAGES.find(l => l.code === i18n.language)?.name}</span>
+                  </td>
+                  <td className="px-1 sm:px-6 py-3 text-center">
+                    <div className={`inline-flex items-center gap-0.5 sm:gap-2 px-1 sm:px-3 py-0.5 rounded-full border ${
+                      order.statusType === 'primary' ? 'bg-primary/10 border-primary/20' : 'bg-green-500/10 border-green-500/20'
+                    }`}>
+                      {order.statusType === 'primary' && <span className="w-0.5 h-0.5 sm:w-1.5 sm:h-1.5 rounded-full bg-primary animate-pulse"></span>}
+                      <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-tighter ${
+                        order.statusType === 'primary' ? 'text-primary' : 'text-green-500'
+                      }`}>{order.status}</span>
+                    </div>
+                  </td>
+                  <td className="px-1 sm:px-6 py-3 text-right">
+                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="p-1 sm:p-2 hover:bg-white/10 rounded-md sm:rounded-xl text-zinc-500 hover:text-white transition-all">
+                        <Share2 className="w-4 h-4" />
                       </button>
-                      <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary pointer-events-none transition-transform ${showLanguageDropdown ? 'rotate-180' : ''}`} />
+                      <button className="p-1 sm:p-2 hover:bg-white/10 rounded-md sm:rounded-xl text-zinc-500 hover:text-white transition-all">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-                      {showLanguageDropdown && (
-                        <>
-                          <div className="fixed inset-0 z-[110]" onClick={() => setShowLanguageDropdown(false)}></div>
-                          <div className="absolute right-0 top-full mt-2 w-full min-w-[180px] max-h-[300px] overflow-y-auto glass-panel rounded-2xl border-white/10 shadow-2xl z-[120] animate-in fade-in slide-in-from-top-2 duration-200 scroll-hide">
-                            <div className="p-2 space-y-1">
-                              {LANGUAGES.map((lang) => (
-                                <button
-                                  key={lang.code}
-                                  onClick={() => {
-                                    i18n.changeLanguage(lang.code);
-                                    setShowLanguageDropdown(false);
-                                  }}
-                                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all text-left ${
-                                    i18n.language === lang.code 
-                                      ? 'bg-primary/20 text-primary border border-primary/20' 
-                                      : 'hover:bg-white/5 text-zinc-300'
-                                  }`}
-                                >
-                                  <span className="text-xl">{lang.flag}</span>
-                                  <span className="text-[16px] sm:text-xs font-bold tracking-tight">{lang.name}</span>
-                                </button>
-                              ))}
-                            </div>
+      {/* Settings List */}
+      <section className="glass-panel rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden mt-4 sm:mt-8">
+        <div className="flex flex-col">
+          <button onClick={() => setShowSettings(!showSettings)} className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
+                <Settings className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.app_settings')}</h4>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.theme_prefs')}</p>
+              </div>
+            </div>
+            <ChevronRight className={`w-5 h-5 text-zinc-600 group-hover:text-primary transition-all ${showSettings ? 'rotate-90' : ''}`} />
+          </button>
+
+          {/* Inline Settings Panel */}
+          {showSettings && (
+            <div className="p-4 sm:p-6 bg-black/40 border-b border-white/5">
+              <div className="space-y-8">
+                {/* Language Setting */}
+                <div className="flex items-center justify-between px-2 py-1">
+                  <div className="flex flex-col">
+                    <span className="text-xs sm:text-[11px] font-black text-white uppercase tracking-widest">{t('settings.appearance')} / Language</span>
+                    <span className="text-[10px] font-bold text-zinc-500 tracking-tight opacity-80">Active: {LANGUAGES.find(l => l.code === i18n.language)?.name}</span>
+                  </div>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                      className="bg-white/10 border border-white/10 rounded-xl px-4 py-3 sm:px-6 sm:py-4 pr-10 text-sm sm:text-[10px] font-bold text-primary outline-none hover:bg-white/15 transition-all min-w-[140px] sm:min-w-[160px] text-center flex items-center justify-center gap-2"
+                    >
+                      <span>{LANGUAGES.find(l => l.code === i18n.language)?.flag}</span>
+                      <span>{LANGUAGES.find(l => l.code === i18n.language)?.name}</span>
+                    </button>
+                    <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary pointer-events-none transition-transform ${showLanguageDropdown ? 'rotate-180' : ''}`} />
+
+                    {showLanguageDropdown && (
+                      <>
+                        <div className="fixed inset-0 z-[110]" onClick={() => setShowLanguageDropdown(false)}></div>
+                        <div className="absolute right-0 top-full mt-2 w-full min-w-[180px] max-h-[300px] overflow-y-auto glass-panel rounded-2xl border-white/10 shadow-2xl z-[120] animate-in fade-in slide-in-from-top-2 duration-200 scroll-hide">
+                          <div className="p-2 space-y-1">
+                            {LANGUAGES.map((lang) => (
+                              <button
+                                key={lang.code}
+                                onClick={() => {
+                                  i18n.changeLanguage(lang.code);
+                                  setShowLanguageDropdown(false);
+                                }}
+                                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all text-left ${
+                                  i18n.language === lang.code 
+                                    ? 'bg-primary/20 text-primary border border-primary/20' 
+                                    : 'hover:bg-white/5 text-zinc-300'
+                                }`}
+                              >
+                                <span className="text-xl">{lang.flag}</span>
+                                <span className="text-[16px] sm:text-xs font-bold tracking-tight">{lang.name}</span>
+                              </button>
+                            ))}
                           </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Butler Settings */}
-                  <div className="space-y-4 px-2">
-                    <p className="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
-                      <Sparkles className="w-3 h-3 text-primary" />
-                      Personal Butler Protocol
-                    </p>
-                    
-                    <div className="space-y-3">
-                      <div className="relative group">
-                        <input
-                          value={draftAgentName}
-                          onChange={(e) => {
-                            setDraftAgentName(e.target.value);
-                            localStorage.setItem('butlerName', e.target.value);
-                            window.dispatchEvent(new Event('butlerNameChanged'));
-                          }}
-                          placeholder="Name your agent"
-                          className="w-full h-14 px-5 rounded-2xl bg-black/40 border border-white/10 text-base font-bold text-white placeholder:text-zinc-600 focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all outline-none"
-                        />
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                          <button
-                            type="button"
-                            disabled={!isAgentNameDirty}
-                            onClick={() => onAgentNameChange(draftAgentName.trim())}
-                            className="p-2.5 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:hover:scale-100"
-                          >
-                            <ArrowRight className="w-5 h-5" />
-                          </button>
                         </div>
-                      </div>
-                      <p className="text-[10px] font-bold text-zinc-500 ml-2 italic">The Butler will refer to itself by this name.</p>
-                    </div>
-                  </div>
-
-                  {/* BYOK Settings */}
-                  <div className="space-y-4 px-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-[11px] font-black text-white uppercase tracking-widest">{t('settings.byok_protocol')}</span>
-                        <span className="text-[10px] font-bold text-zinc-500 tracking-tight">{t('settings.byok_desc')}</span>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer group">
-                        <input type="checkbox" className="sr-only peer" checked={useByok} onChange={(e) => setUseByok(e.target.checked)} />
-                        <div className="w-12 h-6.5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-primary shadow-inner"></div>
-                      </label>
-                    </div>
-
-                    {useByok && (
-                      <div className="space-y-3 pt-2">
-                        <div className="space-y-1.5 relative">
-                          <label className="text-[10px] font-black text-zinc-500 uppercase ml-2 tracking-widest">{t('settings.model_endpoint')}</label>
-                          <button 
-                            onClick={() => setShowModelDropdown(!showModelDropdown)}
-                            className="w-full h-11 px-4 rounded-xl bg-black/40 border border-white/10 text-base sm:text-sm font-bold text-white outline-none flex items-center justify-between hover:bg-black/60 transition-all"
-                          >
-                            <span>DeepSeek Chat (V3)</span>
-                            <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${showModelDropdown ? 'rotate-180' : ''}`} />
-                          </button>
-                          
-                          {showModelDropdown && (
-                            <>
-                              <div className="fixed inset-0 z-[110]" onClick={() => setShowModelDropdown(false)}></div>
-                              <div className="absolute left-0 top-full mt-1 w-full glass-panel rounded-xl border-white/10 shadow-2xl z-[120] p-1 space-y-1 overflow-hidden">
-                                {['DeepSeek Chat (V3)', 'GPT-4o (OpenAI)', 'Claude 3.5 Sonnet'].map((model) => (
-                                  <button
-                                    key={model}
-                                    onClick={() => setShowModelDropdown(false)}
-                                    className="w-full px-4 py-3 text-[16px] sm:text-sm font-bold text-left text-zinc-300 hover:bg-white/5 rounded-lg transition-colors"
-                                  >
-                                    {model}
-                                  </button>
-                                ))}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-black text-zinc-500 uppercase ml-2 tracking-widest">{t('settings.api_key')}</label>
-                          <input type="password" placeholder="sk-..." className="w-full h-11 px-4 rounded-xl bg-black/40 border border-white/10 text-sm font-bold text-white outline-none focus:border-primary transition-all" />
-                        </div>
-                      </div>
+                      </>
                     )}
                   </div>
                 </div>
-              </div>
-            )}
 
-            <button className="flex items-center justify-between p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <ShieldCheck className="w-5 h-5" />
+                {/* Butler Settings */}
+                <div className="space-y-4 px-2">
+                  <p className="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
+                    <Sparkles className="w-3 h-3 text-primary" />
+                    Personal Butler Protocol
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <div className="relative group">
+                      <input
+                        value={draftAgentName}
+                        onChange={(e) => {
+                          setDraftAgentName(e.target.value);
+                          localStorage.setItem('butlerName', e.target.value);
+                          window.dispatchEvent(new Event('butlerNameChanged'));
+                        }}
+                        placeholder="Name your agent"
+                        className="w-full h-12 sm:h-14 px-5 rounded-2xl bg-black/40 border border-white/10 text-base font-bold text-white placeholder:text-zinc-600 focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all outline-none"
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <button
+                          type="button"
+                          disabled={!isAgentNameDirty}
+                          onClick={() => onAgentNameChange(draftAgentName.trim())}
+                          className="p-2.5 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:hover:scale-100"
+                        >
+                          <ArrowRight className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[10px] font-bold text-zinc-500 ml-2 italic">The Butler will refer to itself by this name.</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.google_2fa')}</h4>
-                  <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">{t('me.active_secure')}</p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
-            </button>
 
-            <button className="flex items-center justify-between p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.security')}</h4>
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.passwords_keys')}</p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
-            </button>
+                {/* BYOK Settings */}
+                <div className="space-y-4 px-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-[11px] font-black text-white uppercase tracking-widest">{t('settings.byok_protocol')}</span>
+                      <span className="text-[10px] font-bold text-zinc-500 tracking-tight">{t('settings.byok_desc')}</span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer group">
+                      <input type="checkbox" className="sr-only peer" checked={useByok} onChange={(e) => setUseByok(e.target.checked)} />
+                      <div className="w-12 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner"></div>
+                    </label>
+                  </div>
 
-            <button className="flex items-center justify-between p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
-                  <Globe className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.region')}</h4>
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.usd_en')}</p>
+                  {useByok && (
+                    <div className="space-y-3 pt-2">
+                      <div className="space-y-1.5 relative">
+                        <label className="text-[10px] font-black text-zinc-500 uppercase ml-2 tracking-widest">{t('settings.model_endpoint')}</label>
+                        <button 
+                          onClick={() => setShowModelDropdown(!showModelDropdown)}
+                          className="w-full h-11 px-4 rounded-xl bg-black/40 border border-white/10 text-base sm:text-sm font-bold text-white outline-none flex items-center justify-between hover:bg-black/60 transition-all"
+                        >
+                          <span>DeepSeek Chat (V3)</span>
+                          <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${showModelDropdown ? 'rotate-180' : ''}`} />
+                        </button>
+                        
+                        {showModelDropdown && (
+                          <>
+                            <div className="fixed inset-0 z-[110]" onClick={() => setShowModelDropdown(false)}></div>
+                            <div className="absolute left-0 top-full mt-1 w-full glass-panel rounded-xl border-white/10 shadow-2xl z-[120] p-1 space-y-1 overflow-hidden">
+                              {['DeepSeek Chat (V3)', 'GPT-4o (OpenAI)', 'Claude 3.5 Sonnet'].map((model) => (
+                                <button
+                                  key={model}
+                                  onClick={() => setShowModelDropdown(false)}
+                                  className="w-full px-4 py-3 text-[16px] sm:text-sm font-bold text-left text-zinc-300 hover:bg-white/5 rounded-lg transition-colors"
+                                >
+                                  {model}
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-zinc-500 uppercase ml-2 tracking-widest">{t('settings.api_key')}</label>
+                        <input type="password" placeholder="sk-..." className="w-full h-11 px-4 rounded-xl bg-black/40 border border-white/10 text-sm font-bold text-white outline-none focus:border-primary transition-all" />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
-            </button>
+            </div>
+          )}
 
-            <button className="flex items-center justify-between p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
-                  <Book className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.address_book')}</h4>
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.nodes_config')}</p>
-                </div>
+          <button className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <ShieldCheck className="w-5 h-5" />
               </div>
-              <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
-            </button>
+              <div className="text-left">
+                <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.google_2fa')}</h4>
+                <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">{t('me.active_secure')}</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
+          </button>
 
-            <button className="flex items-center justify-between p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
-                  <HelpCircle className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.help_center')}</h4>
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.support_doc')}</p>
-                </div>
+          <button className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
+                <Lock className="w-5 h-5" />
               </div>
-              <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
-            </button>
+              <div className="text-left">
+                <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.security')}</h4>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.passwords_keys')}</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
+          </button>
 
-            <button 
-              onClick={onLogout}
-              className="flex items-center justify-between p-6 hover:bg-error/5 transition-colors group"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-error transition-colors">
-                  <LogOut className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <h4 className="font-bold text-white text-sm uppercase tracking-tight group-hover:text-error transition-colors">{t('me.terminate_session')}</h4>
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.sign_out')}</p>
-                </div>
+          <button className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
+                <Globe className="w-5 h-5" />
               </div>
-              <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-error transition-colors" />
-            </button>
-          </div>
-        </section>
-      </div>
+              <div className="text-left">
+                <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.region')}</h4>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.usd_en')}</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
+          </button>
+
+          <button className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
+                <Book className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.address_book')}</h4>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.nodes_config')}</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
+          </button>
+
+          <button className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
+                <HelpCircle className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.help_center')}</h4>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.support_doc')}</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
+          </button>
+
+          <button 
+            onClick={onLogout}
+            className="flex items-center justify-between p-4 sm:p-6 hover:bg-error/5 transition-colors group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-error transition-colors">
+                <LogOut className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <h4 className="font-bold text-white text-sm uppercase tracking-tight group-hover:text-error transition-colors">{t('me.terminate_session')}</h4>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{t('me.sign_out')}</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-error transition-colors" />
+          </button>
+        </div>
+      </section>
 
       {/* Rules Modal */}
       {showRulesModal && (

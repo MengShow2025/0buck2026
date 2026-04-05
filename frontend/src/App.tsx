@@ -339,6 +339,8 @@ export default function App() {
         return (
           <AIButlerView 
             agentName={agentDisplayName} 
+            userId={currentUser?.id}
+            currentUser={currentUser}
             onProductClick={(product) => {
               setSelectedProduct(product);
               setPreviousView('chat');

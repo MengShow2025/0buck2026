@@ -17,7 +17,10 @@ export function useStreamVCC(isAuthenticated: boolean, currentUser: any) {
     try {
       if (isAuthenticated && currentUser?.id) {
         // Scene A: Authenticated Member
-        const res = await axios.post(`${BACKEND_URL}/api/v1/agent/session`, { user_id: currentUser.id });
+        const res = await axios.post(`${BACKEND_URL}/api/v1/agent/session`, 
+          { user_id: currentUser.id },
+          { timeout: 10000 } // 10s timeout
+        );
         const chatToken = res.data.chat_token;
 
         await chatClient.connectUser(

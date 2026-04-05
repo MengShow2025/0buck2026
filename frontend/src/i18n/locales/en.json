@@ -341,5 +341,26 @@
     "renewal_alert_desc": "Your daily streak has been interrupted for {{days}} days. Active a renewal card now to protect your pending cashback.",
     "buy_renewal_card": "Buy Renewal Card",
     "dismiss": "Dismiss"
+  },
+  "lounge": {
+    "tab_messages": "Messages",
+    "tab_friends": "Friends",
+    "tab_moments": "Moments",
+    "tab_notes": "Notes",
+    "my_friends": "My Friends",
+    "notifications": "Notifications",
+    "post_moment": "Post Moment",
+    "post_note": "Post Note",
+    "send_uplink": "Send Uplink",
+    "reset_memory": "Reset Memory",
+    "butler_active": "Butler Active",
+    "clear_history_confirm": "Are you sure you want to clear all chat history with the Butler?",
+    "no_requests": "No new requests",
+    "select_group": "Select a group to start connecting",
+    "add_friend": "Add Friend",
+    "friend_request": "Friend Request",
+    "syncing": "Neural Link Syncing...",
+    "establishing_uplink": "Establishing Secure Uplink...",
+    "no_channels_found": "No active neural nodes found"
   }
 }

@@ -32,12 +32,32 @@ export default function SecurePayView({ payload, onBack, currentUser }: SecurePa
 
   useEffect(() => {
     if (currentUser?.email) setEmail(currentUser.email);
-    setLocalItems(payload?.items ?? []);
+    
+    if (payload?.type === 'single') {
+      const item: CartItem = {
+        id: payload.id || 'single_item',
+        name: payload.name,
+        product: {
+          id: payload.id || 'single_item',
+          name: payload.name || 'Product',
+          price: payload.price?.toString() || '0',
+          image: payload.image || '',
+          description: ''
+        },
+        quantity: payload.quantity || 1,
+        price: payload.price
+      };
+      setLocalItems([item]);
+    } else {
+      setLocalItems(payload?.items ?? []);
+    }
   }, [payload, currentUser]);
 
   const parsePrice = useMemo(() => {
-    return (price: string | number) => {
+    return (price: any) => {
+      if (price === null || price === undefined) return 0;
       if (typeof price === 'number') return price;
+      if (typeof price !== 'string') return 0;
       const n = parseFloat(price.replace(/[^0-9.]/g, ''));
       return Number.isFinite(n) ? n : 0;
     };

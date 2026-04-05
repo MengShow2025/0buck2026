@@ -83,6 +83,27 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
     }
   }, [butlerName, messages.length]);
 
+  const [realProducts, setRealProducts] = useState<Product[]>([]);
+
+  // Fetch real products from DB for recommendations
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || '';
+        const response = await fetch(`${backendUrl}/api/v1/products/discovery?limit=5`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && Array.isArray(data)) {
+            setRealProducts(data);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch real products for floating butler:', e);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -144,26 +165,18 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
     // Call to backend AI endpoint
     const fetchAIResponse = async () => {
       try {
-        const response = await fetch('https://api.minimax.chat/v1/text/chatcompletion_v2', {
+        const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || '';
+        const response = await fetch(`${backendUrl}/api/v1/butler/chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer sk-api-lP0o87Y0JDMSWS79RP5S-0pQWyOmRN47PRARkz1bJeL6IFa4QggDw0G3oqhwZ1nR6jTgn90TKJYGRdSNJ5KMndR-ZC8h3NPsaBtuiDkrb2rd1uWd1bTL7Zs',
           },
           body: JSON.stringify({
-            model: 'abab6.5s-chat',
-            messages: [
-              {
-                role: 'system',
-                name: 'system',
-                content: `你是 0Buck 的专属 AI 管家。你的名字是 "${butlerName || '0Buck Butler'}"。你可以查询订单、提供商品推荐和解答 0Buck 平台相关的问题。当用户询问你的名字时，请回答你叫 ${butlerName || '0Buck Butler'}。当用户要求查询订单时，请不要说你是一个文本生成模型或者无法查询，而是模拟出你正在查询，并回复一个虚拟的 0Buck 订单状态。请保持你的回答专业、简洁、有赛博朋克和未来感。如果用户要求推荐产品或购买东西，你需要回复推荐内容，我们将通过前端代码拦截并展示商品卡片。`
-              },
-              {
-                role: 'user',
-                name: 'user',
-                content: valueToSend
-              }
-            ]
+            messages: messages.slice(-5).map(m => ({
+              role: m.type === 'assistant' ? 'assistant' : 'user',
+              content: m.content
+            })).concat({ role: 'user', content: valueToSend }),
+            butler_name: butlerName || '0Buck Butler'
           }),
         });
           
@@ -181,15 +194,7 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
           type: 'assistant',
           content: content,
           ...(isRecommending ? {
-            recommendedProducts: [
-              {
-                id: 'p1',
-                name: 'Vanguard Chronograph Alpha',
-                price: '$12,400',
-                description: 'The pinnacle of precision timekeeping. Featuring a 42mm titanium case and proprietary movement.',
-                image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDfnlwVYitFglSNAKIBXWOiEXiqy3DLXoEBdY1nJ7WuIQIJOaHwmlBNuoM1Hc5SRFn8y6BFlLqYF_s0r_D4Y8OM0V1pa8o7oxBcWewukUORB6juLnKt0PXTSjUZ4ZddvdypKIZMmxfseQi3VOZCFrNgbezDKoZd8i9vRgNQ97pHc8am7pYKD4qHwsBXJJU9ra82GEWnX4B1uRuQ7HGtzBynJZa8fxPb_3ks0EUZh5DnlDUjnRyC-lvzy3x5RauoZkoqL91Vir8H-sDo'
-              }
-            ]
+            recommendedProducts: realProducts.length > 0 ? realProducts.slice(0, 3) : []
           } : {})
         }]);
       } catch (error) {

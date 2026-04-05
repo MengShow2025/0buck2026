@@ -30,12 +30,14 @@ interface Message {
 
 interface AIButlerViewProps {
   agentName: string;
+  userId?: number | string;
+  currentUser?: any;
   onProductClick?: (product: Product) => void;
   onBuyNow?: (product: Product) => void;
   onAddToCart?: (product: Product) => void;
 }
 
-export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAddToCart }: AIButlerViewProps) {
+export default function AIButlerView({ agentName, userId, currentUser, onProductClick, onBuyNow, onAddToCart }: AIButlerViewProps) {
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem('butler_messages');
     if (saved) {
@@ -56,7 +58,27 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
   const [isNaming, setIsNaming] = useState(false);
   const [butlerName, setButlerName] = useState(() => agentName || localStorage.getItem('butlerName') || '');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [realProducts, setRealProducts] = useState<Product[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Fetch real products from DB for recommendations
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || '';
+        const response = await fetch(`${backendUrl}/api/v1/products/discovery?limit=10`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && Array.isArray(data)) {
+            setRealProducts(data);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch real products for butler:', e);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   // Persist messages to localStorage
   useEffect(() => {
@@ -76,37 +98,6 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
       localStorage.removeItem('butler_messages');
     }
   };
-
-  const products = [
-    {
-      id: 'p1',
-      name: 'Vanguard Chronograph Alpha',
-      price: '$12,400',
-      description: 'The pinnacle of precision timekeeping. Featuring a 42mm titanium case and proprietary movement.',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDfnlwVYitFglSNAKIBXWOiEXiqy3DLXoEBdY1nJ7WuIQIJOaHwmlBNuoM1Hc5SRFn8y6BFlLqYF_s0r_D4Y8OM0V1pa8o7oxBcWewukUORB6juLnKt0PXTSjUZ4ZddvdypKIZMmxfseQi3VOZCFrNgbezDKoZd8i9vRgNQ97pHc8am7pYKD4qHwsBXJJU9ra82GEWnX4B1uRuQ7HGtzBynJZa8fxPb_3ks0EUZh5DnlDUjnRyC-lvzy3x5RauoZkoqL91Vir8H-sDo'
-    },
-    {
-      id: 'p2',
-      name: 'Sonic Prime Noir Edition',
-      price: '$899',
-      description: 'High-fidelity audio transceiver with carbon-fiber architecture and noise-canceling technology.',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBios1Xtqw8t6vbdps64JqHzWlE1zGMyQ6j_9aEZbfuwC97BlTU8lvsAFm1CnNzXCw7MwvDDUSr6eKqIsTPE-SEJzyKXcuAtIvEmyUg-hoYtW4sX1SZIdWxkHH5rxCipjKGDhOOnWKvkvrUG1ga5lEjOv8vCCdqi8mi61SOHSEL2Lj_bpw42U7QbrrgcZsDwn5V_HDKmFWI-qCwo1F32Eypx8eEUdJlb3V9zDIgvWPOvSE6hhgX1ygHxOy9W_JDfXOmSoRA6duVQked'
-    },
-    {
-      id: 'p3',
-      name: 'Mechanical Ledger Core',
-      price: '$2,150',
-      description: 'Advanced hardware wallet with real-time market tracking and biometric security.',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDp0RDQXBeF6QabM_LIAHpK06XqzCoPgzBpRm2p_jhxFV0aQth9kBZ_CneaQ3sysv6rzxz1OXR2w4rJ9DLTrrkwYt78SVc7itWB1NKOIrAtDqvUiYR3A5UCrmXSYM_kvK0EiUAnFXJDX380yQckimH4_fanOgDA6Nj9xnjrf6dmtCVMq2FNEioJLnal6udBgeamZB9YK_MAQ32Xvw5B5YxN74e6lg4Qty1McxDiML24aSWVVrp5wz0UFw2vQMdbFhv8IPMlas14i000'
-    },
-    {
-      id: 'p4',
-      name: 'Aero-Pulse Velocity S1',
-      price: '$450',
-      description: 'Lightweight performance drone with 4K neural imaging and obstacle avoidance.',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCSfWIlzLCdLppfcvL4P4_7uYROh7Uf6jHkMGBMyXY19fq2nK3LPrZLMQIzZGbZ9ZUj2gRKqvjeBntNY0hvgGKMR9Y-f5U-uMnph1KYbDIVDA3q-r63NLa1FdYRyk24Oj35wzTa_tPAHCeSu9kKPmFDesmklgVsA4TKUOCZJ6QYg6imnZgFGy4tss80qryqoQW69U-Ey624AUB_rExtzzHOhtBcNLeX2wrPU1GTSh4UhKw1y4YlnjEb66nOMHWlUt8YvaycHt_zKviZ'
-    }
-  ];
 
   useEffect(() => {
     const handleNameChange = () => {
@@ -181,6 +172,7 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
         },
         body: JSON.stringify({
           butler_name: agentName,
+          user_id: userId || currentUser?.id,
           messages: messages.slice(-5).map(m => ({
             role: m.type === 'assistant' ? 'assistant' : 'user',
             content: m.content
@@ -220,7 +212,7 @@ export default function AIButlerView({ agentName, onProductClick, onBuyNow, onAd
         bapData: bapData || (isRecommending ? {
           type: '0B_PRODUCT_GRID',
           data: {
-            products: products.slice(0, 5),
+            products: realProducts.length > 0 ? realProducts.slice(0, 10) : [],
             butler_comment: "I've selected these items for your node network."
           }
         } : undefined)

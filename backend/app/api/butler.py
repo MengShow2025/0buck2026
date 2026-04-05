@@ -64,7 +64,11 @@ async def proxy_butler_chat(request: MinimaxChatRequest, db: Session = Depends(g
                         }
                     }
                 ],
-                "model": "gemini-1.5-flash-fallback"
+                "model": "gemini-1.5-flash-fallback",
+                "base_resp": {
+                    "status_code": 0,
+                    "status_msg": "ok"
+                }
             }
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Gemini Fallback Error: {str(e)}")
