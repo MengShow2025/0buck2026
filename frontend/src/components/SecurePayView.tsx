@@ -2,14 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ShieldCheck, Truck, ArrowLeft, Loader2 } from 'lucide-react';
 import { CartItem, SecurePayPayload } from '../types';
 import axios from 'axios';
-
-const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || '';
-
-interface SecurePayViewProps {
-  payload: SecurePayPayload | null;
-  onBack?: () => void;
-  currentUser?: any;
-}
+import { getApiUrl } from '../utils/api';
 
 export default function SecurePayView({ payload, onBack, currentUser }: SecurePayViewProps) {
   const [localItems, setLocalItems] = useState<CartItem[]>([]);
@@ -64,9 +57,11 @@ export default function SecurePayView({ payload, onBack, currentUser }: SecurePa
   }, []);
 
   const itemsSubtotal = useMemo(() => {
+    if (!localItems || !Array.isArray(localItems)) return 0;
     return localItems.reduce((sum, it) => {
-      const priceVal = it?.product?.price ?? it?.price ?? 0;
-      return sum + parsePrice(priceVal) * (it?.quantity || 1);
+      if (!it) return sum;
+      const priceVal = it.product?.price ?? it.price ?? 0;
+      return sum + parsePrice(priceVal) * (it.quantity || 1);
     }, 0);
   }, [localItems, parsePrice]);
 
@@ -74,7 +69,10 @@ export default function SecurePayView({ payload, onBack, currentUser }: SecurePa
   const tax = useMemo(() => Math.round(itemsSubtotal * 0.105 * 100) / 100, [itemsSubtotal]);
   const orderTotal = useMemo(() => Math.round((itemsSubtotal + shipping + tax) * 100) / 100, [itemsSubtotal, shipping, tax]);
 
-  const totalQuantity = useMemo(() => localItems.reduce((sum, it) => sum + it.quantity, 0), [localItems]);
+  const totalQuantity = useMemo(() => {
+    if (!localItems || !Array.isArray(localItems)) return 0;
+    return localItems.reduce((sum, it) => sum + (it?.quantity || 0), 0);
+  }, [localItems]);
   const primaryItem = localItems[0];
   const supplierName = primaryItem?.sellerName ?? 'Supplier';
   const supplierAvatar = primaryItem?.sellerAvatar;
@@ -109,7 +107,8 @@ export default function SecurePayView({ payload, onBack, currentUser }: SecurePa
         }
       };
 
-      const res = await axios.post(`${BACKEND_URL}/api/v1/orders/create`, orderData);
+      const url = getApiUrl('/v1/orders/create');
+      const res = await axios.post(url, orderData);
       
       if (res.data.status === 'success') {
         setOrderSuccess(true);

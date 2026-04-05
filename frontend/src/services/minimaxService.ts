@@ -1,6 +1,9 @@
+import { getApiUrl } from '../utils/api';
+
 export const fetchMinimaxChat = async (messages: {role: string, content: string}[], butlerName: string) => {
   // Proxy through backend to protect API keys
-  const response = await fetch('/api/v1/butler/chat', {
+  const url = getApiUrl('/v1/butler/chat');
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

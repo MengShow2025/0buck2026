@@ -43,8 +43,16 @@ i18n
       escapeValue: false,
     },
     detection: {
-      order: ['localStorage', 'navigator'],
+      order: ['querystring', 'localStorage', 'navigator', 'htmlTag'],
+      lookupQuerystring: 'lng',
+      lookupLocalStorage: 'i18nextLng',
       caches: ['localStorage'],
+      convertDetectedLanguage: (lng) => {
+        if (lng.toLowerCase().startsWith('zh')) {
+          return lng.toLowerCase().includes('tw') || lng.toLowerCase().includes('hk') ? 'zh-TW' : 'zh-CN';
+        }
+        return lng;
+      }
     },
   });
 

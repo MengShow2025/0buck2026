@@ -13,6 +13,8 @@ import { Product } from '../types';
 import ChatInput from './ChatInput';
 import BAPAttachmentRenderer from './BAPAttachmentRenderer';
 
+import { getApiUrl } from '../utils/api';
+
 interface Message {
   id: string;
   type: 'user' | 'assistant';
@@ -61,24 +63,24 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
   const [realProducts, setRealProducts] = useState<Product[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch real products from DB for recommendations
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || '';
-        const response = await fetch(`${backendUrl}/api/v1/products/discovery?limit=10`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data && Array.isArray(data)) {
-            setRealProducts(data);
+    // Fetch real products from DB for recommendations
+    useEffect(() => {
+      const fetchProducts = async () => {
+        try {
+          const url = getApiUrl('/v1/products/discovery?limit=10');
+          const response = await fetch(url);
+          if (response.ok) {
+            const data = await response.json();
+            if (data && Array.isArray(data)) {
+              setRealProducts(data);
+            }
           }
+        } catch (e) {
+          console.error('Failed to fetch real products for butler:', e);
         }
-      } catch (e) {
-        console.error('Failed to fetch real products for butler:', e);
-      }
-    };
-    fetchProducts();
-  }, []);
+      };
+      fetchProducts();
+    }, []);
 
   // Persist messages to localStorage
   useEffect(() => {
@@ -164,19 +166,19 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
 
     // Call to backend AI endpoint (Proxying MiniMax to protect keys)
     try {
-      const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || '';
-      const response = await fetch(`${backendUrl}/api/v1/butler/chat`, {
+      const url = getApiUrl('/v1/butler/chat');
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          butler_name: agentName,
-          user_id: userId || currentUser?.id,
-          messages: messages.slice(-5).map(m => ({
+          butler_name: butlerName || agentName || '0Buck Butler',
+          messages: [...messages.slice(-5), newMessage].map(m => ({
             role: m.type === 'assistant' ? 'assistant' : 'user',
             content: m.content
-          })).concat({ role: 'user', content: inputValue })
+          }))
         }),
       });
         
@@ -261,7 +263,7 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
         <section className="h-12 sm:h-24 bg-zinc-900/20 border-b border-zinc-800/30 flex-shrink-0 flex flex-col justify-center overflow-hidden">
           <div className="w-full overflow-hidden relative group/scroller-top">
             <div className="animate-scroll-left flex gap-4 px-10">
-              {[...products, ...products].map((product, idx) => (
+              {[...realProducts, ...realProducts].map((product, idx) => (
                 <div 
                   key={`${product.id}-${idx}`} 
                   onClick={() => onProductClick?.(product as Product)}

@@ -13,6 +13,8 @@ interface Message {
   recommendedProducts?: Product[];
 }
 
+import { getApiUrl } from '../utils/api';
+
 export default function FloatingButler({ onProductClick }: { onProductClick?: (product: Product) => void }) {
   const deviceType = useDeviceType();
   const [isOpen, setIsOpen] = useState(false);
@@ -89,8 +91,8 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || '';
-        const response = await fetch(`${backendUrl}/api/v1/products/discovery?limit=5`);
+        const url = getApiUrl('/v1/products/discovery?limit=5');
+        const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
           if (data && Array.isArray(data)) {
@@ -165,8 +167,9 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
     // Call to backend AI endpoint
     const fetchAIResponse = async () => {
       try {
-        const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || '';
-        const response = await fetch(`${backendUrl}/api/v1/butler/chat`, {
+        const url = getApiUrl('/v1/butler/chat');
+        
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -212,13 +215,17 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
   return (
     <motion.div 
       ref={dragRef}
-      className="fixed bottom-8 right-8 z-[100] pointer-events-none flex flex-col items-end"
+      className={`fixed ${deviceType === 'h5' ? 'bottom-4 right-4' : 'bottom-8 right-8'} z-[100] pointer-events-none flex flex-col items-end`}
       drag
       dragMomentum={false}
+      dragConstraints={{
+        left: -(typeof window !== 'undefined' ? window.innerWidth - (deviceType === 'h5' ? 48 : 80) : 300),
+        right: 0,
+        top: -(typeof window !== 'undefined' ? window.innerHeight - (deviceType === 'h5' ? 120 : 160) : 600),
+        bottom: 0
+      }}
       onDragStart={() => setIsDragging(true)}
       onDragEnd={() => setTimeout(() => setIsDragging(false), 100)}
-      style={{ x: position.x, y: position.y }}
-      onDrag={(e, info) => setPosition({ x: position.x + info.delta.x, y: position.y + info.delta.y })}
     >
       <AnimatePresence>
         {!isOpen ? (
@@ -267,8 +274,9 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
               opacity: 1, 
               y: 0, 
               scale: 1,
-              height: isMinimized ? '80px' : '600px',
-              width: isMinimized ? '300px' : '400px'
+              height: isMinimized ? '80px' : (deviceType === 'h5' ? '85vh' : '600px'),
+              width: isMinimized ? (deviceType === 'h5' ? '280px' : '300px') : (deviceType === 'h5' ? '90vw' : '400px'),
+              maxWidth: deviceType === 'h5' ? '90vw' : '400px'
             }}
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
             className="pointer-events-auto bg-zinc-950/90 border border-zinc-800 shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-[32px] overflow-hidden flex flex-col relative backdrop-blur-2xl"

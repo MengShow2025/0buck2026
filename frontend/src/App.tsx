@@ -30,7 +30,9 @@ import 'stream-chat-react/dist/css/v2/index.css';
 import BAPAttachmentRenderer from './components/BAPAttachmentRenderer';
 import { useStreamVCC } from './hooks/useStreamVCC';
 
-export default function App() {
+export default import { getApiUrl } from './utils/api';
+
+function App() {
   const { t } = useTranslation();
   const deviceType = useDeviceType();
   const [showWelcome, setShowWelcome] = useState(true);
@@ -199,7 +201,8 @@ export default function App() {
                 setCurrentView('product-detail');
               } else if (action === 'VOTE') {
                 // Trigger C2M Vote logic
-                axios.post(`${(import.meta as any).env.VITE_BACKEND_URL || ''}/api/v1/c2m/vote`, {
+                const url = getApiUrl('/v1/c2m/vote');
+                axios.post(url, {
                   user_id: currentUser?.id,
                   wish_id: params.wish_id
                 }).then(() => alert('Vote registered!'))

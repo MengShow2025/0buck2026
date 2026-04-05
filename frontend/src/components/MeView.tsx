@@ -81,7 +81,7 @@ export default function MeView({
           animate={{ y: 0, opacity: 1, rotateX: 0 }}
           exit={{ y: -20, opacity: 0, rotateX: 90 }}
           transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-          className={`flip-card text-2xl font-headline font-black px-2 py-1 bg-zinc-900 rounded-lg border border-white/5 shadow-inner ${color}`}
+          className={`flip-card text-3xl font-headline font-black px-2 py-1 bg-zinc-900 rounded-lg border border-white/5 shadow-inner ${color}`}
         >
           {value}
         </motion.div>
@@ -122,40 +122,46 @@ export default function MeView({
   }
 
   return (
-    <div className="pt-2 sm:pt-8 pb-24 px-0.5 sm:px-8 max-w-[1600px] mx-auto space-y-2 sm:space-y-8 font-body">
+    <div className="pt-2 sm:pt-8 pb-24 px-1 sm:px-8 max-w-[1600px] mx-auto space-y-2 sm:space-y-8 font-body relative">
+      {onMenuClick && deviceType === 'h5' && (
+        <button 
+          onClick={onMenuClick}
+          className="fixed top-4 left-4 w-10 h-10 rounded-xl bg-zinc-900/80 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-400 hover:text-primary transition-colors z-50 shadow-2xl"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      )}
       {/* Header Section */}
       <header className="glass-panel rounded-[1rem] sm:rounded-[2.5rem] p-3 sm:p-10 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] -mr-32 -mt-32 rounded-full"></div>
         
-        <div className="relative z-10">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 sm:mb-8">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-[1.25rem] sm:rounded-[2rem] bg-zinc-900 border border-white/10 overflow-hidden p-1">
-                <div className="w-full h-full rounded-[1rem] sm:rounded-[1.75rem] bg-primary/10 flex items-center justify-center text-primary">
-                  <User className="w-7 h-7 sm:w-10 sm:h-10" />
-                </div>
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="flex items-center gap-4 mb-6 sm:mb-8">
+            <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-[1.25rem] sm:rounded-[2rem] bg-zinc-900 border border-white/10 overflow-hidden p-1 flex-shrink-0">
+              <div className="w-full h-full rounded-[1rem] sm:rounded-[1.75rem] bg-primary/10 flex items-center justify-center text-primary">
+                <User className="w-7 h-7 sm:w-10 sm:h-10" />
               </div>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2 text-primary mb-1">
-                  <Terminal className="w-3 h-3 sm:w-4 h-4" />
-                  <span className="text-[10px] sm:text-[10px] font-black tracking-[0.2em] sm:tracking-[0.3em] uppercase">{t('me.secure_terminal')}</span>
-                </div>
-                <h1 className="font-headline text-xl sm:text-4xl font-extrabold tracking-tighter text-white flex items-center gap-2 sm:gap-3">
-                  <input 
-                      type="text" 
-                      defaultValue="Julian Rossi"
-                      className="bg-transparent border-none outline-none focus:ring-0 focus:border-b focus:border-primary/50 transition-all p-0 w-full max-w-[120px] sm:max-w-[200px]"
-                    />
-                  <button className="text-zinc-500 hover:text-primary transition-colors">
-                    <Settings className="w-3.5 h-3.5 sm:w-4 h-4" />
-                  </button>
-                </h1>
-                <p className="text-[10px] sm:text-sm font-bold text-zinc-500 tracking-widest uppercase mt-1">Pro Member • Node ID: 8829-QX</p>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 text-primary mb-0.5">
+                <Terminal className="w-3 h-3 sm:w-4 h-4" />
+                <span className="text-[10px] sm:text-[10px] font-black tracking-[0.2em] sm:tracking-[0.3em] uppercase">{t('me.secure_terminal')}</span>
               </div>
+              <h1 className="font-headline text-xl sm:text-4xl font-extrabold tracking-tighter text-white flex items-center gap-2 sm:gap-3">
+                <input 
+                    type="text" 
+                    defaultValue="Julian Rossi"
+                    className="bg-transparent border-none outline-none focus:ring-0 focus:border-b focus:border-primary/50 transition-all p-0 w-full max-w-[120px] sm:max-w-[200px]"
+                  />
+                <button className="text-zinc-500 hover:text-primary transition-colors ml-4 sm:ml-6">
+                  <Settings className="w-3.5 h-3.5 sm:w-4 h-4" />
+                </button>
+              </h1>
+              <p className="text-[10px] sm:text-sm font-bold text-zinc-500 tracking-widest uppercase mt-0.5">Pro Member • Node ID: 8829-QX</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 w-full">
             {/* Wallet Card 1: Cash */}
             <div className="glass-panel rounded-[1.25rem] sm:rounded-[2rem] p-3 sm:p-6 relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
