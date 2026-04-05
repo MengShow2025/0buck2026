@@ -7,14 +7,9 @@ export const getApiUrl = (path: string): string => {
   // Ensure path starts with a slash
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   
-  // Vercel deployment detection
-  const isVercel = typeof window !== 'undefined' && 
-    (window.location.hostname.includes('vercel.app') || 
-     window.location.hostname === '0buck.com' || 
-     window.location.hostname === 'www.0buck.com');
-
-  if (isVercel) {
-    // Production: Always use relative path to leverage Vercel Proxy
+  // Production: Always use relative path to leverage Vercel Proxy
+  const isProd = import.meta.env.PROD;
+  if (isProd) {
     return normalizedPath.startsWith('/api') ? normalizedPath : `/api${normalizedPath}`;
   }
 
