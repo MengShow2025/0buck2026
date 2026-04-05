@@ -64,7 +64,10 @@ export default function SecurePayView({ payload, onBack, currentUser }: SecurePa
   }, []);
 
   const itemsSubtotal = useMemo(() => {
-    return localItems.reduce((sum, it) => sum + parsePrice(it.product.price) * it.quantity, 0);
+    return localItems.reduce((sum, it) => {
+      const priceVal = it?.product?.price ?? it?.price ?? 0;
+      return sum + parsePrice(priceVal) * (it?.quantity || 1);
+    }, 0);
   }, [localItems, parsePrice]);
 
   const shipping: number = 0;
@@ -93,9 +96,9 @@ export default function SecurePayView({ payload, onBack, currentUser }: SecurePa
         customer_id: currentUser?.id ? parseInt(currentUser.id) : null,
         email: email,
         items: localItems.map(it => ({
-          product_id: it.product.id,
-          quantity: it.quantity,
-          price: parsePrice(it.product.price)
+          product_id: it.product?.id || it.id,
+          quantity: it.quantity || 1,
+          price: parsePrice(it.product?.price || it.price)
         })),
         total_price: orderTotal,
         reward_base: itemsSubtotal, // Exclude tax/shipping for reward calculation
@@ -189,12 +192,12 @@ export default function SecurePayView({ payload, onBack, currentUser }: SecurePa
                     {localItems.map((it) => (
                       <div key={it.id} className="flex flex-col md:flex-row gap-6">
                         <div className="w-full md:w-32 aspect-square rounded-2xl overflow-hidden bg-black/5 border border-zinc-500/10 flex-shrink-0">
-                          <img src={it.product.image} alt={it.product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          <img src={it.product?.image || it.image || ''} alt={it.product?.name || it.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         </div>
                         <div className="flex-1 min-w-0 space-y-3">
-                          <div className="text-sm font-black text-on-surface leading-snug">{it.product.name}</div>
+                          <div className="text-sm font-black text-on-surface leading-snug">{it.product?.name || it.name}</div>
                           <div className="flex items-baseline gap-2">
-                            <div className="text-2xl font-black text-on-surface">${parsePrice(it.product.price).toFixed(2)}</div>
+                            <div className="text-2xl font-black text-on-surface">${parsePrice(it.product?.price || it.price).toFixed(2)}</div>
                             <div className="text-xs font-bold text-on-surface-variant/60 line-through">$1,500.00</div>
                           </div>
                           <div className="inline-flex items-center gap-2 px-3 py-2 bg-surface-container/60 border border-zinc-500/10 rounded-2xl">

@@ -122,9 +122,9 @@ export default function MeView({
   }
 
   return (
-    <div className="pt-2 sm:pt-8 pb-24 px-2 sm:px-8 max-w-[1600px] mx-auto space-y-4 sm:space-y-8 font-body">
+    <div className="pt-2 sm:pt-8 pb-24 px-0.5 sm:px-8 max-w-[1600px] mx-auto space-y-2 sm:space-y-8 font-body">
       {/* Header Section */}
-      <header className="glass-panel rounded-[1.5rem] sm:rounded-[2.5rem] p-4 sm:p-10 relative overflow-hidden">
+      <header className="glass-panel rounded-[1rem] sm:rounded-[2.5rem] p-3 sm:p-10 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] -mr-32 -mt-32 rounded-full"></div>
         
         <div className="relative z-10">
@@ -157,7 +157,7 @@ export default function MeView({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
             {/* Wallet Card 1: Cash */}
-            <div className="glass-panel rounded-[1.25rem] sm:rounded-[2rem] p-4 sm:p-6 relative overflow-hidden group">
+            <div className="glass-panel rounded-[1.25rem] sm:rounded-[2rem] p-3 sm:p-6 relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Wallet className="w-12 h-12 sm:w-16 sm:h-16" />
               </div>
@@ -183,7 +183,7 @@ export default function MeView({
             </div>
 
             {/* Wallet Card 2: Points */}
-            <div className="glass-panel rounded-[1.25rem] sm:rounded-[2rem] p-4 sm:p-6 relative overflow-hidden group">
+            <div className="glass-panel rounded-[1.25rem] sm:rounded-[2rem] p-3 sm:p-6 relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Star className="w-12 h-12 sm:w-16 sm:h-16" />
               </div>
@@ -212,7 +212,7 @@ export default function MeView({
       </header>
 
       {/* Stats Section */}
-      <div className="relative glass-panel rounded-[1.5rem] sm:rounded-[3rem] p-4 sm:p-8 border-primary/20 bg-black/40 overflow-hidden">
+      <div className="relative glass-panel rounded-[1rem] sm:rounded-[3rem] p-3 sm:p-8 border-primary/20 bg-black/40 overflow-hidden">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 relative z-10">
           <div className="lg:col-span-5 space-y-6">
@@ -281,8 +281,8 @@ export default function MeView({
           </div>
 
           <div className="lg:col-span-7 flex flex-col justify-between">
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <div className="p-4 sm:p-6 bg-white/5 rounded-[1.25rem] sm:rounded-3xl border border-white/5 relative group">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+              <div className="p-3 sm:p-6 bg-white/5 rounded-[1rem] sm:rounded-3xl border border-white/5 relative group">
                 <button 
                   onClick={() => setShowRulesModal('rewards')}
                   className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1 hover:bg-white/5 rounded-full text-zinc-500 hover:text-white transition-colors"
@@ -295,7 +295,7 @@ export default function MeView({
                   {t('me.signin')}
                 </button>
               </div>
-              <div className="p-4 sm:p-6 bg-primary/5 rounded-[1.25rem] sm:rounded-3xl border border-primary/10 relative group">
+              <div className="p-3 sm:p-6 bg-primary/5 rounded-[1rem] sm:rounded-3xl border border-primary/10 relative group">
                 <button 
                   onClick={() => setShowRulesModal('rewards')}
                   className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1 hover:bg-primary/10 rounded-full text-zinc-500 hover:text-primary transition-colors"
@@ -332,8 +332,8 @@ export default function MeView({
       </div>
 
       {/* Order History Table (Restored & Optimized) */}
-      <section className="glass-panel rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden mt-4 sm:mt-8">
-        <div className="p-4 sm:p-6 flex justify-between items-center border-b border-white/5 bg-black/20">
+      <section className="glass-panel rounded-[1rem] sm:rounded-[2.5rem] overflow-hidden mt-4 sm:mt-8">
+        <div className="p-3 sm:p-6 flex justify-between items-center border-b border-white/5 bg-black/20">
           <div className="flex items-center gap-3">
             <History className="w-5 h-5 text-primary" />
             <h3 className="font-headline font-bold text-white uppercase tracking-widest text-sm">{t('me.order_logs')}</h3>
@@ -398,9 +398,9 @@ export default function MeView({
       </section>
 
       {/* Settings List */}
-      <section className="glass-panel rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden mt-4 sm:mt-8">
+      <section className="glass-panel rounded-[1rem] sm:rounded-[2.5rem] overflow-hidden mt-4 sm:mt-8">
         <div className="flex flex-col">
-          <button onClick={() => setShowSettings(!showSettings)} className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+          <button onClick={() => setShowSettings(!showSettings)} className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
                 <Settings className="w-5 h-5" />
@@ -415,7 +415,7 @@ export default function MeView({
 
           {/* Inline Settings Panel */}
           {showSettings && (
-            <div className="p-4 sm:p-6 bg-black/40 border-b border-white/5">
+            <div className="p-3 sm:p-6 bg-black/40 border-b border-white/5">
               <div className="space-y-8">
                 {/* Language Setting */}
                 <div className="flex items-center justify-between px-2 py-1">
@@ -549,7 +549,7 @@ export default function MeView({
             </div>
           )}
 
-          <button className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <ShieldCheck className="w-5 h-5" />
@@ -562,7 +562,7 @@ export default function MeView({
             <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
           </button>
 
-          <button className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
                 <Lock className="w-5 h-5" />
@@ -575,7 +575,7 @@ export default function MeView({
             <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
           </button>
 
-          <button className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
                 <Globe className="w-5 h-5" />
@@ -588,7 +588,7 @@ export default function MeView({
             <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
           </button>
 
-          <button className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
                 <Book className="w-5 h-5" />
@@ -601,7 +601,7 @@ export default function MeView({
             <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
           </button>
 
-          <button className="flex items-center justify-between p-4 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
                 <HelpCircle className="w-5 h-5" />
@@ -616,7 +616,7 @@ export default function MeView({
 
           <button 
             onClick={onLogout}
-            className="flex items-center justify-between p-4 sm:p-6 hover:bg-error/5 transition-colors group"
+            className="flex items-center justify-between p-3 sm:p-6 hover:bg-error/5 transition-colors group"
           >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-error transition-colors">
