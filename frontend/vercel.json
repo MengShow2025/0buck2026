@@ -13,7 +13,7 @@
       "destination": "https://zerobuck-api.onrender.com/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
