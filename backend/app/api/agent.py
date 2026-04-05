@@ -9,38 +9,46 @@ from typing import List, Dict, Any, Optional
 from backend.app.schemas.agent import ChatRequest, ChatResponse, SessionCreate, SessionResponse, ProductSearchRequest
 from backend.app.services.agent import agent_executor
 from backend.app.services.vector_search import vector_search_service
+from backend.app.services.stream_chat import stream_chat_service
+from backend.app.models.ledger import AISession
+from backend.app.db.session import get_db
+from sqlalchemy.orm import Session
 from langchain_core.messages import HumanMessage
 
 router = APIRouter()
 
-# Mock session store (in production use Redis)
-SESSIONS = {}
-
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, db: Session = Depends(get_db)):
     """
     Core AI Chat endpoint. Processes natural language, images, and intent.
     Routes to the LangGraph AI agent.
     """
     try:
-        # Prepare content: if image_url exists, the model should handle it
-        # Note: Gemini 1.5 Pro can handle image urls if properly passed in HumanMessage
-        content = request.content
-        
-        # Simple string-based history for now (thread_id manages it in LangGraph Memory)
         session_id = request.session_id or "default"
-        
-        # Configuration for LangGraph (manages history automatically if configured)
         config = {"configurable": {"thread_id": session_id}}
         
-        # Run agent
-        initial_input = {"messages": [HumanMessage(content=content)]}
+        # Verify session if not default
+        if session_id != "default":
+            session = db.query(AISession).filter(AISession.session_id == session_id).first()
+            if not session:
+                # In dev we might allow it, but in prod we should be strict
+                print(f"Warning: Session {session_id} not found in database. Using as transient.")
+        
+        # Prepare content: if image_url exists, the model should handle it
+        content = request.content
         if request.image_url:
-            # Multi-modal message if needed, but for now we keep it simple
-            # (In production, format according to model requirements)
-            pass
-            
-        final_state = await agent_executor.ainvoke(initial_input, config=config)
+            content = f"{content}\n\nImage: {request.image_url}"
+
+        initial_state = {
+            "messages": [HumanMessage(content=content)],
+            "query_params": {},
+            "search_results": [],
+            "next_node": "supervisor",
+            "locale": request.locale or "en",
+            "currency": request.currency or "USD",
+        }
+
+        final_state = await agent_executor.ainvoke(initial_state, config=config)
         
         last_msg = final_state["messages"][-1]
         
@@ -67,13 +75,46 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/session", response_model=SessionResponse)
-async def create_session(request: SessionCreate):
+async def create_session(request: SessionCreate, db: Session = Depends(get_db)):
     """
     Initialize a new AI session for a user.
     """
     session_id = f"sess_{uuid.uuid4()}"
-    SESSIONS[session_id] = {"user_id": request.user_id, "created_at": datetime.now()}
-    return SessionResponse(session_id=session_id, user_id=request.user_id)
+    
+    # Save to persistent storage
+    new_session = AISession(
+        session_id=session_id,
+        user_id=request.user_id,
+        metadata_json={"created_via": "api"}
+    )
+    db.add(new_session)
+    db.commit()
+    
+    # Generate Stream Chat token and join global channels
+    try:
+        chat_token = stream_chat_service.generate_user_token(request.user_id)
+        chat_api_key = stream_chat_service.get_api_key()
+        
+        # v3.4 VCC: Ensure user is a member of global platform channels
+        global_channels = ["global_commerce", "global_square", "global_lounge"]
+        for c_id in global_channels:
+            try:
+                channel = stream_chat_service.server_client.channel("messaging", c_id)
+                channel.add_members([request.user_id])
+            except Exception as channel_err:
+                print(f"Error joining global channel {c_id}: {channel_err}")
+                
+    except Exception as e:
+        print(f"Error generating chat token: {e}")
+        chat_token = ""
+        chat_api_key = ""
+        
+    return SessionResponse(
+        session_id=session_id, 
+        user_id=request.user_id,
+        chat_token=chat_token,
+        chat_api_key=chat_api_key
+    )
 
 @router.post("/product_search")
 async def product_search(request: ProductSearchRequest):

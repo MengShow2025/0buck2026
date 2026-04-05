@@ -6,6 +6,8 @@ class ChatRequest(BaseModel):
     content: str
     session_id: Optional[str] = "default"
     image_url: Optional[str] = None
+    locale: Optional[str] = "en" # "en", "zh-CN", "es", etc.
+    currency: Optional[str] = "USD"
 
 class ChatResponse(BaseModel):
     id: str
@@ -22,6 +24,8 @@ class SessionCreate(BaseModel):
 class SessionResponse(BaseModel):
     session_id: str
     user_id: str
+    chat_token: Optional[str] = ""
+    chat_api_key: Optional[str] = ""
     created_at: datetime = datetime.now()
 
 class ProductSearchRequest(BaseModel):

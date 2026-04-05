@@ -32,9 +32,17 @@ class Settings(BaseSettings):
     
     # AI
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    MINIMAX_API_KEY: str = os.getenv("MINIMAX_API_KEY", "")
     EXA_API_KEY: str = os.getenv("EXA_API_KEY", "")
+    NOTION_TOKEN: str = os.getenv("NOTION_TOKEN", "")
     QDRANT_HOST: str = os.getenv("QDRANT_HOST", "localhost")
     QDRANT_PORT: int = int(os.getenv("QDRANT_PORT", 6333))
+    MASTER_SECRET_KEY: str = os.getenv("MASTER_SECRET_KEY", "0buck_default_master_key_for_api_keys_32")
+
+    # Stream Chat SDK
+    STREAM_API_KEY: str = os.getenv("STREAM_API_KEY", "")
+    STREAM_API_SECRET: str = os.getenv("STREAM_API_SECRET", "")
 
     # WhatsApp Business API
     WHATSAPP_API_TOKEN: str = os.getenv("WHATSAPP_API_TOKEN", "")
@@ -43,6 +51,7 @@ class Settings(BaseSettings):
 
     # Domains & Routing
     BACKEND_URL: str = os.getenv("BACKEND_URL", "")
+    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://0buck.com,https://0buck.com")
     STOREFRONT_DOMAIN: str = os.getenv("STOREFRONT_DOMAIN", "0buck.com")
     SHOPIFY_CHECKOUT_DOMAIN: str = os.getenv("SHOPIFY_CHECKOUT_DOMAIN", "") # e.g. shop.0buck.com
 

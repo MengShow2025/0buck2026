@@ -21,16 +21,16 @@ async def shopify_proxy(
     signature = params.pop("signature", None)
     
     # Verification logic
-    # sorted_params = sorted(params.items())
-    # data = "".join([f"{k}={v}" for k, v in sorted_params])
-    # expected_signature = hmac.new(
-    #     settings.SHOPIFY_API_SECRET.encode('utf-8'),
-    #     data.encode('utf-8'),
-    #     hashlib.sha256
-    # ).hexdigest()
+    sorted_params = sorted(params.items())
+    data = "".join([f"{k}={v}" for k, v in sorted_params])
+    expected_signature = hmac.new(
+        settings.SHOPIFY_API_SECRET.encode('utf-8'),
+        data.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
     
-    # if signature != expected_signature:
-    #    return {"error": "Invalid signature"}
+    if signature != expected_signature:
+       raise HTTPException(status_code=401, detail="Invalid signature")
     
     # Return proxy content or redirect to frontend
     return {"message": "App Proxy Verified", "customer_id": params.get("logged_in_customer_id")}

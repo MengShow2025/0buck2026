@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "square": "Platz",
+    "lounge": "Lounge",
+    "prime": "Direktbezug",
+    "feed": "Feed",
+    "stash": "Versteck",
+    "settings": "Einstellungen",
+    "help": "Hilfe",
+    "logout": "Abmelden",
+    "login": "Anmelden",
+    "active": "Aktiv",
+    "guest": "Gastforscher",
+    "pro_member": "Pro-Mitglied",
+    "guest_mode": "Gastmodus",
+    "chat": "KI-Butler"
+  },
+  "welcome": {
+    "slogans": [
+      "Jeder Termin, jede Begegnung,",
+      "Jede Reise, jeder Geistesblitz,",
+      "Jeder Einkauf..."
+    ],
+    "evolving": "Entwickelt sich zum",
+    "ai_butler": "KI-Butler",
+    "truly_knows": "der dich wirklich kennt.",
+    "enter": "Erfahrung betreten"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "subtitle": "Konfigurieren Sie Ihr Premium-Erlebnis",
+    "notifications": "Benachrichtigungen",
+    "message_alerts": "Nachrichten-Alarme",
+    "message_alerts_desc": "Ton und Banner für eingehende Direktnachrichten",
+    "group_mentions": "Gruppenerwähnungen",
+    "group_mentions_desc": "Benachrichtigen, wenn dich jemand in einem Bereich erwähnt",
+    "weekly_digest": "Wöchentliche Zusammenfassung",
+    "weekly_digest_desc": "Zusammenfassung der besten Diskussionen und Nachrichten per E-Mail",
+    "appearance": "Erscheinungsbild",
+    "butler_protocol": "Persönliches Butler-Protokoll",
+    "butler_name": "Name des Butlers",
+    "butler_name_desc": "Der Butler wird sich selbst mit diesem Namen ansprechen.",
+    "quota": "Nutzungskontingent",
+    "standard": "STANDARD",
+    "daily_progress": "Täglicher Fortschritt",
+    "monthly_consumption": "Monatlicher Verbrauch",
+    "used": "Gebraucht",
+    "byok_protocol": "BYOK-Protokoll",
+    "byok_desc": "Benutzerdefiniertes LLM-Gateway",
+    "device_interface": "Geräteschnittstelle",
+    "auto_detect": "Automatische Erkennung",
+    "mobile": "Mobil",
+    "desktop": "Desktop",
+    "model_endpoint": "Modell-Endpunkt",
+    "api_key": "API-Schlüssel",
+    "save_name": "Name speichern",
+    "update_all": "Alle aktualisieren",
+    "edit_profile": "Profil bearbeiten",
+    "manage_account": "Konto verwalten"
+  },
+  "prime": {
+    "title": "LIEFERBIBLIOTHEK",
+    "subtitle": "Verifizierte Fabriken & Quellgüter",
+    "banner_tag": "Sonderangebot",
+    "banner_title": "DIREKT VON DER QUELLE",
+    "banner_desc": "Schalten Sie Fabrikdirektpreise mit bis zu 100% Rückvergütung auf kuratierte Essentials frei.",
+    "explore_now": "Jetzt erkunden",
+    "supplier_types": "Lieferantentypen",
+    "min_order": "Mindestbestellung",
+    "categories": {
+      "all": "Alle Kategorien",
+      "electronics": "Elektronik",
+      "home": "Wohnen & Leben",
+      "fashion": "Mode",
+      "apparel": "Bekleidung",
+      "pet": "Tierbedarf",
+      "kitchen": "Küche",
+      "beauty": "Schönheit"
+    },
+    "card": {
+      "years": "JAHRE",
+      "top_rated": "Top bewertet",
+      "response_time": "Reaktionszeit",
+      "delivery": "Pünktliche Lieferung",
+      "contact": "Lieferanten kontaktieren",
+      "chat": "Jetzt chatten"
+    }
+  },
+  "chat": {
+    "placeholder": "Frage alles...",
+    "send": "Senden",
+    "butler_active": "Aktiv",
+    "daily_usage": "Täglicher Verbrauch",
+    "enter_full_view": "In die Vollansicht wechseln",
+    "buy_now": "Jetzt kaufen",
+    "add_to_cart": "In den Warenkorb"
+  },
+  "stash": {
+    "title": "Das Versteck",
+    "subtitle": "Deine handverlesenen Gewinne",
+    "empty": "Dein Versteck ist leer.",
+    "subtotal": "Zwischensumme",
+    "checkout": "Zur Kasse",
+    "remove": "Entfernen"
+  },
+  "secure_pay": {
+    "title": "Sicheres Bezahlen",
+    "subtitle": "Letzter Check vor dem Start",
+    "shipping": "Lieferadresse",
+    "payment": "Zahlungsmethode",
+    "confirm": "Zahlung bestätigen"
+  },
+  "common": {
+    "coming_soon": "Die Ansicht \"{{view}}\" folgt in Kürze.",
+    "error": "Etwas ist schiefgelaufen.",
+    "success": "Erfolg!"
+  }
+}

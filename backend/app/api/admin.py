@@ -1,45 +1,352 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import List, Dict
-from backend.app.db.session import get_db
-from backend.app.models.rewards import UserExt, Wallet, WalletTransaction, CheckinPlan
-from backend.app.models.product import Product
+from typing import List, Optional, Any
+from datetime import datetime
 from decimal import Decimal
+from pydantic import BaseModel
+
+from backend.app.db.session import get_db
+from backend.app.models import UserExt, Wallet, CheckinPlan, SystemConfig
+from backend.app.models.butler import UserButlerProfile, AIContribution, ShadowIDMapping, PersonaTemplate, AIUsageStats, UserMemoryFact
+from backend.app.models.ledger import AvailableCoupon, Order, SourcingOrder
+from backend.app.models.product import Product
+from backend.app.models.c2m import UserWish, DemandInsight, OrderCustomization
+from backend.app.services.discount_service import DiscountSyncService
+from backend.app.services.c2m_service import C2MService
 
 router = APIRouter()
 
-@router.get("/summary")
-def get_admin_summary(db: Session = Depends(get_db)):
-    """Get high-level summary for the dashboard"""
-    total_users = db.query(func.count(UserExt.customer_id)).scalar()
-    total_orders_synced = db.query(func.count(CheckinPlan.order_id)).scalar()
-    total_wallet_balance = db.query(func.sum(Wallet.balance_available)).scalar() or 0.0
-    total_products = db.query(func.count(Product.id)).scalar()
-    
-    # Last 10 transactions
-    recent_txs = db.query(WalletTransaction).order_by(WalletTransaction.created_at.desc()).limit(10).all()
+# --- Pydantic Schemas ---
+
+class PersonaTemplateUpdate(BaseModel):
+    id: str
+    name: str
+    style_prompt: str
+    empathy_weight: float = 0.5
+    formality_score: float = 0.5
+    vibrancy_level: float = 0.5
+    emoji_density: float = 0.5
+    is_active: bool = True
+
+class ExcludedCategoriesUpdate(BaseModel):
+    categories: List[str]
+
+class ProductUpdate(BaseModel):
+    category: Optional[str] = None
+    is_reward_eligible: Optional[bool] = None
+    is_cashback_eligible: Optional[bool] = None
+    product_category_type: Optional[str] = None
+    strategy_tag: Optional[str] = None
+    price_fluctuation_threshold: Optional[float] = None
+
+class GlobalConfigUpdate(BaseModel):
+    key: str
+    value: Any
+
+class RewardRatesUpdate(BaseModel):
+    silver_rate: float
+    gold_rate: float
+    platinum_rate: float
+    kol_dist_default: float
+    kol_fan_default: float
+    fan_silver_rate: float
+    fan_gold_rate: float
+    fan_platinum_rate: float
+
+class KOLApproveRequest(BaseModel):
+    user_id: int
+    dist_rate: Optional[float] = None
+    fan_rate: Optional[float] = None
+    status: str = "approved" # approved, rejected
+
+class CouponAssignRequest(BaseModel):
+    ai_category: str
+    ai_issuance_permission: str = "LOW" # LOW, MEDIUM, HIGH
+
+# --- Coupon Management ---
+
+@router.get("/coupons")
+def list_coupons(db: Session = Depends(get_db)):
+    """v3.1 List all synced coupons with AI categories and permissions"""
+    coupons = db.query(AvailableCoupon).all()
+    return [{
+        "code": c.code,
+        "type": c.type,
+        "value": c.value,
+        "min_requirement": c.min_requirement,
+        "ai_category": c.ai_category,
+        "ai_issuance_permission": c.ai_issuance_permission,
+        "is_active": c.is_active,
+        "expires_at": c.expires_at
+    } for c in coupons]
+
+@router.get("/coupons/sync")
+def sync_coupons(db: Session = Depends(get_db)):
+    """v3.1 Manual trigger for Shopify Coupon Sync"""
+    service = DiscountSyncService(db)
+    count = service.sync_from_shopify()
+    return {"status": "success", "synced_count": count}
+
+@router.post("/coupons/{code}/assign-category")
+def assign_coupon_category(code: str, data: CouponAssignRequest, db: Session = Depends(get_db)):
+    """v3.1 Assign AI category and permission to a synced coupon"""
+    coupon = db.query(AvailableCoupon).filter_by(code=code).first()
+    if not coupon:
+        raise HTTPException(status_code=404, detail="Coupon not found")
+    coupon.ai_category = data.ai_category
+    coupon.ai_issuance_permission = data.ai_issuance_permission
+    db.commit()
+    return {"status": "success"}
+
+# --- Global Config & AI Rules ---
+
+@router.get("/config/ai-rules")
+def get_ai_rules(db: Session = Depends(get_db)):
+    """v3.1 Get AI Coupon Issuance rules and daily budget"""
+    budget = db.query(SystemConfig).filter_by(key="AI_COUPON_DAILY_BUDGET").first()
+    rules = db.query(SystemConfig).filter_by(key="AI_COUPON_RULES").first()
     
     return {
-        "users_count": total_users,
-        "orders_count": total_orders_synced,
-        "total_balance": float(total_wallet_balance),
-        "products_count": total_products,
-        "recent_transactions": [
-            {
-                "id": str(tx.id),
-                "user_id": tx.user_id,
-                "amount": float(tx.amount),
-                "type": tx.type,
-                "status": tx.status,
-                "created_at": tx.created_at.isoformat()
-            } for tx in recent_txs
-        ]
+        "daily_budget": budget.value if budget else 50.0,
+        "rules": rules.value if rules else {}
     }
+
+@router.post("/config/global")
+def update_global_config(data: GlobalConfigUpdate, db: Session = Depends(get_db)):
+    """Update v3.0/v3.1 global strategy settings (markup, threshold, budget, etc.)"""
+    from backend.app.services.config_service import ConfigService
+    config = ConfigService(db)
+    config.set(data.key, data.value)
+    return {"status": "success", "key": data.key, "value": data.value}
+
+@router.get("/config/reward-rates")
+def get_reward_rates(db: Session = Depends(get_db)):
+    """v3.4.5 Get current reward rates from SystemConfig"""
+    from backend.app.services.config_service import ConfigService
+    config = ConfigService(db)
+    return {
+        "silver_rate": config.get("silver_rate", 0.015),
+        "gold_rate": config.get("gold_rate", 0.02),
+        "platinum_rate": config.get("platinum_rate", 0.03),
+        "kol_dist_default": config.get("kol_dist_default", 0.15),
+        "kol_fan_default": config.get("kol_fan_default", 0.05),
+        "fan_silver_rate": config.get("fan_silver_rate", 0.01),
+        "fan_gold_rate": config.get("fan_gold_rate", 0.0125),
+        "fan_platinum_rate": config.get("fan_platinum_rate", 0.015),
+    }
+
+@router.post("/config/reward-rates")
+def update_reward_rates(data: RewardRatesUpdate, db: Session = Depends(get_db)):
+    """v3.4.5 Update reward rates in SystemConfig"""
+    from backend.app.services.config_service import ConfigService
+    config = ConfigService(db)
+    for key, value in data.dict().items():
+        config.set(key, value, description=f"Reward rate for {key}")
+    return {"status": "success"}
+
+# --- Finance & KPIs ---
+
+@router.get("/finance/balance-sheet")
+def get_balance_sheet(db: Session = Depends(get_db)):
+    """v3.1 Financial Dashboard: Profit vs Liability"""
+    total_sales = db.query(func.sum(Order.total_price)).scalar() or 0.0
+    total_cogs = db.query(func.sum(Order.cogs_total)).scalar() or 0.0
+    # Reserve = Sales * 1.0 (Approx for 500 days return logic)
+    cashback_reserve = total_sales 
+    
+    return {
+        "net_profit": float(total_sales - total_cogs),
+        "total_sales": float(total_sales),
+        "total_cogs": float(total_cogs),
+        "cashback_reserve": float(cashback_reserve)
+    }
+
+@router.get("/dashboard/kpis")
+def get_dashboard_kpis(db: Session = Depends(get_db)):
+    """Admin v3.0/v3.1 Dashboard KPIs"""
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    orders_today = db.query(func.count(Order.shopify_order_id)).filter(Order.created_at >= today_start).scalar() or 0
+    
+    month_start = today_start.replace(day=1)
+    profit_mtd = db.query(func.sum(Product.sale_price - Product.source_cost_usd)).\
+        filter(Product.last_synced_at >= month_start).scalar() or 0.0
+    
+    ids_stats = db.query(Product.strategy_tag, func.count(Product.id)).group_by(Product.strategy_tag).all()
+    ids_conversion = {tag: count for tag, count in ids_stats if tag}
+    
+    melting_count = db.query(func.count(Product.id)).filter(Product.is_melted == True).scalar() or 0
+    
+    return {
+        "orders_today": orders_today,
+        "profit_mtd": round(float(profit_mtd), 2),
+        "ids_conversion": ids_conversion,
+        "melting_count": melting_count
+    }
+
+# --- Product Management ---
+
+@router.post("/products/{product_id}/update")
+def update_product_admin(product_id: int, data: ProductUpdate, db: Session = Depends(get_db)):
+    """Update product category, eligibility, and v3.0 management fields from admin"""
+    product = db.query(Product).filter_by(id=product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    if data.category is not None:
+        product.category = data.category
+    if data.is_reward_eligible is not None:
+        product.is_reward_eligible = data.is_reward_eligible
+    if data.is_cashback_eligible is not None:
+        product.is_cashback_eligible = data.is_cashback_eligible
+    if data.product_category_type is not None:
+        product.product_category_type = data.product_category_type
+    if data.strategy_tag is not None:
+        product.strategy_tag = data.strategy_tag
+    if data.price_fluctuation_threshold is not None:
+        product.price_fluctuation_threshold = data.price_fluctuation_threshold
+        
+    db.commit()
+    return {
+        "status": "success", 
+        "product_id": product_id, 
+        "category": product.category,
+        "strategy_tag": product.strategy_tag
+    }
+
+@router.get("/sync-status")
+def get_sync_status(db: Session = Depends(get_db)):
+    """Monitor Supply Chain, Shopify sync and v2.0 Margin (Anchor Pricing)"""
+    products = db.query(Product).order_by(Product.updated_at.desc()).limit(50).all()
+    res = []
+    for p in products:
+        buffered_cost = (float(p.original_price) * 1.005 / 0.14) if p.original_price else 0.0
+        margin_multiplier = p.sale_price / buffered_cost if buffered_cost > 0 else 0.0
+        is_pass = p.sale_price >= (buffered_cost * 4)
+            
+        res.append({
+            "id": p.id,
+            "title": p.title_en or (p.titles.get("en") if p.titles else "N/A"),
+            "shopify_id": p.shopify_product_id,
+            "category": p.category,
+            "cost_cny": float(p.original_price) if p.original_price else 0.0,
+            "buffered_cost_usd": round(buffered_cost, 2),
+            "price_usd": float(p.sale_price) if p.sale_price else 0.0,
+            "compare_at_price": float(p.compare_at_price) if p.compare_at_price else 0.0,
+            "margin_multiplier": round(margin_multiplier, 2),
+            "is_reward_eligible": p.is_reward_eligible,
+            "is_risk": not is_pass,
+            "updated_at": p.updated_at.isoformat()
+        })
+    return res
+
+@router.get("/melting/queue")
+def get_melting_queue(db: Session = Depends(get_db)):
+    """List products that triggered price melting"""
+    melted_products = db.query(Product).filter(Product.is_melted == True).all()
+    return [{
+        "product_id": p.id,
+        "title": p.title_en,
+        "id_1688": p.product_id_1688,
+        "old_price": p.last_stable_cost,
+        "current_price": p.original_price,
+        "melted_at": p.melted_at,
+        "melting_reason": p.melting_reason,
+        "updated_at": p.updated_at
+    } for p in melted_products]
+
+# --- AI Persona & Memory OS (v3.2) ---
+
+@router.get("/ai/persona-templates")
+def list_persona_templates(db: Session = Depends(get_db)):
+    """v3.2 List all L2 Persona Templates"""
+    templates = db.query(PersonaTemplate).all()
+    return templates
+
+@router.post("/ai/persona-templates")
+def update_persona_template(data: PersonaTemplateUpdate, db: Session = Depends(get_db)):
+    """v3.2 Create or Update an L2 Persona Template"""
+    template = db.query(PersonaTemplate).filter_by(id=data.id).first()
+    if not template:
+        template = PersonaTemplate(id=data.id)
+        db.add(template)
+    
+    template.name = data.name
+    template.style_prompt = data.style_prompt
+    template.empathy_weight = data.empathy_weight
+    template.formality_score = data.formality_score
+    template.vibrancy_level = data.vibrancy_level
+    template.emoji_density = data.emoji_density
+    template.is_active = data.is_active
+    
+    db.commit()
+    return {"status": "success", "template_id": data.id}
+
+@router.get("/ai/usage-stats")
+def get_ai_usage_stats(db: Session = Depends(get_db)):
+    """v3.2 Token Economics & Usage Analytics"""
+    stats = db.query(
+        AIUsageStats.task_type,
+        func.sum(AIUsageStats.tokens_in).label("total_in"),
+        func.sum(AIUsageStats.tokens_out).label("total_out"),
+        func.sum(AIUsageStats.cost_usd).label("total_cost")
+    ).group_by(AIUsageStats.task_type).all()
+    
+    return [
+        {
+            "task_type": s.task_type,
+            "tokens_in": s.total_in,
+            "tokens_out": s.total_out,
+            "cost_usd": float(s.total_cost)
+        } for s in stats
+    ]
+
+@router.get("/ai/memory-audit/{user_id}")
+def audit_user_memory(user_id: int, db: Session = Depends(get_db)):
+    """v3.2 Audit a specific user's long-term memory (Facts)"""
+    facts = db.query(UserMemoryFact).filter_by(user_id=user_id).order_by(UserMemoryFact.created_at.desc()).all()
+    return facts
+
+# --- AI & Sourcing Audit ---
+
+@router.get("/ai/health-check")
+def ai_health_check(db: Session = Depends(get_db)):
+    """v3.1 Hourly Health Check for BYOK Keys"""
+    active_keys = db.query(UserButlerProfile).filter(UserButlerProfile.ai_api_key.isnot(None)).all()
+    for profile in active_keys:
+        profile.byok_status = "active" if profile.ai_api_key.startswith("sk-") else "failed"
+        profile.last_health_check = datetime.utcnow()
+    db.commit()
+    return {"status": "success", "checked_count": len(active_keys)}
+
+@router.get("/ai/contributions")
+def get_ai_contributions(db: Session = Depends(get_db)):
+    """v3.1 AI Contribution Rankings and Rewards Status"""
+    contributions = db.query(AIContribution).order_by(AIContribution.usd_saved.desc()).limit(10).all()
+    return [{
+        "user_id": c.user_id,
+        "tokens_saved": c.tokens_saved,
+        "usd_saved": float(c.usd_saved),
+        "shards": c.reward_shards,
+        "total_cards": c.total_rewards_given
+    } for c in contributions]
+
+@router.get("/ai/shield-audit")
+def get_shield_audit(db: Session = Depends(get_db)):
+    """v3.1 Audit Shadow ID Mappings (Shield Zone 2)"""
+    mappings = db.query(ShadowIDMapping).order_by(ShadowIDMapping.created_at.desc()).limit(50).all()
+    return [{
+        "shadow_id": m.shadow_id,
+        "real_id": m.real_id,
+        "type": m.context_type,
+        "expires_at": m.expires_at
+    } for m in mappings]
+
+# --- User & Rewards Management ---
 
 @router.get("/users")
 def get_all_users(db: Session = Depends(get_db)):
-    """List all extended user profiles"""
+    """List all extended user profiles with balance and status"""
     users = db.query(UserExt).all()
     res = []
     for u in users:
@@ -48,25 +355,60 @@ def get_all_users(db: Session = Depends(get_db)):
             "customer_id": u.customer_id,
             "referral_code": u.referral_code,
             "user_type": u.user_type,
-            "balance": float(wallet.balance_available) if wallet else 0.0,
+            "user_tier": u.user_tier,
+            "kol_status": u.kol_status,
+            "dist_rate": float(u.dist_rate) if u.dist_rate else None,
+            "fan_rate": float(u.fan_rate) if u.fan_rate else None,
+            "balance_available": float(wallet.balance_available) if wallet else 0.0,
+            "balance_locked": float(wallet.balance_locked) if wallet else 0.0,
             "created_at": u.created_at.isoformat()
         })
     return res
 
-@router.get("/sync-status")
-def get_sync_status(db: Session = Depends(get_db)):
-    """Monitor 1688 and Shopify sync status"""
-    products = db.query(Product).order_by(Product.updated_at.desc()).limit(50).all()
+@router.post("/kol/approve")
+def approve_kol(data: KOLApproveRequest, db: Session = Depends(get_db)):
+    """Approve a KOL application and set custom commission rates"""
+    user = db.query(UserExt).filter_by(customer_id=data.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.user_type = "kol" if data.status == "approved" else "customer"
+    user.kol_status = data.status
+    if data.dist_rate is not None:
+        user.dist_rate = Decimal(str(data.dist_rate))
+    if data.fan_rate is not None:
+        user.fan_rate = Decimal(str(data.fan_rate))
+    db.commit()
+    return {"status": "success", "user_id": data.user_id, "user_type": user.user_type}
+
+@router.get("/rewards/plans")
+def get_all_checkin_plans(status: str = "active_checkin", db: Session = Depends(get_db)):
+    """Monitor active 500-day check-in plans"""
+    plans = db.query(CheckinPlan).filter_by(status=status).order_by(CheckinPlan.created_at.desc()).all()
     return [
         {
-            "id": p.id,
-            "title": p.title_en,
-            "shopify_id": p.shopify_product_id,
-            "cost_cny": float(p.cost_cny),
-            "price_usd": float(p.price_usd),
-            "updated_at": p.updated_at.isoformat()
-        } for p in products
+            "id": str(p.id),
+            "user_id": p.user_id,
+            "order_id": p.order_id,
+            "reward_base": float(p.reward_base),
+            "current_period": p.current_period,
+            "consecutive_days": p.consecutive_days,
+            "status": p.status,
+            "created_at": p.created_at.isoformat()
+        } for p in plans
     ]
+
+@router.post("/rewards/adjust-plan")
+def adjust_reward_plan(plan_id: str, days: int, status: str = None, db: Session = Depends(get_db)):
+    """Manual intervention for a user's 500-day check-in plan"""
+    plan = db.query(CheckinPlan).filter_by(id=plan_id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    plan.consecutive_days = days
+    if status:
+        plan.status = status
+    db.commit()
+    return {"status": "success", "plan_id": plan_id, "new_days": plan.consecutive_days, "new_status": plan.status}
 
 @router.post("/wallet/adjust")
 def adjust_wallet(user_id: int, amount: float, reason: str, db: Session = Depends(get_db)):
@@ -75,3 +417,140 @@ def adjust_wallet(user_id: int, amount: float, reason: str, db: Session = Depend
     rewards = RewardsService(db)
     rewards.update_wallet_balance(user_id, Decimal(str(amount)), "admin_adjustment", None, reason)
     return {"status": "success", "message": f"已为用户 {user_id} 调整余额: {amount}"}
+
+# --- Notion Integration ---
+
+@router.get("/notion/product-pool")
+async def get_notion_product_pool():
+    from backend.app.services.notion import NotionService
+    notion = NotionService()
+    try:
+        return await notion.get_product_pool()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Notion Error: {str(e)}")
+
+@router.post("/notion/sync-approved")
+async def sync_approved_products(db: Session = Depends(get_db)):
+    from backend.app.services.notion import NotionService
+    from backend.app.services.supply_chain import SupplyChainService
+    from backend.app.services.sync_shopify import SyncShopifyService
+    
+    notion = NotionService()
+    sc_service = SupplyChainService(db)
+    shopify_service = SyncShopifyService()
+    
+    try:
+        all_products = await notion.get_product_pool()
+        approved = [p for p in all_products if p.get("audit_status") == "审核通过"]
+        if not approved:
+            return {"status": "success", "message": "No approved products."}
+            
+        results = []
+        for p in approved:
+            id_1688 = p.get("id_1688")
+            if not id_1688: continue
+            
+            # v3.2: Pass Notion-level cashback eligibility to the sync service
+            product_obj = await sc_service.sync_product(
+                id_1688, 
+                comp_price_usd=p.get("comp_price"),
+                is_cashback_eligible=p.get("is_cashback_eligible")
+            )
+            
+            if isinstance(product_obj, dict) and product_obj.get("error"):
+                 results.append({"name": p['name'], "status": "failed", "reason": product_obj.get("error")})
+                 continue
+                 
+            shopify_service.sync_to_shopify(product_obj)
+            # Update Notion (Mocked here for brevity, actual uses curl PATCH)
+            results.append({"name": p['name'], "status": "synced"})
+        return {"status": "success", "synced_count": len(results)}
+    finally:
+        shopify_service.close_session()
+
+# --- C2M Management (v3.3) ---
+
+@router.get("/c2m/wishes")
+def list_user_wishes(db: Session = Depends(get_db)):
+    """v3.3 List all user wishes from the Wishing Well"""
+    wishes = db.query(UserWish).order_by(UserWish.created_at.desc()).all()
+    return wishes
+
+@router.get("/c2m/insights")
+async def get_demand_insights(db: Session = Depends(get_db)):
+    """v3.3 Get AI-clustered demand insights from LTM"""
+    service = C2MService(db)
+    # Trigger a refresh of insights from LTM
+    await service.analyze_unmet_needs()
+    insights = db.query(DemandInsight).order_by(DemandInsight.frequency.desc()).all()
+    return insights
+
+@router.post("/c2m/insights/{insight_id}/action")
+def update_insight_action(insight_id: int, action: str, db: Session = Depends(get_db)):
+    """v3.3 Record action taken on a demand insight"""
+    insight = db.query(DemandInsight).filter_by(id=insight_id).first()
+    if not insight:
+        raise HTTPException(status_code=404, detail="Insight not found")
+    insight.action_taken = action
+    insight.status = "sourcing"
+    db.commit()
+    return {"status": "success"}
+
+# --- IDS Audit Queue (v3.0/v3.2) ---
+
+@router.get("/ids/audit-queue")
+async def get_ids_audit_queue():
+    """v3.0 Fetch candidates from Notion that are '待审核' or '分析中'"""
+    from backend.app.services.notion import NotionService
+    notion = NotionService()
+    all_products = await notion.get_product_pool()
+    # Filter for candidates that haven't been approved yet
+    candidates = [p for p in all_products if p.get("audit_status") in ["待审核", "草稿", "分析中"]]
+    return candidates
+
+@router.post("/ids/approve")
+async def approve_ids_product(name: str, db: Session = Depends(get_db)):
+    """v3.0 Approve a product: Update Notion status and sync to Shopify"""
+    from backend.app.services.notion import NotionService
+    from backend.app.services.supply_chain import SupplyChainService
+    from backend.app.services.sync_shopify import SyncShopifyService
+    
+    notion = NotionService()
+    sc_service = SupplyChainService(db)
+    shopify_service = SyncShopifyService()
+    
+    try:
+        all_products = await notion.get_product_pool()
+        target = next((p for p in all_products if p['name'] == name), None)
+        
+        if not target:
+            raise HTTPException(status_code=404, detail="Product not found in Notion")
+            
+        id_1688 = target.get("id_1688")
+        if not id_1688:
+            raise HTTPException(status_code=400, detail="Missing 1688 ID")
+            
+        # 1. Sync to Local DB and Enforce Pricing
+        product_obj = await sc_service.sync_product(
+            id_1688, 
+            comp_price_usd=target.get("comp_price"),
+            is_cashback_eligible=target.get("is_cashback_eligible"),
+            strategy_tag=target.get("strategy_tag", "IDS_FOLLOWING")
+        )
+        
+        if isinstance(product_obj, dict) and product_obj.get("error"):
+             return {"status": "failed", "reason": product_obj.get("error")}
+             
+        # 2. Sync to Shopify
+        shopify_service.sync_to_shopify(product_obj)
+        
+        # 3. Update Notion Status to '审核通过'
+        # Note: NotionService needs update_audit_status method
+        if "page_id" in target:
+            await notion.update_page_properties(target["page_id"], {
+                "审核状态": {"select": {"name": "审核通过"}}
+            })
+            
+        return {"status": "success", "product_id": product_obj.id}
+    finally:
+        shopify_service.close_session()

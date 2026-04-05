@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "square": "廣場",
+    "lounge": "休息廳",
+    "prime": "優質直供",
+    "feed": "動態",
+    "stash": "儲藏室",
+    "settings": "設置",
+    "help": "幫助",
+    "logout": "注销",
+    "login": "登錄",
+    "active": "在線",
+    "guest": "訪客",
+    "pro_member": "專業版會員",
+    "guest_mode": "訪客模式",
+    "chat": "AI 管家"
+  },
+  "welcome": {
+    "slogans": [
+      "每一次約會，每一次邂逅，",
+      "每一次旅程，每一次靈光一現，",
+      "每一次購買..."
+    ],
+    "evolving": "演進為",
+    "ai_butler": "AI 管家",
+    "truly_knows": "真正了解你的助手。",
+    "enter": "進入體驗"
+  },
+  "settings": {
+    "title": "設置",
+    "subtitle": "配置您的尊享體驗",
+    "notifications": "通知",
+    "message_alerts": "消息提示",
+    "message_alerts_desc": "收到私信時的聲音和橫幅通知",
+    "group_mentions": "群組艾特",
+    "group_mentions_desc": "在頻道中被艾特時通知我",
+    "weekly_digest": "每周摘要",
+    "weekly_digest_desc": "發送到您郵箱的熱門討論和新聞摘要",
+    "appearance": "外觀",
+    "butler_protocol": "個人管家協議",
+    "butler_name": "管家名稱",
+    "butler_name_desc": "管家將在對話中使用此名稱稱呼自己。",
+    "quota": "使用限額",
+    "standard": "標準版",
+    "daily_progress": "今日進度",
+    "monthly_consumption": "本月消耗",
+    "used": "已使用",
+    "byok_protocol": "BYOK 協議",
+    "byok_desc": "自定義大模型網關",
+    "device_interface": "設備界面",
+    "auto_detect": "自動檢測",
+    "mobile": "移動端",
+    "desktop": "桌面端",
+    "model_endpoint": "模型端點",
+    "api_key": "API 密鑰",
+    "save_name": "保存名稱",
+    "update_all": "更新全部",
+    "edit_profile": "編輯個人資料",
+    "manage_account": "管理賬號"
+  },
+  "prime": {
+    "title": "供應庫",
+    "subtitle": "認證工廠與貨源",
+    "banner_tag": "特別優惠",
+    "banner_title": "源頭直供",
+    "banner_desc": "解鎖工廠直供價，精選必需品可享高達 100% 的返現。",
+    "explore_now": "立即探索",
+    "supplier_types": "供應商類型",
+    "min_order": "最小起訂量",
+    "categories": {
+      "all": "所有分類",
+      "electronics": "電子產品",
+      "home": "居家生活",
+      "fashion": "時尚",
+      "apparel": "服裝",
+      "pet": "寵物用品",
+      "kitchen": "廚房用品",
+      "beauty": "美妝"
+    },
+    "card": {
+      "years": "年",
+      "top_rated": "好評如潮",
+      "response_time": "響應時間",
+      "delivery": "準時交貨率",
+      "contact": "聯系供應商",
+      "chat": "立即溝通"
+    }
+  },
+  "chat": {
+    "placeholder": "問我任何事...",
+    "send": "發送",
+    "butler_active": "在線",
+    "daily_usage": "今日用量",
+    "enter_full_view": "進入全功能視圖",
+    "buy_now": "立即購買",
+    "add_to_cart": "加入購物車"
+  },
+  "stash": {
+    "title": "儲藏室",
+    "subtitle": "您挑選的戰利品",
+    "empty": "您的儲藏室是空的。",
+    "subtotal": "小計",
+    "checkout": "去結算",
+    "remove": "移除"
+  },
+  "secure_pay": {
+    "title": "安全支付",
+    "subtitle": "起飛前的最後檢查",
+    "shipping": "收貨地址",
+    "payment": "支付方式",
+    "confirm": "確認支付"
+  },
+  "common": {
+    "coming_soon": "\"{{view}}\" 視圖即將上線。",
+    "error": "出錯了。",
+    "success": "成功！"
+  }
+}

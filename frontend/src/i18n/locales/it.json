@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "square": "Piazza",
+    "lounge": "Salone",
+    "prime": "Fornitura Diretta",
+    "feed": "Notizie",
+    "stash": "Scorta",
+    "settings": "Impostazioni",
+    "help": "Aiuto",
+    "logout": "Disconnetti",
+    "login": "Accedi",
+    "active": "Attivo",
+    "guest": "Esploratore Ospite",
+    "pro_member": "Membro Pro",
+    "guest_mode": "Modalità Ospite",
+    "chat": "Maggiordomo IA"
+  },
+  "welcome": {
+    "slogans": [
+      "Ogni appuntamento, ogni incontro,",
+      "Ogni viaggio, ogni lampo di genio,",
+      "Ogni acquisto..."
+    ],
+    "evolving": "Si evolve in",
+    "ai_butler": "Maggiordomo IA",
+    "truly_knows": "che ti conosce davvero.",
+    "enter": "Entra nell'esperienza"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "subtitle": "Configura la tua esperienza premium",
+    "notifications": "Notifiche",
+    "message_alerts": "Avvisi messaggi",
+    "message_alerts_desc": "Suono e banner per i messaggi diretti in arrivo",
+    "group_mentions": "Menzioni di gruppo",
+    "group_mentions_desc": "Notifica quando qualcuno ti menziona in uno spazio",
+    "weekly_digest": "Riepilogo settimanale",
+    "weekly_digest_desc": "Riepilogo delle migliori discussioni e notizie via email",
+    "appearance": "Aspetto",
+    "butler_protocol": "Protocollo Maggiordomo Personale",
+    "butler_name": "Nome del Maggiordomo",
+    "butler_name_desc": "Il maggiordomo si riferirà a se stesso con questo nome.",
+    "quota": "Quota di utilizzo",
+    "standard": "STANDARD",
+    "daily_progress": "Progresso giornaliero",
+    "monthly_consumption": "Consumo mensile",
+    "used": "Usato",
+    "byok_protocol": "Protocollo BYOK",
+    "byok_desc": "Gateway LLM personalizzato",
+    "device_interface": "Interfaccia dispositivo",
+    "auto_detect": "Rilevamento automatico",
+    "mobile": "Mobile",
+    "desktop": "Desktop",
+    "model_endpoint": "Endpoint del modello",
+    "api_key": "Chiave API",
+    "save_name": "Salva nome",
+    "update_all": "Aggiorna tutto",
+    "edit_profile": "Modifica profilo",
+    "manage_account": "Gestisci account"
+  },
+  "prime": {
+    "title": "LIBRERIA FORNITURE",
+    "subtitle": "Fabbriche Verificate e Prodotti d'Origine",
+    "banner_tag": "Offerta Speciale",
+    "banner_title": "DIRETTO DALLA FONTE",
+    "banner_desc": "Sblocca i prezzi diretti di fabbrica con fino al 100% di rimborso su articoli essenziali.",
+    "explore_now": "Esplora ora",
+    "supplier_types": "Tipi di Fornitori",
+    "min_order": "Ordine Minimo",
+    "categories": {
+      "all": "Tutte le categorie",
+      "electronics": "Elettronica",
+      "home": "Casa e Vita",
+      "fashion": "Moda",
+      "apparel": "Abbigliamento",
+      "pet": "Animali domestici",
+      "kitchen": "Cucina",
+      "beauty": "Bellezza"
+    },
+    "card": {
+      "years": "ANNI",
+      "top_rated": "Più votati",
+      "response_time": "Tempo di risposta",
+      "delivery": "Consegna puntuale",
+      "contact": "Contatta il fornitore",
+      "chat": "Chat ora"
+    }
+  },
+  "chat": {
+    "placeholder": "Chiedi qualsiasi cosa...",
+    "send": "Invia",
+    "butler_active": "Attivo",
+    "daily_usage": "Utilizzo giornaliero",
+    "enter_full_view": "Passa alla vista completa",
+    "buy_now": "Acquista ora",
+    "add_to_cart": "Aggiungi al carrello"
+  },
+  "stash": {
+    "title": "La Scorta",
+    "subtitle": "I tuoi guadagni selezionati",
+    "empty": "La tua scorta è vuota.",
+    "subtotal": "Subtotale",
+    "checkout": "Procedi al pagamento",
+    "remove": "Rimuovi"
+  },
+  "secure_pay": {
+    "title": "Pagamento Sicuro",
+    "subtitle": "Ultimo controllo prima del decollo",
+    "shipping": "Indirizzo di spedizione",
+    "payment": "Metodo di pagamento",
+    "confirm": "Conferma pagamento"
+  },
+  "common": {
+    "coming_soon": "La vista \"{{view}}\" sarà disponibile a breve.",
+    "error": "Qualcosa è andato storto.",
+    "success": "Successo!"
+  }
+}

@@ -3,6 +3,10 @@ node_modules/
 dist/
 build/
 .env
+.env.local
+.env.*.local
+frontend/.env
+backend/.env
 
 # Python
 __pycache__/
@@ -10,53 +14,62 @@ __pycache__/
 *$py.class
 venv/
 ENV/
+.venv/
+.pytest_cache/
 
 # OS
 .DS_Store
+Thumbs.db
 
 # DB
 *.db
 *.sqlite
+*.sqlite3
 
 # Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pip-log.txt
 curl_output.txt
 
 # Temp / Local
 .accio/
 .chrome-profile/
 .vscode/
+.idea/
 temp/
 shop_info.json
-*.log
 project/
 SECURITY_POST_MORTEM.md
 
-# Frontend/Backend specifics
-frontend/node_modules/
-backend/node_modules/
+# Project Redundancy / Archives
+_Archive（冗余）/
+data/
+delivery/
+market_research/
+product_assets/
+reports/
 
-# Security: never commit secrets
-curl_output.txt
-*.log
-backend_output_*.log
-test_new_credentials.py
-test_customer_permission.py
-get_shop_info*.py
-test_new_token_debug.py
-verify_*.py
-final_test_prep.py
+# Scripts & Test files (prevent leakage of setup logic)
+scripts/
+backend/scripts/
+test_*.py
 check_*.py
-update_webhooks_py.py
-trigger_test_order.py
-*.js
-*.json
-*.png
-!vercel.json
-!frontend/vercel.json
-!frontend/package.json
-!backend/package.json
-!frontend/package-lock.json
-!backend/package-lock.json
-!frontend/tsconfig.json
-!frontend/tsconfig.node.json
+verify_*.py
+debug_*.py
+final_*.py
+update_*.py
+trigger_*.py
+get_shop_info*.py
+ids_daily_run.py
+align_shopify.py
+final_alignment.py
+fix_metafields.py
+init_db.py
+inject_redirect.py
+migrate_*.py
+sync_all.py
+sync_approved_products_v2.py
+audit_v3_2_full_system.py

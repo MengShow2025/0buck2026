@@ -1,10 +1,10 @@
 import httpx
 from typing import Dict, Any, List, Optional
 from langchain_core.tools import tool
-from app.core.config import settings
-from app.services.rewards import RewardsService
-from app.services.vector_search import vector_search_service
-from app.db.session import SessionLocal # 假设后端已有此 session 工厂
+from backend.app.core.config import settings
+from backend.app.services.rewards import RewardsService
+from backend.app.services.vector_search import vector_search_service
+from backend.app.db.session import SessionLocal # 假设后端已有此 session 工厂
 
 # Shopify Config
 SHOPIFY_API_URL = f"https://{settings.SHOPIFY_SHOP_NAME}.myshopify.com/admin/api/2026-01"
@@ -91,7 +91,7 @@ def get_recent_transactions(customer_id: int, limit: int = 5) -> List[Dict[str, 
 
 @tool
 def search_kb_rules(query: str) -> str:
-    """查询 0Buck 的平台规则，包括 555天签到、3人免单、推广分润等。"""
+    """查询 0Buck 的平台规则，包括 500天签到、3人免单、推广分润等。"""
     kb_path = "/Volumes/SAMSUNG 970/AccioWork/coder/0buck/backend/app/core/kb_rules.md"
     try:
         with open(kb_path, "r", encoding="utf-8") as f:

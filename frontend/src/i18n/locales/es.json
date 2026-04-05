@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "square": "Plaza",
+    "lounge": "Salón",
+    "prime": "Suministro Directo",
+    "feed": "Noticias",
+    "stash": "Alijo",
+    "settings": "Ajustes",
+    "help": "Ayuda",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "active": "Activo",
+    "guest": "Explorador Invitado",
+    "pro_member": "Miembro Pro",
+    "guest_mode": "Modo Invitado",
+    "chat": "Mayordomo IA"
+  },
+  "welcome": {
+    "slogans": [
+      "Cada cita, cada encuentro,",
+      "Cada viaje, cada destello de genio,",
+      "Cada compra..."
+    ],
+    "evolving": "Evolucionando a",
+    "ai_butler": "Mayordomo IA",
+    "truly_knows": "que realmente te conoce.",
+    "enter": "Entrar a la experiencia"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "subtitle": "Configure su experiencia premium",
+    "notifications": "Notificaciones",
+    "message_alerts": "Alertas de mensajes",
+    "message_alerts_desc": "Sonido y banner para mensajes directos entrantes",
+    "group_mentions": "Menciones de grupo",
+    "group_mentions_desc": "Notificar cuando alguien te menciona en un espacio",
+    "weekly_digest": "Resumen semanal",
+    "weekly_digest_desc": "Resumen de las mejores discusiones y noticias en su correo",
+    "appearance": "Apariencia",
+    "butler_protocol": "Protocolo de Mayordomo Personal",
+    "butler_name": "Nombre del Mayordomo",
+    "butler_name_desc": "El mayordomo se referirá a sí mismo por este nombre.",
+    "quota": "Cuota de Uso",
+    "standard": "ESTÁNDAR",
+    "daily_progress": "Progreso Diario",
+    "monthly_consumption": "Consumo Mensual",
+    "used": "Usado",
+    "byok_protocol": "Protocolo BYOK",
+    "byok_desc": "Pasarela LLM personalizada",
+    "device_interface": "Interfaz del dispositivo",
+    "auto_detect": "Detección automática",
+    "mobile": "Móvil",
+    "desktop": "Escritorio",
+    "model_endpoint": "Extremo del modelo",
+    "api_key": "Clave API",
+    "save_name": "Guardar nombre",
+    "update_all": "Actualizar todo",
+    "edit_profile": "Editar perfil",
+    "manage_account": "Gestionar cuenta"
+  },
+  "prime": {
+    "title": "BIBLIOTECA DE SUMINISTROS",
+    "subtitle": "Fábricas Verificadas y Productos de Origen",
+    "banner_tag": "Oferta Especial",
+    "banner_title": "DIRECTO DE ORIGEN",
+    "banner_desc": "Desbloquee precios directos de fábrica con hasta un 100% de reembolso en artículos esenciales.",
+    "explore_now": "Explorar ahora",
+    "supplier_types": "Tipos de Proveedores",
+    "min_order": "Pedido Mínimo",
+    "categories": {
+      "all": "Todas las categorías",
+      "electronics": "Electrónica",
+      "home": "Hogar y Vida",
+      "fashion": "Moda",
+      "apparel": "Ropa",
+      "pet": "Mascotas",
+      "kitchen": "Cocina",
+      "beauty": "Belleza"
+    },
+    "card": {
+      "years": "AÑOS",
+      "top_rated": "Mejor valorado",
+      "response_time": "Tiempo de respuesta",
+      "delivery": "Entrega puntual",
+      "contact": "Contactar proveedor",
+      "chat": "Chat ahora"
+    }
+  },
+  "chat": {
+    "placeholder": "Pregunta cualquier cosa...",
+    "send": "Enviar",
+    "butler_active": "Activo",
+    "daily_usage": "Uso Diario",
+    "enter_full_view": "Entrar a vista completa",
+    "buy_now": "Comprar ahora",
+    "add_to_cart": "Añadir al carrito"
+  },
+  "stash": {
+    "title": "El Alijo",
+    "subtitle": "Tus ganancias seleccionadas",
+    "empty": "Tu alijo está vacío.",
+    "subtotal": "Subtotal",
+    "checkout": "Proceder al pago",
+    "remove": "Eliminar"
+  },
+  "secure_pay": {
+    "title": "Pago Seguro",
+    "subtitle": "Verificación final antes del despegue",
+    "shipping": "Dirección de envío",
+    "payment": "Método de pago",
+    "confirm": "Confirmar pago"
+  },
+  "common": {
+    "coming_soon": "La vista \"{{view}}\" estará disponible pronto.",
+    "error": "Algo salió mal.",
+    "success": "¡Éxito!"
+  }
+}

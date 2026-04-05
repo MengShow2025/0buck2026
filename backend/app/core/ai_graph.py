@@ -53,7 +53,7 @@ async def search_agent_node(state: AgentState):
     
     # 构建 AI 回复，并附带商品数据供前端渲染
     ai_response = AIMessage(
-        content=f"为您找到 {len(results)} 款匹配商品。这些都是精选自 1688 的优质货源。",
+        content=f"为您找到 {len(results)} 款匹配商品。这些都是精选自供应库的优质货源。",
         additional_kwargs={
             "type": "products",
             "products": results

@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "square": "Dataran",
+    "lounge": "Lounge",
+    "prime": "Bekalan Terus",
+    "feed": "Suapan",
+    "stash": "Simpanan",
+    "settings": "Tetapan",
+    "help": "Bantuan",
+    "logout": "Log Keluar",
+    "login": "Log Masuk",
+    "active": "Aktif",
+    "guest": "Penjelajah Tetamu",
+    "pro_member": "Ahli Pro",
+    "guest_mode": "Mod Tetamu",
+    "chat": "Pembantu AI"
+  },
+  "welcome": {
+    "slogans": [
+      "Setiap janji temu, setiap pertemuan,",
+      "Setiap perjalanan, setiap cetusan idea,",
+      "Setiap pembelian..."
+    ],
+    "evolving": "Berevolusi menjadi",
+    "ai_butler": "Pembantu AI",
+    "truly_knows": "yang benar-benar mengenali anda.",
+    "enter": "Masuk Pengalaman"
+  },
+  "settings": {
+    "title": "Tetapan",
+    "subtitle": "Konfigurasi Pengalaman Premium Anda",
+    "notifications": "Pemberitahuan",
+    "message_alerts": "Amaran Mesej",
+    "message_alerts_desc": "Bunyi dan sepanduk untuk mesej langsung masuk",
+    "group_mentions": "Sebutan Kumpulan",
+    "group_mentions_desc": "Beritahu apabila seseorang menyebut anda dalam ruang",
+    "weekly_digest": "Ringkasan Mingguan",
+    "weekly_digest_desc": "Ringkasan perbincangan dan berita teratas dihantar ke e-mel anda",
+    "appearance": "Penampilan",
+    "butler_protocol": "Protokol Pembantu Peribadi",
+    "butler_name": "Nama Pembantu",
+    "butler_name_desc": "Pembantu akan merujuk dirinya dengan nama ini dalam sembang.",
+    "quota": "Kuota Penggunaan",
+    "standard": "STANDARD",
+    "daily_progress": "Kemajuan Harian",
+    "monthly_consumption": "Penggunaan Bulanan",
+    "used": "Digunakan",
+    "byok_protocol": "Protokol BYOK",
+    "byok_desc": "Gerbang LLM Tersuai",
+    "device_interface": "Antara Muka Peranti",
+    "auto_detect": "Kesan Automatik",
+    "mobile": "Mudah Alih",
+    "desktop": "Desktop",
+    "model_endpoint": "Endpoint Model",
+    "api_key": "Kunci API",
+    "save_name": "Simpan Nama",
+    "update_all": "Kemas Kini Semua",
+    "edit_profile": "Edit Profil",
+    "manage_account": "Urus Akaun"
+  },
+  "prime": {
+    "title": "PERPUSTAKAAN BEKALAN",
+    "subtitle": "Kilang Disahkan & Barangan Sumber",
+    "banner_tag": "Tawaran Istimewa",
+    "banner_title": "TERUS DARI SUMBER",
+    "banner_desc": "Buka kunci harga terus dari kilang dengan rebat sehingga 100% pada barangan keperluan terpilih.",
+    "explore_now": "Teroka Sekarang",
+    "supplier_types": "Jenis Pembekal",
+    "min_order": "Pesanan Minimum",
+    "categories": {
+      "all": "Semua Kategori",
+      "electronics": "Elektronik",
+      "home": "Rumah & Kehidupan",
+      "fashion": "Fesyen",
+      "apparel": "Pakaian",
+      "pet": "Bekalan Haiwan Peliharaan",
+      "kitchen": "Dapur",
+      "beauty": "Kecantikan"
+    },
+    "card": {
+      "years": "TAHUN",
+      "top_rated": "Dinilai Tertinggi",
+      "response_time": "Masa Respons",
+      "delivery": "Penghantaran Tepat Masa",
+      "contact": "Hubungi Pembekal",
+      "chat": "Sembang Sekarang"
+    }
+  },
+  "chat": {
+    "placeholder": "Tanya apa sahaja...",
+    "send": "Hantar",
+    "butler_active": "Aktif",
+    "daily_usage": "Penggunaan Harian",
+    "enter_full_view": "Masuk Paparan Penuh",
+    "buy_now": "Beli Sekarang",
+    "add_to_cart": "Tambah ke Troli"
+  },
+  "stash": {
+    "title": "Simpanan",
+    "subtitle": "Keuntungan terpilih anda",
+    "empty": "Simpanan anda kosong.",
+    "subtotal": "Jumlah kecil",
+    "checkout": "Teruskan ke Pembayaran",
+    "remove": "Keluarkan"
+  },
+  "secure_pay": {
+    "title": "Pembayaran Selamat",
+    "subtitle": "Semakan terakhir sebelum berlepas",
+    "shipping": "Alamat Penghantaran",
+    "payment": "Kaedah Pembayaran",
+    "confirm": "Sahkan Pembayaran"
+  },
+  "common": {
+    "coming_soon": "Paparan \"{{view}}\" akan datang tidak lama lagi.",
+    "error": "Sesuatu telah berlaku.",
+    "success": "Berjaya!"
+  }
+}

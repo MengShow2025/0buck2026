@@ -7,27 +7,30 @@ import json
 import asyncio
 from backend.app.core.config import settings
 from backend.app.db.session import get_db
-from backend.app.services.sync_1688 import Sync1688Service
+from backend.app.services.supply_chain import SupplyChainService
 from backend.app.services.sync_shopify import SyncShopifyService
 from backend.app.api.webhooks import router as webhooks_router
 from backend.app.api.admin import router as admin_router
 from backend.app.api.proxy import router as proxy_router
 from backend.app.api.agent import router as agent_router
+from backend.app.api.butler import router as butler_router
+from backend.app.api.rewards import router as rewards_router
+from backend.app.api.products import router as products_router
+from backend.app.api.stream import router as stream_router
 from backend.app.services.rewards import RewardsService
+from backend.app.services.stream_chat import stream_chat_service
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
 
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
-)
+app = FastAPI(title="0Buck Backend", version="3.4")
 
 # Set up CORS
+origins = settings.ALLOWED_ORIGINS.split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,7 +45,7 @@ async def root():
 
 @api_router.post("/sync/1688/{product_id}")
 async def sync_1688_product(product_id: str, db: Session = Depends(get_db)):
-    sync_1688 = Sync1688Service(db)
+    sync_1688 = SupplyChainService(db)
     product = await sync_1688.sync_product(product_id)
     
     sync_shopify = SyncShopifyService()
@@ -64,7 +67,9 @@ async def get_user_profile(customer_id: str, db: Session = Depends(get_db)):
         "id": customer_id,
         "name": "User " + customer_id,
         "wallet_balance": summary["available"],
-        "level": level_info["level"]
+        "level": level_info["level"],
+        "invitees": int(level_info.get("invitees") or 0),
+        "total_volume": float(level_info.get("total_volume") or 0),
     }
 
 @api_router.get("/customer/sync/{customer_id}")
@@ -81,11 +86,32 @@ async def sync_customer_to_shopify(customer_id: str, db: Session = Depends(get_d
     else:
         return {"status": "failed", "message": "Failed to sync data to Shopify. Check permissions."}
 
+@app.on_event("startup")
+async def startup_event():
+    # v3.4 VCC: Pre-create global platform channels
+    channels = [
+        ("messaging", "global_commerce", "COMMERCE HUB", {"platform_role": "global"}),
+        ("messaging", "global_square", "SQUARE BROADCAST", {"platform_role": "global"}),
+        ("messaging", "global_lounge", "SOCIAL LOUNGE", {"platform_role": "global"})
+    ]
+
+    for c_type, c_id, name, extra in channels:
+        try:
+            stream_chat_service.create_channel(c_type, c_id, name, extra_data=extra)
+            logger.info(f"  [VCC] Platform Channel Ready: {name} ({c_id})")
+        except Exception as e:
+            logger.error(f"  [VCC] Failed to create platform channel {name}: {e}")
+
 # Include routers
 app.include_router(api_router, tags=["api"])
 app.include_router(agent_router, prefix=f"{settings.API_V1_STR}", tags=["agent"])
+app.include_router(agent_router, prefix=f"{settings.API_V1_STR}/agent", tags=["agent"])
 app.include_router(admin_router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
 app.include_router(webhooks_router, prefix=f"{settings.API_V1_STR}/webhooks", tags=["webhooks"])
+app.include_router(butler_router, prefix=f"{settings.API_V1_STR}/butler", tags=["butler"])
+app.include_router(rewards_router, prefix=f"{settings.API_V1_STR}/rewards", tags=["rewards"])
+app.include_router(products_router, prefix=f"{settings.API_V1_STR}/products", tags=["products"])
+app.include_router(stream_router, prefix=f"{settings.API_V1_STR}/stream", tags=["stream"])
 app.include_router(proxy_router, prefix=f"{settings.API_V1_STR}/checkin", tags=["checkin"])
 
 # Serve static files from React build

@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "square": "Quảng trường",
+    "lounge": "Phòng chờ",
+    "prime": "Nguồn trực tiếp",
+    "feed": "Bản tin",
+    "stash": "Kho đồ",
+    "settings": "Cài đặt",
+    "help": "Trợ giúp",
+    "logout": "Đăng xuất",
+    "login": "Đăng nhập",
+    "active": "Hoạt động",
+    "guest": "Khách khám phá",
+    "pro_member": "Thành viên Pro",
+    "guest_mode": "Chế độ khách",
+    "chat": "Quản gia AI"
+  },
+  "welcome": {
+    "slogans": [
+      "Mọi cuộc hẹn, mọi cuộc gặp gỡ,",
+      "Mọi hành trình, mọi tia sáng thiên tài,",
+      "Mọi lần mua sắm..."
+    ],
+    "evolving": "Tiến hóa thành",
+    "ai_butler": "Quản gia AI",
+    "truly_knows": "người thực sự hiểu bạn.",
+    "enter": "Bắt đầu trải nghiệm"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "subtitle": "Cấu hình trải nghiệm cao cấp của bạn",
+    "notifications": "Thông báo",
+    "message_alerts": "Cảnh báo tin nhắn",
+    "message_alerts_desc": "Âm thanh và biểu ngữ cho tin nhắn trực tiếp đến",
+    "group_mentions": "Nhắc đến trong nhóm",
+    "group_mentions_desc": "Thông báo khi có người nhắc đến bạn trong một không gian",
+    "weekly_digest": "Tóm tắt hàng tuần",
+    "weekly_digest_desc": "Tóm tắt các cuộc thảo luận và tin tức hàng đầu được gửi đến email của bạn",
+    "appearance": "Giao diện",
+    "butler_protocol": "Giao thức quản gia cá nhân",
+    "butler_name": "Tên quản gia",
+    "butler_name_desc": "Quản gia sẽ tự xưng bằng tên này trong trò chuyện.",
+    "quota": "Hạn mức sử dụng",
+    "standard": "TIÊU CHUẨN",
+    "daily_progress": "Tiến độ hàng ngày",
+    "monthly_consumption": "Tiêu thụ hàng tháng",
+    "used": "Đã dùng",
+    "byok_protocol": "Giao thức BYOK",
+    "byok_desc": "Cổng LLM tùy chỉnh",
+    "device_interface": "Giao diện thiết bị",
+    "auto_detect": "Tự động phát hiện",
+    "mobile": "Di động",
+    "desktop": "Máy tính",
+    "model_endpoint": "Điểm cuối mô hình",
+    "api_key": "Khóa API",
+    "save_name": "Lưu tên",
+    "update_all": "Cập nhật tất cả",
+    "edit_profile": "Chỉnh sửa hồ sơ",
+    "manage_account": "Quản lý tài khoản"
+  },
+  "prime": {
+    "title": "THƯ VIỆN CUNG ỨNG",
+    "subtitle": "Nhà máy đã xác minh & Hàng hóa từ nguồn",
+    "banner_tag": "Ưu đãi đặc biệt",
+    "banner_title": "TRỰC TIẾP TỪ NGUỒN",
+    "banner_desc": "Mở khóa giá trực tiếp từ nhà máy với mức hoàn tiền lên tới 100% cho các mặt hàng thiết yếu được chọn lọc.",
+    "explore_now": "Khám phá ngay",
+    "supplier_types": "Loại nhà cung cấp",
+    "min_order": "Đơn hàng tối thiểu",
+    "categories": {
+      "all": "Tất cả danh mục",
+      "electronics": "Điện tử",
+      "home": "Nhà cửa & Đời sống",
+      "fashion": "Thời trang",
+      "apparel": "Quần áo",
+      "pet": "Đồ thú cưng",
+      "kitchen": "Nhà bếp",
+      "beauty": "Làm đẹp"
+    },
+    "card": {
+      "years": "NĂM",
+      "top_rated": "Xếp hạng cao nhất",
+      "response_time": "Thời gian phản hồi",
+      "delivery": "Giao hàng đúng hạn",
+      "contact": "Liên hệ nhà cung cấp",
+      "chat": "Trò chuyện ngay"
+    }
+  },
+  "chat": {
+    "placeholder": "Hỏi bất cứ điều gì...",
+    "send": "Gửi",
+    "butler_active": "Hoạt động",
+    "daily_usage": "Sử dụng hàng ngày",
+    "enter_full_view": "Vào chế độ xem đầy đủ",
+    "buy_now": "Mua ngay",
+    "add_to_cart": "Thêm vào giỏ hàng"
+  },
+  "stash": {
+    "title": "Kho đồ",
+    "subtitle": "Những món đồ bạn đã chọn",
+    "empty": "Kho đồ của bạn đang trống.",
+    "subtotal": "Tạm tính",
+    "checkout": "Tiến hành thanh toán",
+    "remove": "Xóa"
+  },
+  "secure_pay": {
+    "title": "Thanh toán an toàn",
+    "subtitle": "Kiểm tra cuối cùng trước khi hoàn tất",
+    "shipping": "Địa chỉ giao hàng",
+    "payment": "Phương thức thanh toán",
+    "confirm": "Xác nhận thanh toán"
+  },
+  "common": {
+    "coming_soon": "Chế độ xem \"{{view}}\" sẽ sớm ra mắt.",
+    "error": "Đã có lỗi xảy ra.",
+    "success": "Thành công!"
+  }
+}
