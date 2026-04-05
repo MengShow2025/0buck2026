@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://35c5-38-175-103-191.ngrok-free.app/api/:path*"
+      "destination": "https://zerobuck-api.onrender.com/api/:path*"
     }
   ]
 }
