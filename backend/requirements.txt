@@ -21,3 +21,5 @@ passlib
 bcrypt
 authlib
 itsdangerous
+pyotp
+qrcode[pil]

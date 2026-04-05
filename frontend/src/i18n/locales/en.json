@@ -281,7 +281,22 @@
     "help_center": "Help Center",
     "support_doc": "Support & Documentation",
     "terminate_session": "Terminate Session",
-    "sign_out": "Sign out of 0Buck"
+    "sign_out": "Sign out of 0Buck",
+    "2fa": {
+      "setup_title": "Setup Google 2FA",
+      "setup_desc": "Scan the QR code with Google Authenticator to enable two-factor authentication.",
+      "scan_qr": "Scan QR Code",
+      "enter_code": "Enter 6-digit code",
+      "placeholder": "000000",
+      "enable": "Enable 2FA",
+      "disable": "Disable 2FA",
+      "verify_title": "Two-Factor Verification",
+      "verify_desc": "Please enter the 6-digit verification code from your authenticator app.",
+      "invalid_code": "Invalid code, please try again.",
+      "success_enabled": "Google 2FA has been enabled.",
+      "success_disabled": "Google 2FA has been disabled.",
+      "backup_secret": "Please backup this secret key:"
+    }
   },
   "referral": {
     "normal_user": "Normal User",

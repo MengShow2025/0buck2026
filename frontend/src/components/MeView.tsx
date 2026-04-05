@@ -7,8 +7,10 @@ import {
   Calendar, TrendingUp, History, Share2, Eye, Settings,
   Shield, Lock, Globe, Book, LogOut, User, ChevronRight, ChevronDown, X,
   Sparkles, ArrowRight, Bell, MessageSquare, Users, Mail,
-  Palette, Smartphone, EyeOff, Trash2, Menu
+  Palette, Smartphone, EyeOff, Trash2, Menu, QrCode, Copy, Check
 } from 'lucide-react';
+import axios from 'axios';
+import { getApiUrl } from '../utils/api';
 
 const LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -69,6 +71,14 @@ export default function MeView({
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState<'points' | 'renewal' | 'rewards' | null>(null);
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [twoFactorData, setTwoFactorData] = useState<{qr_code: string, secret: string} | null>(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isSettingUp, setIsSettingUp] = useState(false);
+  const [copiedSecret, setCopiedSecret] = useState(false);
+  
   const [draftAgentName, setDraftAgentName] = useState(agentName);
   const [useByok, setUseByok] = useState(false);
   
@@ -93,6 +103,43 @@ export default function MeView({
   useEffect(() => {
     setDraftAgentName(agentName);
   }, [agentName]);
+
+  const handle2FASetup = async () => {
+    if (isSettingUp) return;
+    setIsSettingUp(true);
+    try {
+      const res = await axios.post(getApiUrl('/v1/auth/2fa/setup'));
+      setTwoFactorData(res.data);
+      setShow2FAModal(true);
+    } catch (err) {
+      console.error('Failed to setup 2FA:', err);
+      alert('2FA Setup failed: Connection Error');
+    } finally {
+      setIsSettingUp(false);
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    if (verificationCode.length !== 6) return;
+    setIsVerifying(true);
+    try {
+      await axios.post(getApiUrl('/v1/auth/2fa/enable'), { code: verificationCode });
+      setIs2FAEnabled(true);
+      setShow2FAModal(false);
+      setVerificationCode('');
+    } catch (err) {
+      console.error('Verification failed:', err);
+      alert(t('me.2fa.invalid_code'));
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedSecret(true);
+    setTimeout(() => setCopiedSecret(false), 2000);
+  };
 
   if (!isAuthenticated) {
     return (
@@ -338,7 +385,7 @@ export default function MeView({
         </div>
       </div>
 
-      {/* Order History Table (Restored & Optimized) */}
+      {/* Order History Table */}
       <section className="glass-panel rounded-[1rem] sm:rounded-[2.5rem] overflow-hidden mt-4 sm:mt-8">
         <div className="p-3 sm:p-6 flex justify-between items-center border-b border-white/5 bg-black/20">
           <div className="flex items-center gap-3">
@@ -412,9 +459,29 @@ export default function MeView({
       </section>
 
       {/* Settings List */}
-      <section className="glass-panel rounded-[1rem] sm:rounded-[2.5rem] overflow-hidden mt-4 sm:mt-8">
+      <section className="glass-panel rounded-[1rem] sm:rounded-[2.5rem] overflow-hidden mt-4 sm:mt-8 relative z-20">
         <div className="flex flex-col">
-          <button onClick={() => setShowSettings(!showSettings)} className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+          {/* Google 2FA Button - Moved to Top for better accessibility */}
+          <button 
+            onClick={handle2FASetup}
+            disabled={isSettingUp}
+            className={`flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5 relative z-30 cursor-pointer active:scale-[0.98] ${isSettingUp ? 'opacity-50' : ''}`}
+          >
+            <div className="flex items-center gap-4">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${is2FAEnabled ? 'bg-primary/10 text-primary' : 'bg-zinc-900 text-zinc-400 group-hover:text-primary'}`}>
+                {isSettingUp ? <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
+              </div>
+              <div className="text-left">
+                <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.google_2fa')}</h4>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${is2FAEnabled ? 'text-green-500' : 'text-zinc-500'}`}>
+                  {is2FAEnabled ? t('me.active_secure') : 'DISABLED'}
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
+          </button>
+
+          <button onClick={() => setShowSettings(!showSettings)} className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5 cursor-pointer active:scale-[0.98]">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
                 <Settings className="w-5 h-5" />
@@ -429,7 +496,7 @@ export default function MeView({
 
           {/* Inline Settings Panel */}
           {showSettings && (
-            <div className="p-3 sm:p-6 bg-black/40 border-b border-white/5">
+            <div className="p-3 sm:p-6 bg-black/40 border-b border-white/5 animate-in slide-in-from-top-4 duration-300">
               <div className="space-y-8">
                 {/* Language Setting */}
                 <div className="flex items-center justify-between px-2 py-1">
@@ -563,20 +630,7 @@ export default function MeView({
             </div>
           )}
 
-          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div className="text-left">
-                <h4 className="font-bold text-white text-sm uppercase tracking-tight">{t('me.google_2fa')}</h4>
-                <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">{t('me.active_secure')}</p>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
-          </button>
-
-          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5 cursor-pointer active:scale-[0.98]">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
                 <Lock className="w-5 h-5" />
@@ -589,7 +643,7 @@ export default function MeView({
             <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
           </button>
 
-          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5 cursor-pointer active:scale-[0.98]">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
                 <Globe className="w-5 h-5" />
@@ -602,7 +656,7 @@ export default function MeView({
             <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
           </button>
 
-          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5 cursor-pointer active:scale-[0.98]">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
                 <Book className="w-5 h-5" />
@@ -615,7 +669,7 @@ export default function MeView({
             <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors" />
           </button>
 
-          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5">
+          <button className="flex items-center justify-between p-3 sm:p-6 hover:bg-white/[0.02] transition-colors group border-b border-white/5 cursor-pointer active:scale-[0.98]">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
                 <HelpCircle className="w-5 h-5" />
@@ -630,7 +684,7 @@ export default function MeView({
 
           <button 
             onClick={onLogout}
-            className="flex items-center justify-between p-3 sm:p-6 hover:bg-error/5 transition-colors group"
+            className="flex items-center justify-between p-3 sm:p-6 hover:bg-error/5 transition-colors group cursor-pointer active:scale-[0.98]"
           >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-error transition-colors">
@@ -692,6 +746,71 @@ export default function MeView({
                 className="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/20"
               >
                 {t('common.success')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 2FA Setup Modal */}
+      {show2FAModal && twoFactorData && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setShow2FAModal(false)}></div>
+          <div className="relative w-full max-w-md glass-panel rounded-[2.5rem] p-8 border-white/10 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <button 
+              onClick={() => setShow2FAModal(false)}
+              className="absolute top-6 right-6 p-2 hover:bg-white/5 rounded-full text-zinc-500 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <QrCode className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-headline font-black text-white uppercase tracking-tight">{t('me.2fa.setup_title')}</h3>
+                <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em] mt-1">{t('me.2fa.setup_desc')}</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex justify-center p-6 bg-white rounded-3xl border-4 border-primary/20">
+                <img src={twoFactorData.qr_code} alt="2FA QR Code" className="w-48 h-48" />
+              </div>
+
+              <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-2">
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{t('me.2fa.backup_secret')}</p>
+                <div className="flex items-center justify-between gap-3">
+                  <code className="text-primary font-mono font-bold text-sm tracking-widest bg-primary/5 px-3 py-2 rounded-lg flex-1">
+                    {twoFactorData.secret}
+                  </code>
+                  <button 
+                    onClick={() => copyToClipboard(twoFactorData.secret)}
+                    className="p-2 hover:bg-white/10 rounded-xl text-zinc-400 hover:text-white transition-all"
+                  >
+                    {copiedSecret ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-zinc-500 uppercase ml-2 tracking-widest">{t('me.2fa.enter_code')}</label>
+                <input 
+                  type="text" 
+                  maxLength={6}
+                  placeholder={t('me.2fa.placeholder')}
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                  className="w-full h-14 px-6 rounded-2xl bg-black/40 border border-white/10 text-center text-2xl font-black tracking-[0.5em] text-white placeholder:text-zinc-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                />
+              </div>
+
+              <button 
+                onClick={handleVerify2FA}
+                disabled={verificationCode.length !== 6 || isVerifying}
+                className="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:hover:scale-100"
+              >
+                {isVerifying ? 'VERIFYING...' : t('me.2fa.enable')}
               </button>
             </div>
           </div>

@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
-import { Apple, Chrome, Facebook, Lock, Mail, Terminal, Shield, ArrowRight, Info } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Apple, Chrome, Facebook, Lock, Mail, Terminal, Shield, ArrowRight, Info, QrCode, ChevronLeft } from 'lucide-react';
 import Logo from './Logo';
 import { getApiUrl } from '../utils/api';
+import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 interface LoginViewProps {
   onLogin: (email: string) => void;
@@ -9,13 +11,75 @@ interface LoginViewProps {
   onGuestAccess?: () => void;
   onInteraction?: () => void;
   isModal?: boolean;
+  initialStep?: 'login' | '2fa';
+  initialEmail?: string;
 }
 
-export default function LoginView({ onLogin, onGoRegister, onGuestAccess, onInteraction, isModal = false }: LoginViewProps) {
-  const [email, setEmail] = useState('');
+export default function LoginView({ 
+  onLogin, 
+  onGoRegister, 
+  onGuestAccess, 
+  onInteraction, 
+  isModal = false,
+  initialStep = 'login',
+  initialEmail = ''
+}: LoginViewProps) {
+  const { t } = useTranslation();
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const [staySignedIn, setStaySignedIn] = useState(true);
-  
+  const [step, setStep] = useState<'login' | '2fa'>(initialStep);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Sync initial state if it changes externally
+  useEffect(() => {
+    if (initialStep) setStep(initialStep);
+    if (initialEmail) setEmail(initialEmail);
+  }, [initialStep, initialEmail]);
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    try {
+      // v3.4.6: Dynamic 2FA Check
+      const url = getApiUrl('/v1/auth/check-2fa');
+      console.log('Checking 2FA status at:', url, 'for email:', email);
+      const res = await axios.post(url, { email });
+      console.log('2FA Check Response:', res.data);
+      if (res.data.required) {
+        setStep('2fa');
+      } else {
+        onLogin(email);
+      }
+    } catch (err) {
+      console.error('Login check failed:', err);
+      // Fallback to normal login if check fails
+      onLogin(email);
+    }
+  };
+
+  const handle2FAVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (twoFactorCode.length !== 6) return;
+    
+    setIsVerifying(true);
+    setError(null);
+    try {
+      await axios.post(getApiUrl('/v1/auth/2fa/verify-login'), {
+        email,
+        code: twoFactorCode
+      });
+      onLogin(email);
+    } catch (err) {
+      setError(t('me.2fa.invalid_code'));
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
     if (onInteraction) onInteraction();
@@ -59,78 +123,130 @@ export default function LoginView({ onLogin, onGoRegister, onGuestAccess, onInte
     <div className="glass-panel bg-black/60 backdrop-blur-[24px] border border-white/10 rounded-2xl p-8 md:p-10 shadow-2xl relative overflow-hidden group">
       <div className="absolute -top-12 -right-12 text-[12rem] font-black text-white/[0.02] select-none pointer-events-none group-hover:text-primary/[0.03] transition-colors slashed-zero">0</div>
       <div className="relative z-10">
-        <h2 className="text-2xl font-bold font-headline mb-2 text-white">Initialize Session</h2>
-        <p className="text-white/40 text-sm mb-8">Select authentication method to access the ledger.</p>
-        
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          <button 
-            onClick={() => window.location.href = getApiUrl('/v1/auth/login/google')}
-            className="flex flex-col items-center justify-center py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 group/btn"
-          >
-            <Chrome className="w-6 h-6 mb-2 text-white/60 group-hover/btn:text-white transition-colors" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover/btn:text-white">Google</span>
-          </button>
-          <button 
-            onClick={() => window.location.href = getApiUrl('/v1/auth/login/apple')}
-            className="flex flex-col items-center justify-center py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 group/btn"
-          >
-            <Apple className="w-6 h-6 mb-2 text-white/60 group-hover/btn:text-white transition-colors" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover/btn:text-white">Apple</span>
-          </button>
-          <button 
-            onClick={() => window.location.href = getApiUrl('/v1/auth/login/facebook')}
-            className="flex flex-col items-center justify-center py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 group/btn"
-          >
-            <Facebook className="w-6 h-6 mb-2 text-white/60 group-hover/btn:text-white transition-colors" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover/btn:text-white">Meta</span>
-          </button>
-        </div>
+        {step === 'login' ? (
+          <>
+            <h2 className="text-2xl font-bold font-headline mb-2 text-white">Initialize Session</h2>
+            <p className="text-white/40 text-sm mb-8">Select authentication method to access the ledger.</p>
+            
+            <div className="grid grid-cols-3 gap-3 mb-8">
+              <button 
+                onClick={() => window.location.href = getApiUrl('/v1/auth/login/google')}
+                className="flex flex-col items-center justify-center py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 group/btn"
+              >
+                <Chrome className="w-6 h-6 mb-2 text-white/60 group-hover/btn:text-white transition-colors" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover/btn:text-white">Google</span>
+              </button>
+              <button 
+                onClick={() => window.location.href = getApiUrl('/v1/auth/login/apple')}
+                className="flex flex-col items-center justify-center py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 group/btn"
+              >
+                <Apple className="w-6 h-6 mb-2 text-white/60 group-hover/btn:text-white transition-colors" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover/btn:text-white">Apple</span>
+              </button>
+              <button 
+                onClick={() => window.location.href = getApiUrl('/v1/auth/login/facebook')}
+                className="flex flex-col items-center justify-center py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 group/btn"
+              >
+                <Facebook className="w-6 h-6 mb-2 text-white/60 group-hover/btn:text-white transition-colors" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover/btn:text-white">Meta</span>
+              </button>
+            </div>
 
-        <div className="relative flex items-center gap-4 mb-8">
-          <div className="h-px bg-white/10 flex-grow"></div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20">or email protocol</span>
-          <div className="h-px bg-white/10 flex-grow"></div>
-        </div>
+            <div className="relative flex items-center gap-4 mb-8">
+              <div className="h-px bg-white/10 flex-grow"></div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20">or email protocol</span>
+              <div className="h-px bg-white/10 flex-grow"></div>
+            </div>
 
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onLogin(email); }}>
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Email Identifier</label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-              <input 
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-white/20" 
-                placeholder="operator@0buck.network" 
-                type="email"
-                value={email}
-                onChange={handleEmailChange}
-                onFocus={onInteraction}
-              />
+            <form className="space-y-4" onSubmit={handleLoginSubmit}>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Email Identifier</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                  <input 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-white/20" 
+                    placeholder="operator@0buck.network" 
+                    type="email"
+                    value={email}
+                    onChange={handleEmailChange}
+                    onFocus={onInteraction}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Access Key</label>
+                  <button type="button" className="text-[10px] font-bold uppercase text-primary/60 hover:text-primary transition-colors">Recovery?</button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                  <input 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-white/20" 
+                    placeholder="••••••••••••" 
+                    type="password"
+                    value={password}
+                    onChange={handlePasswordChange}
+                    onFocus={onInteraction}
+                  />
+                </div>
+              </div>
+              <button 
+                disabled={isContinueDisabled}
+                className="w-full bg-primary hover:bg-primary/90 py-4 rounded-xl font-bold text-sm tracking-widest uppercase shadow-lg shadow-primary/20 transition-all active:scale-[0.98] mt-4 text-white disabled:opacity-50"
+              >
+                Establish Connection
+              </button>
+            </form>
+          </>
+        ) : (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <button 
+              onClick={() => setStep('login')}
+              className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors mb-6"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Back to Login
+            </button>
+            
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <Shield className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-headline font-black text-white uppercase tracking-tight">{t('me.2fa.verify_title')}</h3>
+                <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em] mt-1">{t('me.2fa.verify_desc')}</p>
+              </div>
             </div>
+
+            <form className="space-y-6" onSubmit={handle2FAVerify}>
+              <div className="space-y-3">
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    maxLength={6}
+                    autoFocus
+                    placeholder={t('me.2fa.placeholder')}
+                    value={twoFactorCode}
+                    onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ''))}
+                    className="w-full h-16 rounded-2xl bg-white/5 border border-white/10 text-center text-3xl font-black tracking-[0.5em] text-white placeholder:text-white/5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                  />
+                </div>
+                {error && <p className="text-[10px] font-bold text-red-500 text-center uppercase tracking-widest">{error}</p>}
+              </div>
+
+              <button 
+                disabled={twoFactorCode.length !== 6 || isVerifying}
+                className="w-full bg-primary hover:bg-primary/90 py-4 rounded-xl font-bold text-sm tracking-widest uppercase shadow-lg shadow-primary/20 transition-all active:scale-[0.98] text-white disabled:opacity-50"
+              >
+                {isVerifying ? 'Verifying...' : 'Authorize Access'}
+              </button>
+              
+              <p className="text-center text-[10px] text-white/20 uppercase tracking-[0.2em] font-bold">
+                Identity Verification Required
+              </p>
+            </form>
           </div>
-          <div className="space-y-1">
-            <div className="flex justify-between items-center">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Access Key</label>
-              <button type="button" className="text-[10px] font-bold uppercase text-primary/60 hover:text-primary transition-colors">Recovery?</button>
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-              <input 
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-white/20" 
-                placeholder="••••••••••••" 
-                type="password"
-                value={password}
-                onChange={handlePasswordChange}
-                onFocus={onInteraction}
-              />
-            </div>
-          </div>
-          <button 
-            disabled={isContinueDisabled}
-            className="w-full bg-primary hover:bg-primary/90 py-4 rounded-xl font-bold text-sm tracking-widest uppercase shadow-lg shadow-primary/20 transition-all active:scale-[0.98] mt-4 text-white disabled:opacity-50"
-          >
-            Establish Connection
-          </button>
-        </form>
+        )}
         <p className="text-center mt-8 text-xs text-white/30">
           System authorized access only. <button onClick={onGoRegister} className="text-white/60 hover:text-primary font-bold transition-colors">Register new node</button>
         </p>

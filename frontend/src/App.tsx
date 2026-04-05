@@ -53,26 +53,74 @@ export default function App() {
   });
   const [isUserTyping, setIsUserTyping] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
-  // v3.4.4: Handle OAuth Callback Redirect
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const authSuccess = params.get('auth_success');
-    const email = params.get('email');
-    
-    if (authSuccess === 'true' && email) {
-      // Clear URL params
-      window.history.replaceState({}, document.title, window.location.pathname);
-      handleLogin(email);
-    }
-  }, []);
-  
-  // v3.4.3: useStreamVCC Hook for lazy initialization
-  const { chatClient, isChatReady, isConnecting, connect, disconnect } = useStreamVCC(isAuthenticated, currentUser);
-
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [onAuthSuccess, setOnAuthSuccess] = useState<{ callback: () => void } | null>(null);
+
+  const handleLogin = useCallback((email: string) => {
+    if (!email) return;
+    const user = { id: email.replace(/[^a-zA-Z0-9]/g, '_'), email };
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    localStorage.setItem('0buck_auth_state', 'true');
+    localStorage.setItem('0buck_user', JSON.stringify(user));
+    setShowAuthModal(false);
+    setCurrentView('chat');
+    if (onAuthSuccess) {
+      onAuthSuccess.callback();
+      setOnAuthSuccess(null);
+    }
+  }, [onAuthSuccess]);
+
+  // v3.4.6: Render LoginView with potential 2FA state
+  const renderLoginView = useCallback((isModal: boolean = false) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const is2FA = urlParams.get('2fa_required') === 'true' || (currentUser?.email && !isAuthenticated && showAuthModal);
+    
+    return (
+      <LoginView 
+        onLogin={handleLogin} 
+        onGoRegister={() => setAuthMode('register')} 
+        onGuestAccess={() => {
+          if (isModal) {
+            setShowAuthModal(false);
+          } else {
+            setShowWelcome(false);
+          }
+          setCurrentView('chat');
+        }}
+        onInteraction={() => !isModal && setIsUserTyping(true)}
+        isModal={isModal}
+        initialStep={is2FA ? '2fa' : 'login'}
+        initialEmail={currentUser?.email || ''}
+      />
+    );
+  }, [handleLogin, currentUser, isAuthenticated, showAuthModal]);
+
+  // v3.4.6: Handle OAuth Success and 2FA Redirects
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const authSuccess = urlParams.get('auth_success');
+    const twoFactorRequired = urlParams.get('2fa_required');
+    const email = urlParams.get('email');
+
+    if (authSuccess === 'true' && email) {
+      handleLogin(email);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (twoFactorRequired === 'true' && email) {
+      // Show login modal but skip to 2FA step
+      setAuthMode('login');
+      setShowAuthModal(true);
+      setCurrentUser({ id: email.replace(/[^a-zA-Z0-9]/g, '_'), email });
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [handleLogin]);
+
+  // v3.4.3: useStreamVCC Hook for lazy initialization
+  const { chatClient, isChatReady, isConnecting, connect, disconnect } = useStreamVCC(isAuthenticated, currentUser);
+
   const [securePayBackView, setSecurePayBackView] = useState<ViewType>('chat');
   const [securePayPayload, setSecurePayPayload] = useState<SecurePayPayload | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -164,21 +212,6 @@ export default function App() {
     setCurrentView('login');
   }, []);
 
-  const handleLogin = useCallback((email: string) => {
-    if (!email) return;
-    const user = { id: email.replace(/[^a-zA-Z0-9]/g, '_'), email };
-    setCurrentUser(user);
-    setIsAuthenticated(true);
-    localStorage.setItem('0buck_auth_state', 'true');
-    localStorage.setItem('0buck_user', JSON.stringify(user));
-    setShowAuthModal(false);
-    setCurrentView('chat');
-    if (onAuthSuccess) {
-      onAuthSuccess.callback();
-      setOnAuthSuccess(null);
-    }
-  }, [onAuthSuccess]);
-
   const requireAuth = useCallback((action: () => void) => {
     if (isAuthenticated) {
       action();
@@ -250,19 +283,12 @@ export default function App() {
       }
       return <Attachment {...props} />;
     };
-  }, [isAuthenticated, requireAuth, currentView]);
+  }, [isAuthenticated, requireAuth, currentView, currentUser?.id]);
 
   const renderView = () => {
     switch (currentView) {
       case 'login':
-        return (
-          <LoginView 
-            onLogin={handleLogin} 
-            onGoRegister={() => setCurrentView('register')} 
-            onGuestAccess={() => { setShowWelcome(false); setCurrentView('chat'); }} 
-            onInteraction={() => setIsUserTyping(true)}
-          />
-        );
+        return renderLoginView();
       case 'register':
         return <RegisterView onRegister={handleLogin} onGoLogin={() => setCurrentView('login')} onGuestAccess={() => { setShowWelcome(false); setCurrentView('chat'); }} />;
       case 'checkin':
@@ -648,7 +674,7 @@ export default function App() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </button>
                   {authMode === 'login' ? (
-                    <LoginView onLogin={handleLogin} onGoRegister={() => setAuthMode('register')} isModal />
+                    renderLoginView(true)
                   ) : (
                     <RegisterView onRegister={handleLogin} onGoLogin={() => setAuthMode('login')} isModal />
                   )}

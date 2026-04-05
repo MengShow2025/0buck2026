@@ -5,6 +5,11 @@ from app.core.config import settings
 from authlib.integrations.starlette_client import OAuth
 from starlette.responses import RedirectResponse
 import json
+import pyotp
+import qrcode
+import io
+import base64
+from app.models.ledger import UserExt
 
 router = APIRouter()
 
@@ -37,6 +42,108 @@ oauth.register(
     client_kwargs={'scope': 'name email'}
 )
 
+@router.post("/check-2fa")
+async def check_2fa_status(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    email = data.get("email")
+    print(f"Checking 2FA status for email: {email}")
+    
+    # v3.4.6: In this demo, all logins are mapped to user 8829 (Julian Rossi)
+    # This ensures that if the user enables 2FA on the Me page, 
+    # any subsequent login with a standard email will trigger the 2FA challenge.
+    user = db.query(UserExt).filter(UserExt.customer_id == 8829).first()
+    if user and user.is_two_factor_enabled:
+        print(f"2FA is ENABLED for user 8829")
+        return {"required": True}
+    
+    print(f"2FA is DISABLED for user 8829")
+    return {"required": False}
+
+@router.post("/2fa/setup")
+async def setup_2fa(request: Request, db: Session = Depends(get_db)):
+    # In v3.4 we simulate the current user. In prod, use JWT/Session.
+    # For now, we use a fixed user ID for testing or the email if provided in session.
+    user_id = 8829 # Default Node ID from MeView.tsx
+    user = db.query(UserExt).filter(UserExt.customer_id == user_id).first()
+    
+    if not user:
+        # Create user if doesn't exist for demo
+        user = UserExt(customer_id=user_id, referral_code=f"REF{user_id}")
+        db.add(user)
+        db.commit()
+
+    if not user.two_factor_secret:
+        user.two_factor_secret = pyotp.random_base32()
+        db.commit()
+
+    totp = pyotp.TOTP(user.two_factor_secret)
+    provisioning_uri = totp.provisioning_uri(name="0Buck", issuer_name="0Buck")
+    
+    # Generate QR Code
+    img = qrcode.make(provisioning_uri)
+    buf = io.BytesIO()
+    img.save(buf)
+    qr_base64 = base64.b64encode(buf.getvalue()).decode()
+
+    return {
+        "secret": user.two_factor_secret,
+        "qr_code": f"data:image/png;base64,{qr_base64}"
+    }
+
+@router.post("/2fa/enable")
+async def enable_2fa(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    code = data.get("code")
+    user_id = 8829 # Simulated current user
+    
+    user = db.query(UserExt).filter(UserExt.customer_id == user_id).first()
+    if not user or not user.two_factor_secret:
+        raise HTTPException(status_code=400, detail="2FA not set up")
+
+    totp = pyotp.TOTP(user.two_factor_secret)
+    if totp.verify(code):
+        user.is_two_factor_enabled = True
+        db.commit()
+        return {"status": "success"}
+    else:
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+
+@router.post("/2fa/disable")
+async def disable_2fa(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    code = data.get("code")
+    user_id = 8829
+    
+    user = db.query(UserExt).filter(UserExt.customer_id == user_id).first()
+    if not user or not user.is_two_factor_enabled:
+        return {"status": "success"}
+
+    totp = pyotp.TOTP(user.two_factor_secret)
+    if totp.verify(code):
+        user.is_two_factor_enabled = False
+        user.two_factor_secret = None
+        db.commit()
+        return {"status": "success"}
+    else:
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+
+@router.post("/2fa/verify-login")
+async def verify_login_2fa(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    email = data.get("email")
+    code = data.get("code")
+    
+    # In a real app, find user by email. Here we use 8829.
+    user = db.query(UserExt).filter(UserExt.customer_id == 8829).first()
+    if not user or not user.is_two_factor_enabled:
+        return {"status": "success"}
+
+    totp = pyotp.TOTP(user.two_factor_secret)
+    if totp.verify(code):
+        return {"status": "success"}
+    else:
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+
 @router.get("/login/{provider}")
 async def login(provider: str, request: Request):
     if provider not in ['google', 'apple', 'facebook']:
@@ -67,10 +174,14 @@ async def auth_callback(provider: str, request: Request, db: Session = Depends(g
     if not email:
         raise HTTPException(status_code=400, detail="Email not provided by OAuth provider")
 
-    # Here we would find or create the user in our DB
-    # For now, we'll return a success redirect with a token (simulated)
-    # In a real app, you'd generate a JWT here.
-    
+    # Check if this user has 2FA enabled
+    # In this demo, we check user 8829 as a proxy for the test user
+    user = db.query(UserExt).filter(UserExt.customer_id == 8829).first()
     frontend_url = settings.ALLOWED_ORIGINS.split(",")[0]
+    
+    if user and user.is_two_factor_enabled:
+        # Redirect to 2FA verification page on frontend
+        return RedirectResponse(url=f"{frontend_url}/?2fa_required=true&email={email}&provider={provider}")
+
     response = RedirectResponse(url=f"{frontend_url}/?auth_success=true&email={email}")
     return response

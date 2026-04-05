@@ -280,7 +280,22 @@
     "help_center": "帮助中心",
     "support_doc": "支持与文档",
     "terminate_session": "终止会话",
-    "sign_out": "退出 0Buck"
+    "sign_out": "退出 0Buck",
+    "2fa": {
+      "setup_title": "设置谷歌双重验证",
+      "setup_desc": "使用 Google Authenticator 扫描二维码以启用二次验证。",
+      "scan_qr": "扫描二维码",
+      "enter_code": "输入 6 位验证码",
+      "placeholder": "000000",
+      "enable": "启用验证",
+      "disable": "禁用验证",
+      "verify_title": "二次验证",
+      "verify_desc": "请输入您手机上的 6 位动态验证码。",
+      "invalid_code": "验证码无效，请重试。",
+      "success_enabled": "谷歌双重验证已启用。",
+      "success_disabled": "谷歌双重验证已禁用。",
+      "backup_secret": "请务必备份此密钥："
+    }
   },
   "referral": {
     "normal_user": "普通用户",

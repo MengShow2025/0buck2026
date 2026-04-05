@@ -14,6 +14,10 @@ class UserExt(Base):
     user_tier = Column(String, default="silver") # 'silver', 'gold', 'platinum'
     kol_status = Column(String, default="none") # 'none', 'pending', 'approved', 'rejected'
     
+    # v3.4.6: Google 2FA
+    two_factor_secret = Column(String(32), nullable=True)
+    is_two_factor_enabled = Column(Boolean, default=False)
+    
     # Custom rates (if null, use tier defaults)
     dist_rate = Column(Numeric(5, 4), nullable=True) 
     fan_rate = Column(Numeric(5, 4), nullable=True)
