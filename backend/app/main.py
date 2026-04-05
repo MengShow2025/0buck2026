@@ -17,6 +17,7 @@ from app.api.agent import router as agent_router
 from app.api.butler import router as butler_router
 from app.api.rewards import router as rewards_router
 from app.api.products import router as products_router
+from app.api.suppliers import router as suppliers_router
 from app.api.stream import router as stream_router
 from app.api.auth import router as auth_router
 from app.services.rewards import RewardsService
@@ -124,6 +125,7 @@ app.include_router(webhooks_router, prefix=f"{settings.API_V1_STR}/webhooks", ta
 app.include_router(butler_router, prefix=f"{settings.API_V1_STR}/butler", tags=["butler"])
 app.include_router(rewards_router, prefix=f"{settings.API_V1_STR}/rewards", tags=["rewards"])
 app.include_router(products_router, prefix=f"{settings.API_V1_STR}/products", tags=["products"])
+app.include_router(suppliers_router, prefix=f"{settings.API_V1_STR}/suppliers", tags=["suppliers"])
 app.include_router(stream_router, prefix=f"{settings.API_V1_STR}/stream", tags=["stream"])
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(proxy_router, prefix=f"{settings.API_V1_STR}/checkin", tags=["checkin"])

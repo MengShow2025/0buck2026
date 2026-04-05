@@ -72,7 +72,8 @@ class PersonalizedMatrixService:
                         image_url = p.images[0]
                     
                     products.append({
-                        "id": p.id, 
+                        "id": str(p.id), 
+                        "name": p.title_en or p.title_zh or "Unknown Product", 
                         "title": p.title_en or p.title_zh or "Unknown Product", 
                         "price": p.sale_price or 0.0, 
                         "image": image_url

@@ -9,6 +9,7 @@ import {
   Zap, Verified, Box, Cpu, Truck, Activity, Share2, CheckCircle2
 } from 'lucide-react';
 import { Product } from '../types';
+import { getApiUrl } from '../utils/api';
 
 const BASE_SUPPLIERS = [
   {
@@ -56,132 +57,6 @@ const BASE_SUPPLIERS = [
   }
 ];
 
-const ALL_SUPPLIERS = Array.from({ length: 50 }).map((_, i) => {
-  const base = BASE_SUPPLIERS[i % BASE_SUPPLIERS.length];
-  return {
-    ...base,
-    id: `s-${i}`,
-    name: `${base.name} ${i + 1}`
-  };
-});
-
-const MOCK_MERCHANTS = [
-  {
-    id: 'm1',
-    name: 'Shenzhen Chenghao Industry Co., Ltd.',
-    location: 'Guangdong, CN',
-    logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=NeuroLink',
-    rating: 4.7,
-    reorderRate: 17,
-    deliveryRate: 92.4,
-    years: 2,
-    businessType: 'Manufacturer',
-    matches: '2/2',
-    isVerified: true,
-    categories: ['Night Lights', 'Smart Home Lights', 'Decorative lighting'],
-    featuredProducts: [
-      { id: 'p1', name: 'Neural Processor X7', price: 'US$5.90', moq: '1 piece', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=400&fit=crop', description: 'Advanced neural processing unit for high-performance computing.' },
-      { id: 'p2', name: 'Quantum Chip Array', price: 'US$8.45', moq: '1 piece', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop', description: 'Next-generation quantum chip array for parallel processing.' },
-      { id: 'p3', name: 'Robotic Arm Joint', price: 'US$6.90', moq: '1 piece', image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=400&fit=crop', description: 'Precision industrial robotic arm joint with high torque.' }
-    ]
-  },
-  {
-    id: 'm2',
-    name: 'Aether Dynamics European Hub',
-    location: 'Berlin, DE',
-    logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=Aether',
-    rating: 4.9,
-    reorderRate: 24,
-    deliveryRate: 98.1,
-    years: 5,
-    businessType: 'Wholesaler',
-    matches: '1/2',
-    isVerified: true,
-    categories: ['Fasteners', 'Panels', 'Aerospace'],
-    featuredProducts: [
-      { id: 'p4', name: 'Titanium Fastener Set', price: 'US$0.85', moq: '100 pieces', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop', description: 'High-strength titanium fasteners for aerospace applications.' },
-      { id: 'p5', name: 'Carbon Fiber Panel', price: 'US$88.00', moq: '1 piece', image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400&h=400&fit=crop', description: 'Lightweight and durable carbon fiber panels.' },
-      { id: 'p6', name: 'Aerospace Component', price: 'US$560.00', moq: '1 piece', image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=400&h=400&fit=crop', description: 'Certified aerospace-grade component for critical systems.' }
-    ]
-  },
-  {
-    id: 'm3',
-    name: 'Synthetix Labs Seoul Node',
-    location: 'Seoul, KR',
-    logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=Synthetix',
-    rating: 5.0,
-    reorderRate: 31,
-    deliveryRate: 99.9,
-    years: 8,
-    businessType: 'Custom Lab',
-    matches: '2/2',
-    isVerified: true,
-    categories: ['Biometrics', 'Medical Pro', 'Cryo'],
-    featuredProducts: [
-      { id: 'p7', name: 'Biometric Sensor', price: 'US$320.00', moq: '1 piece', image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=400&fit=crop', description: 'High-accuracy biometric sensor for secure authentication.' },
-      { id: 'p8', name: 'Medical Patch Pro', price: 'US$45.00', moq: '5 pieces', image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=400&fit=crop', description: 'Professional medical monitoring patch with wireless sync.' },
-      { id: 'p9', name: 'Cryo Storage Unit', price: 'US$1.2k', moq: '1 piece', image: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=400&h=400&fit=crop', description: 'Advanced cryogenic storage unit for sensitive biological samples.' }
-    ]
-  },
-  {
-    id: 'm4',
-    name: 'Quantum Devices Pacific Hub',
-    location: 'Tokyo, JP',
-    logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=Quantum',
-    rating: 4.8,
-    reorderRate: 12,
-    deliveryRate: 95.5,
-    years: 3,
-    businessType: 'R&D Lab',
-    matches: '1/2',
-    isVerified: true,
-    categories: ['Quantum Sensors', 'Photons', 'Lasers'],
-    featuredProducts: [
-      { id: 'p10', name: 'Quantum Sensor Kit', price: 'US$890.00', moq: '1 piece', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=400&fit=crop', description: 'Complete kit for quantum sensing and measurement.' },
-      { id: 'p11', name: 'Photon Detector', price: 'US$234.00', moq: '1 piece', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop', description: 'Ultra-sensitive photon detector for laboratory research.' },
-      { id: 'p12', name: 'Laser Array Module', price: 'US$1.8k', moq: '1 piece', image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=400&h=400&fit=crop', description: 'High-power laser array module for industrial precision.' }
-    ]
-  },
-  {
-    id: 'm5',
-    name: 'Nexus Manufacturing SEA',
-    location: 'Singapore, SG',
-    logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=Nexus',
-    rating: 4.6,
-    reorderRate: 45,
-    deliveryRate: 90.2,
-    years: 10,
-    businessType: 'Mega Factory',
-    matches: '2/2',
-    isVerified: true,
-    categories: ['IoT Modules', 'Controllers', 'Edge Computing'],
-    featuredProducts: [
-      { id: 'p13', name: 'Smart Module v3', price: 'US$12.00', moq: '1000 pieces', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=400&fit=crop', description: 'Integrated smart module for IoT and automation systems.' },
-      { id: 'p14', name: 'IoT Controller', price: 'US$45.00', moq: '10 pieces', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop', description: 'Reliable IoT controller for smart home and industrial use.' },
-      { id: 'p15', name: 'Edge Computing Unit', price: 'US$320.00', moq: '1 piece', image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=400&h=400&fit=crop', description: 'Compact edge computing unit for real-time data analysis.' }
-    ]
-  },
-  {
-    id: 'm6',
-    name: 'Helix BioTech Hub',
-    location: 'Boston, US',
-    logo: 'https://api.dicebear.com/7.x/shapes/svg?seed=Helix',
-    rating: 4.9,
-    reorderRate: 19,
-    deliveryRate: 97.4,
-    years: 4,
-    businessType: 'Bio Manufacturer',
-    matches: '2/2',
-    isVerified: true,
-    categories: ['DNA Sequencing', 'Lab Gear', 'Bio Reactors'],
-    featuredProducts: [
-      { id: 'p16', name: 'DNA Sequencer Pro', price: 'US$4.5k', moq: '1 piece', image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=400&fit=crop', description: 'High-throughput DNA sequencer for professional genetics labs.' },
-      { id: 'p17', name: 'Lab Analyzer', price: 'US$1.2k', moq: '1 piece', image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=400&fit=crop', description: 'Versatile laboratory analyzer for clinical and research use.' },
-      { id: 'p18', name: 'Bio Reactor v2', price: 'US$6.8k', moq: '1 piece', image: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=400&h=400&fit=crop', description: 'Scalable bioreactor for cell culture and fermentation.' }
-    ]
-  }
-];
-
 const CATEGORIES = [
   'Microchips', 'Tactical Gear', 'Medical Robotics', 
   'Bio-Polymers', 'Quantum Sensors', 'Aerospace Parts',
@@ -197,8 +72,46 @@ export default function PrimeView({ onProductClick, onMerchantClick }: { onProdu
   const [currentPage, setCurrentPage] = useState(1);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const searchRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 25; // 5 rows * 5 columns
+
+  // Fetch real suppliers from backend
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        setIsLoading(true);
+        const url = getApiUrl('/v1/suppliers/');
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) {
+            setSuppliers(data);
+          } else {
+            // Fallback to generated mock if DB is empty
+            const generated = Array.from({ length: 50 }).map((_, i) => {
+              const base = BASE_SUPPLIERS[i % BASE_SUPPLIERS.length];
+              return {
+                ...base,
+                id: `s-${i}`,
+                name: `${base.name} ${i + 1}`
+              };
+            });
+            setSuppliers(generated);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch real suppliers:', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSuppliers();
+  }, []);
+
+  const ALL_SUPPLIERS = suppliers;
+
 
   // Close dropdown when clicking outside
   useEffect(() => {

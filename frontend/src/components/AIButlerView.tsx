@@ -71,8 +71,15 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
           const response = await fetch(url);
           if (response.ok) {
             const data = await response.json();
-            if (data && Array.isArray(data)) {
-              setRealProducts(data);
+            // Handle both array response and { products: [...] } response
+            const productsList = Array.isArray(data) ? data : (data.products || []);
+            if (productsList && Array.isArray(productsList)) {
+              setRealProducts(productsList.map((p: any) => ({
+                ...p,
+                id: String(p.id),
+                name: p.name || p.title || 'Unknown Product',
+                price: typeof p.price === 'number' ? `$${p.price.toFixed(2)}` : String(p.price)
+              })));
             }
           }
         } catch (e) {

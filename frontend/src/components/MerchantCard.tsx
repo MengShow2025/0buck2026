@@ -107,8 +107,10 @@ export const MerchantCard: React.FC<MerchantCardProps> = ({ merchant, onProductC
               <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover/product:scale-110 transition-transform duration-700" />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-black text-on-surface truncate">{p.price}</span>
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase">MOQ: {p.moq}</span>
+              <span className="text-sm font-black text-on-surface truncate">
+                {typeof p.price === 'number' ? `$${p.price.toFixed(2)}` : p.price}
+              </span>
+              <span className="text-[10px] font-bold text-on-surface-variant uppercase">MOQ: {p.moq || '1 piece'}</span>
             </div>
           </div>
         ))}
