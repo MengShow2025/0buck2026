@@ -140,6 +140,73 @@ class SyncShopifyService:
         html += f'</div>'
         return html
 
+    def upload_media_to_shopify(self, urls: list, alt_prefix: str) -> list:
+        """
+        v3.4.11: Uploads files (certificates, etc.) to Shopify via GraphQL fileCreate
+        to ensure we use Shopify CDN for all media.
+        """
+        if not urls:
+            return []
+            
+        cdn_urls = []
+        import httpx
+        import asyncio
+        
+        # Shopify GraphQL Endpoint
+        url = f"https://{self.shop_url}/admin/api/{self.api_version}/graphql.json"
+        headers = {
+            "X-Shopify-Access-Token": self.access_token,
+            "Content-Type": "application/json"
+        }
+        
+        for i, media_url in enumerate(urls):
+            mutation = """
+            mutation fileCreate($files: [FileCreateInput!]!) {
+              fileCreate(files: $files) {
+                files {
+                  id
+                  alt
+                  ... on MediaImage {
+                    image {
+                      url
+                    }
+                  }
+                }
+                userErrors {
+                  field
+                  message
+                }
+              }
+            }
+            """
+            variables = {
+                "files": [
+                    {
+                        "originalSource": media_url,
+                        "alt": f"{alt_prefix}_{i+1}",
+                        "contentType": "IMAGE"
+                    }
+                ]
+            }
+            
+            try:
+                # Use synchronous request for simplicity in this script 
+                # (or wrap in async if called from async context)
+                import requests
+                response = requests.post(url, headers=headers, json={"query": mutation, "variables": variables})
+                data = response.json()
+                
+                if data.get("data", {}).get("fileCreate", {}).get("files"):
+                    files = data["data"]["fileCreate"]["files"]
+                    if files and "image" in files[0] and files[0]["image"]:
+                        cdn_urls.append(files[0]["image"]["url"])
+                else:
+                    logging.warning(f"Failed to upload file {media_url}: {data}")
+            except Exception as e:
+                logging.error(f"Error uploading media to Shopify: {str(e)}")
+                
+        return cdn_urls
+
     def sync_to_shopify(self, product: Product, retries: int = 3):
         """
         Pushes the local Product data to Shopify.
@@ -286,6 +353,22 @@ class SyncShopifyService:
                     if sp.variants:
                         product.shopify_variant_id = str(sp.variants[0].id)
                     
+                    # v3.4.10: Capture Shopify CDN URLs and save back to local DB
+                    # This ensures we use Shopify CDN and avoid 1688 source 404s in frontend
+                    if hasattr(sp, 'images') and sp.images:
+                        cdn_images = [img.src for img in sp.images if hasattr(img, 'src') and img.src]
+                        if cdn_images:
+                            product.images = cdn_images
+                            product.media = cdn_images # Sync full media gallery
+                            logging.info(f"  ✅ Updated Product {product.id} with {len(cdn_images)} Shopify CDN images")
+                    
+                    # v3.4.11: Upload certificates to Shopify CDN
+                    cert_urls = getattr(product, 'certificate_images', [])
+                    if cert_urls:
+                        cdn_certs = self.upload_media_to_shopify(cert_urls, f"SH_{internal_id}_CERT")
+                        if cdn_certs:
+                            product.certificate_images = cdn_certs
+                    
                     # 4. Metafields (CRITICAL for Dispute Resolution & Content)
                     metafields = [
                         {
@@ -303,7 +386,7 @@ class SyncShopifyService:
                         {
                             "namespace": "0buck_legal",
                             "key": "certificates",
-                            "value": json.dumps(getattr(product, 'certificate_images', [])),
+                            "value": json.dumps(product.certificate_images),
                             "type": "json"
                         },
                         {
