@@ -192,9 +192,15 @@ async def orders_paid_webhook(
 @router.post("/shopify/orders/fulfilled")
 async def orders_fulfilled_webhook(
     request: Request,
+    x_shopify_hmac_sha256: str = Header(None),
     db: Session = Depends(get_db)
 ):
     data = await request.body()
+    # v3.7.5: Enforce HMAC for fulfillment
+    if not verify_shopify_webhook(data, x_shopify_hmac_sha256):
+       if settings.ENVIRONMENT == "production":
+           raise HTTPException(status_code=401, detail="Unauthorized")
+    
     payload = json.loads(data)
     order_id = payload.get("id")
     print(f"Webhook Received: Order Fulfilled {order_id}")
@@ -234,9 +240,15 @@ async def orders_fulfilled_webhook(
 @router.post("/shopify/orders/refunded")
 async def orders_refunded_webhook(
     request: Request,
+    x_shopify_hmac_sha256: str = Header(None),
     db: Session = Depends(get_db)
 ):
     data = await request.body()
+    # v3.7.5: Enforce HMAC for refunds
+    if not verify_shopify_webhook(data, x_shopify_hmac_sha256):
+       if settings.ENVIRONMENT == "production":
+           raise HTTPException(status_code=401, detail="Unauthorized")
+
     payload = json.loads(data)
     order_id = payload.get("id")
     print(f"Webhook Received: Order Refunded {order_id}")

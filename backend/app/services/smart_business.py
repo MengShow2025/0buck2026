@@ -81,6 +81,47 @@ class SmartBusinessService:
             logger.warning(f"CHURN ALERT: {msg}")
             # await social_service.send_nudge(plan.user_id, msg)
 
+    async def scan_abandoned_drafts(self):
+        """
+        Logic 1.3: Abandoned Draft Recovery (弃单挽回).
+        Finds Draft Orders created > 1 hour ago that are still open.
+        """
+        import shopify
+        payment_service = ShopifyDraftOrderService()
+        social_service = SocialAutomationService(self.db)
+        
+        try:
+            # Fetch open draft orders
+            drafts = shopify.DraftOrder.find(status="open")
+            now_utc = datetime.utcnow()
+            
+            for draft in drafts:
+                created_at = datetime.fromisoformat(draft.created_at.replace("Z", "+00:00")).replace(tzinfo=None)
+                # If created > 1 hour ago AND not already notified (using note_attributes as a flag)
+                notified = any(attr.name == "nudge_sent" for attr in draft.note_attributes)
+                
+                if (now_utc - created_at) > timedelta(hours=1) and not notified:
+                    user_id_attr = next((attr.value for attr in draft.note_attributes if attr.name == "0buck_user_id"), None)
+                    if user_id_attr:
+                        logger.info(f"🕒 Abandoned Draft Detected: {draft.id}. Triggering AI Nudge.")
+                        await social_service.notify_abandoned_draft(int(user_id_attr), draft.invoice_url)
+                        
+                        # Mark as nudged in Shopify
+                        new_attrs = draft.note_attributes
+                        new_attrs.append({"name": "nudge_sent", "value": "true"})
+                        draft.note_attributes = new_attrs
+                        draft.save()
+        finally:
+            payment_service.close()
+
+    async def scan_all(self):
+        """Triggered every 6 hours by the Smart Scanner."""
+        logger.info("🚀 Starting 6-hour Smart Business Scan...")
+        await self.scan_price_wishes()
+        await self.scan_churn_risk()
+        await self.scan_abandoned_drafts()
+        logger.info("✅ 6-hour Smart Business Scan complete.")
+
     def add_price_wish(self, user_id: int, product_id: int, wish_price: float):
         """API Entry for User to hunting a price"""
         new_wish = PriceWish(
