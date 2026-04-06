@@ -12,7 +12,7 @@ langchain
 langgraph
 google-generativeai
 langchain-google-genai
-pydantic
+pydantic[email]
 email-validator
 asyncio
 stream-chat
