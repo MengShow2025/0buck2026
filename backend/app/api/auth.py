@@ -166,59 +166,65 @@ except Exception:
     login_attempts = {}
     login_attempts_lock = threading.Lock()
 
-def check_rate_limit(email: str) -> bool:
-    """Returns True if user is blocked, False otherwise."""
+def check_rate_limit(email: str, ip: Optional[str] = None) -> bool:
+    """Returns True if user or IP is blocked, False otherwise."""
     now = datetime.now()
     if HAS_REDIS:
-        key = f"ratelimit:login:{email}"
+        # Check by Email
+        email_key = f"ratelimit:login:{email}"
+        # Check by IP (v3.8.2 Throttling)
+        ip_key = f"ratelimit:ip:{ip}" if ip else None
+        
         try:
-            data = redis_client.get(key)
+            # 1. Check Email-based limit
+            data = redis_client.get(email_key)
             if data:
                 attempts = json.loads(data)
-                last_attempt = datetime.fromisoformat(attempts["last_attempt"])
-                # If more than 5 failed attempts in last 5 minutes, block
-                if attempts["count"] >= 5 and (now - last_attempt).seconds < 300:
+                if attempts["count"] >= 5 and (now - datetime.fromisoformat(attempts["last_attempt"])).seconds < 300:
                     return True
-        except (json.JSONDecodeError, KeyError, ValueError, TypeError):
-            # If data is corrupted or Redis fails, treat as no attempts to avoid locking users out
+            
+            # 2. Check IP-based limit (Brute force defense)
+            if ip_key:
+                ip_data = redis_client.get(ip_key)
+                if ip_data:
+                    ip_attempts = int(ip_data)
+                    if ip_attempts >= 20: # Limit 20 attempts per 5 mins per IP
+                        return True
+        except:
             pass
         return False
     else:
+        # Fallback to In-Memory
         with login_attempts_lock:
             attempts = login_attempts.get(email, {"count": 0, "last_attempt": now})
             if attempts["count"] >= 5 and (now - attempts["last_attempt"]).seconds < 300:
                 return True
             return False
 
-def record_login_attempt(email: str, success: bool):
-    """Updates the login attempt counter."""
+def record_login_attempt(email: str, success: bool, ip: Optional[str] = None):
+    """Updates the login attempt counter for both email and IP."""
     now = datetime.now()
     if HAS_REDIS:
-        key = f"ratelimit:login:{email}"
+        email_key = f"ratelimit:login:{email}"
+        ip_key = f"ratelimit:ip:{ip}" if ip else None
+        
         try:
             if success:
-                redis_client.delete(key)
+                redis_client.delete(email_key)
             else:
-                data = redis_client.get(key)
-                try:
-                    attempts = json.loads(data) if data else {"count": 0, "last_attempt": now.isoformat()}
-                    last_attempt = datetime.fromisoformat(attempts["last_attempt"])
-                except (json.JSONDecodeError, KeyError, ValueError, TypeError):
-                    # Fallback if data is corrupted
-                    attempts = {"count": 0, "last_attempt": now.isoformat()}
-                    last_attempt = now
-                
-                # Reset if old (more than 5 mins ago)
-                if (now - last_attempt).seconds > 300:
-                    attempts["count"] = 1
-                else:
-                    attempts["count"] += 1
-                
+                # Email counter
+                data = redis_client.get(email_key)
+                attempts = json.loads(data) if data else {"count": 0, "last_attempt": now.isoformat()}
+                attempts["count"] += 1
                 attempts["last_attempt"] = now.isoformat()
-                redis_client.setex(key, 900, json.dumps(attempts)) # Keep record for 15 mins
-        except Exception as e:
-            # Log Redis error but don't crash the auth flow
-            print(f"Redis Rate Limit Error: {e}")
+                redis_client.setex(email_key, 900, json.dumps(attempts))
+                
+                # IP counter (Aggressive throttling)
+                if ip_key:
+                    redis_client.incr(ip_key)
+                    redis_client.expire(ip_key, 300)
+        except:
+            pass
     else:
         with login_attempts_lock:
             if success:
@@ -236,29 +242,39 @@ def record_login_attempt(email: str, success: bool):
 async def verify_login_2fa(request: Request, db: Session = Depends(get_db)):
     """
     v3.7.6: Secure 2FA verification with email-specific lookup.
+    v3.8.2: Enhanced with IP Throttling and New IP Detection.
     """
     data = await request.json()
     email = data.get("email")
     code = data.get("code")
+    current_ip = request.client.host if request.client else "unknown"
     
     if not email:
         raise HTTPException(status_code=400, detail="Email required")
         
-    # 1. Global Rate Limiting Check
-    if check_rate_limit(email):
-        raise HTTPException(status_code=429, detail="Too many attempts. Please try again in 5 minutes.")
+    # 1. Global Rate Limiting Check (Email + IP)
+    if check_rate_limit(email, ip=current_ip):
+        raise HTTPException(status_code=429, detail="Too many attempts. Please try again later.")
 
     # v3.7.6: Fixed "Cross-User" 2FA bug. Look up user by email.
     user = db.query(UserExt).filter(UserExt.email == email).first()
     if not user or not user.is_two_factor_enabled:
-        # If user doesn't exist or 2FA is off, this endpoint shouldn't be called, 
-        # but we return success for safety (or 404).
         return {"status": "success"}
 
     totp = pyotp.TOTP(user.two_factor_secret)
     if totp.verify(code):
         # Success! Reset attempts
-        record_login_attempt(email, success=True)
+        record_login_attempt(email, success=True, ip=current_ip)
+        
+        # v3.8.2: New IP Detection
+        if user.last_login_ip and user.last_login_ip != current_ip:
+            msg = f"🔔 Security Notice: New login detected from IP {current_ip}. If this wasn't you, please secure your account."
+            print(f"NEW IP ALERT for User {user.customer_id}: {msg}")
+            # BackgroundTask: social_service.send_nudge(user.customer_id, msg)
+        
+        user.last_login_ip = current_ip
+        user.last_login_at = datetime.utcnow()
+        db.commit()
         
         # Issue JWT for v3.5.0 Security
         access_token = create_access_token(subject=user.customer_id)
@@ -281,7 +297,7 @@ async def verify_login_2fa(request: Request, db: Session = Depends(get_db)):
         return response
     else:
         # Failed attempt: Record it
-        record_login_attempt(email, success=False)
+        record_login_attempt(email, success=False, ip=current_ip)
         raise HTTPException(status_code=400, detail="Invalid verification code.")
 
 @router.post("/payment-password/set")

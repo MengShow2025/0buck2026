@@ -22,6 +22,8 @@ class UserExt(Base):
     hashed_payment_password = Column(String, nullable=True)
     payment_pass_failed_attempts = Column(Integer, default=0)
     payment_pass_locked_until = Column(DateTime, nullable=True)
+    last_login_ip = Column(String, nullable=True) # v3.8.2: Security Tracking
+    last_login_at = Column(DateTime, nullable=True)
     
     # Custom rates (if null, use tier defaults)
     dist_rate = Column(Numeric(5, 4), nullable=True) 
