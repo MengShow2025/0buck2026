@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from app.db.session import get_db
 from app.api.deps import get_current_admin
 from app.models import UserExt, Wallet, CheckinPlan, SystemConfig
+from app.models.c2m import UserWish, DemandInsight, OrderCustomization
 from app.models.butler import UserButlerProfile, AIContribution, ShadowIDMapping, PersonaTemplate, AIUsageStats, UserMemoryFact
 from app.models.ledger import AvailableCoupon, Order, SourcingOrder
 from app.models.product import Product, CandidateProduct
@@ -170,10 +171,21 @@ def get_dashboard_kpis(db: Session = Depends(get_db)):
     orders_today = db.query(func.count(Order.shopify_order_id)).filter(Order.created_at >= today_start).scalar() or 0
     
     month_start = today_start.replace(day=1)
-    profit_mtd = db.query(func.sum(Product.sale_price - Product.source_cost_usd)).\
-        filter(Product.last_synced_at >= month_start).scalar() or 0.0
-    
-    ids_stats = db.query(Product.strategy_tag, func.count(Product.id)).group_by(Product.strategy_tag).all()
+    # v3.9.6: Enhanced safety for MTD calculations
+    try:
+        profit_mtd = db.query(func.sum(Product.sale_price - Product.source_cost_usd))\
+            .filter(Product.last_synced_at >= month_start)\
+            .scalar() or 0.0
+    except Exception as e:
+        logger.error(f"Failed to calculate profit_mtd: {e}")
+        profit_mtd = 0.0
+
+    ids_stats = []
+    try:
+        ids_stats = db.query(Product.strategy_tag, func.count(Product.id))\
+            .group_by(Product.strategy_tag).all()
+    except Exception as e:
+        logger.error(f"Failed to fetch ids_stats: {e}")
     ids_conversion = {tag: count for tag, count in ids_stats if tag}
     
     melting_count = db.query(func.count(Product.id)).filter(Product.is_melted == True).scalar() or 0
@@ -306,6 +318,17 @@ def list_sourcing_candidates(
     candidates = db.query(CandidateProduct).filter_by(status=status)\
         .order_by(CandidateProduct.created_at.desc())\
         .offset(skip).limit(limit).all()
+    
+    # v3.9.6: Ensure JSON parsing for frontend safety
+    import json
+    for c in candidates:
+        if isinstance(c.images, str):
+            try: c.images = json.loads(c.images)
+            except: c.images = []
+        if isinstance(c.variants_raw, str):
+            try: c.variants_raw = json.loads(c.variants_raw)
+            except: c.variants_raw = []
+            
     return candidates
 
 @router.patch("/sourcing/candidates/{candidate_id}")

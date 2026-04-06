@@ -681,6 +681,16 @@ class SupplyChainService:
         self.db.commit()
         return product
 
+    def _ensure_absolute_url(self, url: str) -> str:
+        """v3.9.6: Fix relative or protocol-relative image URLs from 1688/Alibaba"""
+        if not url: return ""
+        if url.startswith("http"): return url
+        if url.startswith("//"): return f"https:{url}"
+        # If it looks like a hash/filename, it might be from Alibaba's image server
+        if len(url) > 10 and "." in url and not "/" in url:
+            return f"https://sc01.alicdn.com/kf/{url}"
+        return url
+
     async def ingest_to_candidate_pool(self, data: Dict[str, Any]):
         """
         v3.9.0: The 'Decision Engine' entry point.
@@ -703,6 +713,13 @@ class SupplyChainService:
         
         # 2. AI Polish Preview (v4.0 Desire Engine)
         strategy_tag = data.get("strategy_tag", "IDS_FOLLOWING")
+        
+        # v3.9.6: Clean images and ensure absolute URLs
+        raw_images = data.get("images", [])
+        if not isinstance(raw_images, list):
+            raw_images = []
+        clean_images = [self._ensure_absolute_url(img) for img in raw_images if img]
+        
         enriched_preview = await self.translate_and_enrich({
             "title": data.get("name"),
             "description": data.get("description_zh"),
@@ -716,7 +733,7 @@ class SupplyChainService:
             discovery_evidence=data.get("discovery_evidence", {}),
             title_zh=data.get("name"),
             description_zh=data.get("description_zh", ""),
-            images=data.get("images", []),
+            images=clean_images,
             variants_raw=data.get("variants", []),
             cost_cny=cost_cny,
             comp_price_usd=comp_price,
@@ -751,6 +768,9 @@ class SupplyChainService:
         self.db.commit()
 
         try:
+            # v3.9.6: Ensure absolute URLs before sync
+            clean_images = [self._ensure_absolute_url(img) for img in candidate.images if img]
+            
             # 1. Full AI Enrichment & Translation
             # Reuse sync_product logic with potential admin overrides
             product = await self.sync_product(
@@ -762,7 +782,7 @@ class SupplyChainService:
                 category_type="PROFIT", # Default
                 is_cashback_eligible=True,
                 variants_override=candidate.variants_raw,
-                images_override=candidate.images
+                images_override=clean_images
             )
 
             # 2. Sync to Shopify
