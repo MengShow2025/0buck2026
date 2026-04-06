@@ -54,7 +54,8 @@ class Product(Base):
     sale_price = Column(Float)      # Final price in USD (60% of competitor)
     compare_at_price = Column(Float) # Display price in USD (95% of competitor)
     
-    images = Column(JSON)           # List of image URLs
+    images = Column(JSON)           # List of image URLs (Main Gallery)
+    detail_images = Column(JSON, default=list) # v4.1: Long-page detail images
     variants = Column(JSON)         # SKU options
     
     category = Column(String)

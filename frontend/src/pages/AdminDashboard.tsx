@@ -422,7 +422,15 @@ const AdminDashboard: React.FC = () => {
                             className={`w-full h-full object-cover rounded-2xl border-2 ${idx === 0 ? 'border-orange-500 shadow-lg shadow-orange-500/20' : 'border-white shadow-sm'}`} 
                           />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity flex items-center justify-center gap-2">
-                            <button className="p-1.5 bg-white rounded-lg text-red-500 hover:scale-110 transition-transform">
+                            <button 
+                              onClick={() => {
+                                if (confirm('确认删除此图片吗？')) {
+                                  const newImages = editingCandidate.images.filter((_, i) => i !== idx);
+                                  setEditingCandidate({...editingCandidate, images: newImages});
+                                }
+                              }}
+                              className="p-1.5 bg-white rounded-lg text-red-500 hover:scale-110 transition-transform"
+                            >
                               <Trash2 size={14} />
                             </button>
                             <button className="p-1.5 bg-white rounded-lg text-black cursor-move">

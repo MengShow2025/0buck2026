@@ -365,7 +365,8 @@ class SyncShopifyService:
                     if sp.variants and local_variants and hasattr(sp, 'images'):
                         for i, lv in enumerate(local_variants):
                             img_idx = lv.get("image_index")
-                            if img_idx is not None and 0 <= int(img_idx) < len(sp.images):
+                            # v3.9.6: Added digit check and boundary validation
+                            if img_idx is not None and str(img_idx).isdigit() and 0 <= int(img_idx) < len(sp.images):
                                 # Link the variant to the specific Shopify image
                                 v = sp.variants[i]
                                 v.image_id = sp.images[int(img_idx)].id

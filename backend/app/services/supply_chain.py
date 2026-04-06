@@ -39,18 +39,25 @@ class SupplyChainService:
         # 1. Check if we have this in the candidate pool already
         candidate = self.db.query(CandidateProduct).filter_by(product_id_1688=source_product_id).first()
         if candidate:
+            def safe_json_load(data, default=[]):
+                if isinstance(data, (list, dict)): return data
+                try:
+                    return json.loads(data) if data else default
+                except (json.JSONDecodeError, TypeError):
+                    return default
+
             return {
                 "id": candidate.product_id_1688,
                 "title": candidate.title_zh,
                 "description": candidate.description_zh,
                 "price": candidate.cost_cny,
-                "images": candidate.images if isinstance(candidate.images, list) else json.loads(candidate.images or "[]"),
-                "media": candidate.images if isinstance(candidate.images, list) else json.loads(candidate.images or "[]"),
-                "variants": candidate.variants_raw if isinstance(candidate.variants_raw, list) else json.loads(candidate.variants_raw or "[]"),
+                "images": safe_json_load(candidate.images),
+                "media": safe_json_load(candidate.images),
+                "variants": safe_json_load(candidate.variants_raw),
                 "category": candidate.category or "Artisan Choice",
                 "supplier": {
                     "id": candidate.supplier_id_1688,
-                    **(candidate.supplier_info if isinstance(candidate.supplier_info, dict) else json.loads(candidate.supplier_info or "{}"))
+                    **(candidate.supplier_info if isinstance(candidate.supplier_info, dict) else safe_json_load(candidate.supplier_info, {}))
                 }
             }
 

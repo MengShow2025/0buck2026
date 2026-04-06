@@ -114,12 +114,29 @@ class SmartBusinessService:
         finally:
             payment_service.close()
 
+    async def scan_sourcing_candidates(self):
+        """
+        Logic 1.4: Autonomous Sourcing (选品嗅探).
+        Triggers IDS Sniffing and Spy Monitor to populate CandidateProduct pool.
+        """
+        from app.services.supply_chain import SupplyChainService
+        logger.info("🕵️ Triggering IDS Sniffing & Spy Monitor...")
+        sc_service = SupplyChainService(self.db)
+        try:
+            # 1. Following Mode (IDS)
+            await sc_service.ids_sniffing_and_populate()
+            # 2. Spy Mode (Not implemented yet in supply_chain.py, but placeholder for v3.9.1)
+            # await sc_service.spy_monitor_and_populate()
+        except Exception as e:
+            logger.error(f"Error during sourcing scan: {e}")
+
     async def scan_all(self):
         """Triggered every 6 hours by the Smart Scanner."""
         logger.info("🚀 Starting 6-hour Smart Business Scan...")
         await self.scan_price_wishes()
         await self.scan_churn_risk()
         await self.scan_abandoned_drafts()
+        await self.scan_sourcing_candidates()
         logger.info("✅ 6-hour Smart Business Scan complete.")
 
     def add_price_wish(self, user_id: int, product_id: int, wish_price: float):
