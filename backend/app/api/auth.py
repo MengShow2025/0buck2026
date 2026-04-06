@@ -47,38 +47,51 @@ oauth.register(
 async def check_2fa_status(request: Request, db: Session = Depends(get_db)):
     data = await request.json()
     email = data.get("email")
+    if not email:
+        return {"required": False}
+
     print(f"Checking 2FA status for email: {email}")
     
-    # v3.4.6: In this demo, all logins are mapped to user 8829 (Julian Rossi)
-    # This ensures that if the user enables 2FA on the Me page, 
-    # any subsequent login with a standard email will trigger the 2FA challenge.
-    user = db.query(UserExt).filter(UserExt.customer_id == 8829).first()
+    # v3.7.6: Fixed "Cross-User" 2FA bug. Look up user by email directly.
+    # No more hardcoded 8829 for status check.
+    user = db.query(UserExt).filter(UserExt.email == email).first()
     if user and user.is_two_factor_enabled:
-        print(f"2FA is ENABLED for user 8829")
+        print(f"2FA is ENABLED for {email}")
         return {"required": True}
     
-    print(f"2FA is DISABLED for user 8829")
     return {"required": False}
 
 @router.post("/2fa/setup")
 async def setup_2fa(request: Request, db: Session = Depends(get_db)):
-    # In v3.4 we simulate the current user. In prod, use JWT/Session.
-    # For now, we use a fixed user ID for testing or the email if provided in session.
-    user_id = 8829 # Default Node ID from MeView.tsx
-    user = db.query(UserExt).filter(UserExt.customer_id == user_id).first()
-    
-    if not user:
-        # Create user if doesn't exist for demo
-        user = UserExt(customer_id=user_id, referral_code=f"REF{user_id}")
-        db.add(user)
-        db.commit()
+    # v3.7.6: In production, we extract user_id from the JWT token.
+    # For setup, the user MUST be logged in.
+    from app.api.deps import get_current_user
+    try:
+        # Get the token from cookies or header to find who is setting up 2FA
+        # This is a bit tricky for a direct POST if not using Depends(get_current_user)
+        # So we refactor to use the dependency
+        pass
+    except:
+        pass
 
+    return {"error": "Use the authenticated setup endpoint"}
+
+@router.post("/2fa/setup-authenticated")
+async def setup_2fa_authenticated(
+    db: Session = Depends(get_db),
+    current_user: UserExt = Depends(get_current_user)
+):
+    """
+    v3.7.6: Secure 2FA setup for the CURRENT authenticated user.
+    """
+    user = current_user
+    
     if not user.two_factor_secret:
         user.two_factor_secret = pyotp.random_base32()
         db.commit()
 
     totp = pyotp.TOTP(user.two_factor_secret)
-    provisioning_uri = totp.provisioning_uri(name="0Buck", issuer_name="0Buck")
+    provisioning_uri = totp.provisioning_uri(name=f"0Buck:{user.email}", issuer_name="0Buck")
     
     # Generate QR Code
     img = qrcode.make(provisioning_uri)
@@ -86,18 +99,26 @@ async def setup_2fa(request: Request, db: Session = Depends(get_db)):
     img.save(buf, format="PNG")
     qr_base64 = base64.b64encode(buf.getvalue()).decode()
 
+    # v3.7.6: We also provide 'Backup Codes' in a real production system.
     return {
         "secret": user.two_factor_secret,
-        "qr_code": f"data:image/png;base64,{qr_base64}"
+        "qr_code": f"data:image/png;base64,{qr_base64}",
+        "instructions": "Please save your secret key in a safe place. If you lose your phone, this is the only way to recover access."
     }
 
 @router.post("/2fa/enable")
-async def enable_2fa(request: Request, db: Session = Depends(get_db)):
+async def enable_2fa(
+    request: Request, 
+    db: Session = Depends(get_db),
+    current_user: UserExt = Depends(get_current_user)
+):
+    """
+    v3.7.6: Enable 2FA for the authenticated user.
+    """
     data = await request.json()
     code = data.get("code")
-    user_id = 8829 # Simulated current user
+    user = current_user
     
-    user = db.query(UserExt).filter(UserExt.customer_id == user_id).first()
     if not user or not user.two_factor_secret:
         raise HTTPException(status_code=400, detail="2FA not set up")
 
@@ -214,7 +235,7 @@ def record_login_attempt(email: str, success: bool):
 @router.post("/2fa/verify-login")
 async def verify_login_2fa(request: Request, db: Session = Depends(get_db)):
     """
-    v3.5.0: Secure 2FA verification with Global Redis Rate Limiting.
+    v3.7.6: Secure 2FA verification with email-specific lookup.
     """
     data = await request.json()
     email = data.get("email")
@@ -227,9 +248,11 @@ async def verify_login_2fa(request: Request, db: Session = Depends(get_db)):
     if check_rate_limit(email):
         raise HTTPException(status_code=429, detail="Too many attempts. Please try again in 5 minutes.")
 
-    # In a real app, find user by email. Here we use 8829.
-    user = db.query(UserExt).filter(UserExt.customer_id == 8829).first()
+    # v3.7.6: Fixed "Cross-User" 2FA bug. Look up user by email.
+    user = db.query(UserExt).filter(UserExt.email == email).first()
     if not user or not user.is_two_factor_enabled:
+        # If user doesn't exist or 2FA is off, this endpoint shouldn't be called, 
+        # but we return success for safety (or 404).
         return {"status": "success"}
 
     totp = pyotp.TOTP(user.two_factor_secret)
@@ -281,7 +304,6 @@ async def auth_callback(provider: str, request: Request, db: Session = Depends(g
         resp = await client.get('me?fields=id,name,email', token=token)
         user_info = resp.json()
     elif provider == 'apple':
-        # Apple returns user info in the first request only
         user_info = token.get('userinfo') 
 
     if not user_info:
@@ -291,17 +313,32 @@ async def auth_callback(provider: str, request: Request, db: Session = Depends(g
     if not email:
         raise HTTPException(status_code=400, detail="Email not provided by OAuth provider")
 
-    # Check if this user has 2FA enabled
-    # In this demo, we check user 8829 as a proxy for the test user
-    user = db.query(UserExt).filter(UserExt.customer_id == 8829).first()
+    # v3.7.6: REAL user lookup by email.
+    user = db.query(UserExt).filter(UserExt.email == email).first()
+    
+    # If user doesn't exist, create them (First-time OAuth login)
+    if not user:
+        # In v3.7.6, we ensure every new user gets a real record
+        user = UserExt(
+            email=email,
+            first_name=user_info.get('given_name', user_info.get('name', 'User')),
+            last_name=user_info.get('family_name', ''),
+            user_type='customer',
+            is_active=True
+        )
+        db.add(user)
+        db.flush() # Get customer_id
+        user.referral_code = f"REF{user.customer_id}"
+        db.commit()
+
     frontend_url = settings.ALLOWED_ORIGINS.split(",")[0]
     
-    if user and user.is_two_factor_enabled:
+    if user.is_two_factor_enabled:
         # Redirect to 2FA verification page on frontend
         return RedirectResponse(url=f"{frontend_url}/?2fa_required=true&email={email}&provider={provider}")
 
     # Generate JWT Token for v3.5.0 Security
-    access_token = create_access_token(subject=user.customer_id if user else 8829)
+    access_token = create_access_token(subject=user.customer_id)
     
     response = RedirectResponse(url=f"{frontend_url}/?auth_success=true&email={email}")
     
