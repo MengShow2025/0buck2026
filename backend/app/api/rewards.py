@@ -525,6 +525,8 @@ def payment_pre_check(
             
     return {"status": "success", "message": "Balance frozen, proceed to order creation"}
 
+from app.services.smart_business import SmartBusinessService
+
 @router.post("/payment/create-order")
 def create_payment_order(
     payload: Dict[str, Any], 
@@ -542,9 +544,6 @@ def create_payment_order(
     balance_used = Decimal(str(payload.get("balance_used", "0")))
     referral_code = payload.get("referral_code")
     
-    # Calculate Total from Price Firewall logic (simplified here as we call service)
-    # Service will do the actual firewalling
-    
     if payload.get("is_full_payment"):
         # Schema C: Direct Order
         res = payment_service.create_final_order_direct(customer_id, items, balance_used, referral_code)
@@ -560,3 +559,32 @@ def create_payment_order(
         
     payment_service.close()
     return res
+
+@router.post("/smart/price-hunting")
+def add_price_hunting(
+    payload: Dict[str, Any], 
+    db: Session = Depends(get_db),
+    current_user: UserExt = Depends(get_current_user)
+):
+    """
+    v3.7.0: User subscribes to a wish price (Price Radar).
+    """
+    service = SmartBusinessService(db)
+    return service.add_price_wish(
+        user_id=current_user.customer_id,
+        product_id=payload["product_id"],
+        wish_price=payload["wish_price"]
+    )
+
+@router.get("/smart/scan-radar")
+async def trigger_price_radar_scan(
+    db: Session = Depends(get_db),
+    admin: UserExt = Depends(get_current_admin)
+):
+    """
+    Admin-only: Manually trigger price radar scanning.
+    (In prod, this runs on a Cron Job).
+    """
+    service = SmartBusinessService(db)
+    await service.scan_price_wishes()
+    return {"status": "success", "message": "Price radar scan complete."}

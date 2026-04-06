@@ -237,6 +237,16 @@ class SourcingOrder(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+class PriceWish(Base):
+    __tablename__ = "price_wishes"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, index=True)
+    product_id = Column(Integer, index=True)
+    wish_price = Column(Numeric(12, 2))
+    status = Column(String, default="active") # active, fulfilled, cancelled
+    created_at = Column(DateTime, default=func.now())
+    notified_at = Column(DateTime, nullable=True)
+
 class SquareActivity(Base):
     """
     Feed for 'The Square' (Social activities).
