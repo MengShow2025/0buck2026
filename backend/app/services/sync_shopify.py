@@ -310,7 +310,7 @@ class SyncShopifyService:
                                     multiplier = 2.0
                                     
                                 p_res = calculate_final_price(lv["price"], settings.EXCHANGE_RATE, multiplier)
-                                v_price = p_res["final_price"]
+                                v_price = p_res["final_price_usd"]
                                 # Calculate compare_at based on 60% retail奇袭 rule
                                 v_compare_at = float((Decimal(str(v_price)) / Decimal("0.6") * Decimal("0.95")).quantize(Decimal("0.01")))
                             except Exception as e:
@@ -343,21 +343,35 @@ class SyncShopifyService:
                 
                 # 3. Images (Full Gallery Support)
                 all_media = getattr(product, 'media', []) or product.images or []
+                shopify_images = []
                 if all_media:
                     internal_id = product.product_id_1688
-                    sp.images = [
-                        shopify.Image({
+                    for i, img in enumerate(all_media):
+                        shopify_images.append(shopify.Image({
                             "src": img, 
                             "position": i+1,
                             "alt": f"SH_{internal_id}_GALLERY_{i+1}"
-                        }) for i, img in enumerate(all_media)
-                    ]
+                        }))
+                    sp.images = shopify_images
                 else:
                     sp.images = []
                 
                 if sp.save():
                     product.shopify_product_id = str(sp.id)
-                    if sp.variants:
+                    
+                    # v3.9.5: Handle Variant-Image Mapping
+                    # Now that the product and images are saved, Shopify has assigned IDs to images.
+                    # We need to map our local image_index to these Shopify Image IDs.
+                    if sp.variants and local_variants and hasattr(sp, 'images'):
+                        for i, lv in enumerate(local_variants):
+                            img_idx = lv.get("image_index")
+                            if img_idx is not None and 0 <= int(img_idx) < len(sp.images):
+                                # Link the variant to the specific Shopify image
+                                v = sp.variants[i]
+                                v.image_id = sp.images[int(img_idx)].id
+                                v.save()
+                    
+                    if sp.variants and not product.shopify_variant_id:
                         product.shopify_variant_id = str(sp.variants[0].id)
                     
                     # v3.4.10: Capture Shopify CDN URLs and save back to local DB

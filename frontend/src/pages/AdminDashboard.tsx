@@ -13,7 +13,12 @@ import {
   Settings,
   AlertCircle,
   TrendingDown,
-  Coins
+  Coins,
+  X,
+  ChevronRight,
+  GripVertical,
+  Trash2,
+  Edit3
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -91,8 +96,14 @@ interface AuditCandidate {
   status: string;
   discovery_source: string;
   discovery_evidence: any;
+  supplier_info: any;
   title_en_preview: string;
+  desire_hook?: string;
+  desire_logic?: string;
+  desire_closing?: string;
   images: string[];
+  variants_raw: any[];
+  category: string;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -111,9 +122,12 @@ const AdminDashboard: React.FC = () => {
     expiry: 48
   });
   const [auditQueue, setAuditQueue] = useState<AuditCandidate[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [meltedProducts, setMeltedProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [editingCandidate, setEditingCandidate] = useState<AuditCandidate | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     fetchSummary();
@@ -160,9 +174,20 @@ const AdminDashboard: React.FC = () => {
   const fetchAuditQueue = async () => {
     try {
       const res = await fetch('/api/v1/admin/sourcing/candidates?status=new');
-      setAuditQueue(await res.json());
+      const data = await res.json();
+      // v3.9.1: Fix title vs name mapping for consistency
+      const formatted = data.map((item: any) => ({
+        ...item,
+        name: item.title_zh || item.name || '未命名商品'
+      }));
+      setAuditQueue(formatted);
     } catch (e) { console.error(e); }
   };
+
+  const categories = ['ALL', ...new Set(auditQueue.map(item => item.category || 'OTHER'))];
+  const filteredQueue = selectedCategory === 'ALL' 
+    ? auditQueue 
+    : auditQueue.filter(item => (item.category || 'OTHER') === selectedCategory);
 
   const fetchMeltedQueue = async () => {
     try {
@@ -195,6 +220,36 @@ const AdminDashboard: React.FC = () => {
         fetchAuditQueue();
       }
     } catch (e) { alert('操作失败'); }
+  };
+
+  const handleUpdateCandidate = async () => {
+    if (!editingCandidate) return;
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`/api/v1/admin/sourcing/candidates/${editingCandidate.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title_zh: editingCandidate.name,
+          title_en_preview: editingCandidate.title_en_preview,
+          desire_hook: editingCandidate.desire_hook,
+          desire_logic: editingCandidate.desire_logic,
+          desire_closing: editingCandidate.desire_closing,
+          images: editingCandidate.images,
+          variants_raw: editingCandidate.variants_raw,
+          category: editingCandidate.category
+        })
+      });
+      if (res.ok) {
+        alert('修改已保存');
+        setEditingCandidate(null);
+        fetchAuditQueue();
+      }
+    } catch (e) {
+      alert('保存失败');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const fetchPersonaTemplates = async () => {
@@ -323,6 +378,166 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] font-sans">
+      {/* Artisan Refinement Modal (v4.1) */}
+      {editingCandidate && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white w-full max-w-5xl max-h-[90vh] rounded-[40px] shadow-2xl overflow-hidden flex flex-col border border-white/20"
+          >
+            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-white">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600">
+                  <Edit3 size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black italic tracking-tight uppercase">Artisan 精修编辑器 <span className="text-gray-300 ml-2">v4.1</span></h3>
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">正在编辑: {editingCandidate.product_id_1688}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setEditingCandidate(null)}
+                className="w-10 h-10 rounded-full hover:bg-gray-50 flex items-center justify-center text-gray-400 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-[#FBFBFD]">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                {/* Left: Media & Variants */}
+                <div className="space-y-8">
+                  <section>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em]">视觉画廊 (拖拽排序预研)</h4>
+                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">首图锁定</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-3">
+                      {editingCandidate.images.map((img, idx) => (
+                        <div key={idx} className="relative aspect-square group">
+                          <img 
+                            src={img} 
+                            alt="gallery" 
+                            className={`w-full h-full object-cover rounded-2xl border-2 ${idx === 0 ? 'border-orange-500 shadow-lg shadow-orange-500/20' : 'border-white shadow-sm'}`} 
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity flex items-center justify-center gap-2">
+                            <button className="p-1.5 bg-white rounded-lg text-red-500 hover:scale-110 transition-transform">
+                              <Trash2 size={14} />
+                            </button>
+                            <button className="p-1.5 bg-white rounded-lg text-black cursor-move">
+                              <GripVertical size={14} />
+                            </button>
+                          </div>
+                          {idx === 0 && (
+                            <div className="absolute top-2 left-2 bg-orange-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow-sm uppercase tracking-tighter">Cover</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section>
+                    <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4">规格名品牌化 (Variants)</h4>
+                    <div className="space-y-3">
+                      {editingCandidate.variants_raw.map((v, idx) => (
+                        <div key={idx} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                          <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-50">
+                            {editingCandidate.images[v.image_index] ? (
+                              <img src={editingCandidate.images[v.image_index]} className="w-full h-full object-cover" />
+                            ) : <Database size={16} className="text-gray-200" />}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[9px] font-black text-gray-300 uppercase mb-1">原始: {v.title}</p>
+                            <input 
+                              type="text"
+                              value={v.title}
+                              onChange={(e) => {
+                                const newVariants = [...editingCandidate.variants_raw];
+                                newVariants[idx].title = e.target.value;
+                                setEditingCandidate({...editingCandidate, variants_raw: newVariants});
+                              }}
+                              className="w-full bg-transparent border-none p-0 text-sm font-black focus:ring-0 focus:outline-none"
+                              placeholder="输入品牌化规格名..."
+                            />
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[9px] font-black text-gray-300 uppercase mb-1">估价</p>
+                            <p className="text-sm font-black text-orange-600">${editingCandidate.estimated_sale_price.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+
+                {/* Right: Desire Engine Texts */}
+                <div className="space-y-8">
+                  <section className="space-y-6">
+                    <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em]">欲望文案精修 (Desire Engine v4.0)</h4>
+                    
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest ml-1">The Hook (痛点重现)</label>
+                      <textarea 
+                        value={editingCandidate.desire_hook}
+                        onChange={(e) => setEditingCandidate({...editingCandidate, desire_hook: e.target.value})}
+                        className="w-full h-24 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-medium leading-relaxed focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none custom-scrollbar"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-orange-500 uppercase tracking-widest ml-1">The Logic (价值解构)</label>
+                      <textarea 
+                        value={editingCandidate.desire_logic}
+                        onChange={(e) => setEditingCandidate({...editingCandidate, desire_logic: e.target.value})}
+                        className="w-full h-32 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-medium leading-relaxed focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none custom-scrollbar"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-purple-500 uppercase tracking-widest ml-1">The Closing (仪式契约)</label>
+                      <textarea 
+                        value={editingCandidate.desire_closing}
+                        onChange={(e) => setEditingCandidate({...editingCandidate, desire_closing: e.target.value})}
+                        className="w-full h-24 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-medium leading-relaxed focus:border-purple-500 focus:ring-4 focus:ring-purple-500/5 transition-all outline-none custom-scrollbar"
+                      />
+                    </div>
+                  </section>
+
+                  <div className="pt-6 border-t border-gray-100">
+                    <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100 mb-6">
+                      <div className="flex gap-3">
+                        <AlertCircle className="text-orange-600 shrink-0" size={18} />
+                        <p className="text-[11px] text-orange-800 font-medium leading-relaxed">
+                          提示：点击“保存并准备批准”将更新本地候选池。最终上架前，系统会再次执行红线毛利核算，确保 0.5% 的汇率 Buffer 依然安全。
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-4">
+                      <button 
+                        onClick={() => setEditingCandidate(null)}
+                        className="flex-1 py-4 rounded-2xl bg-gray-100 text-gray-500 font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
+                      >
+                        取消修改
+                      </button>
+                      <button 
+                        onClick={handleUpdateCandidate}
+                        disabled={isUpdating}
+                        className="flex-[2] py-4 rounded-2xl bg-black text-white font-black text-xs uppercase tracking-[0.2em] hover:bg-orange-600 shadow-xl shadow-orange-600/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                      >
+                        {isUpdating ? <RefreshCw size={16} className="animate-spin" /> : <Shield size={16} />}
+                        保存并准备批准
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
         {/* Sidebar */}
         <aside className="w-full lg:w-64 bg-white border-r border-gray-100 p-6 flex flex-col h-auto lg:h-full">
@@ -405,62 +620,200 @@ const AdminDashboard: React.FC = () => {
 
           {activeTab === 'sourcing' && (
             <div className="space-y-8">
+              {/* Category Filter Tabs */}
+              <div className="flex gap-2 p-1 bg-gray-100 rounded-2xl w-fit">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                      selectedCategory === cat ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
               <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                 <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                  <h3 className="font-black text-lg">IDS 选品审核队列 (Following & Spy)</h3>
-                  <div className="flex gap-2">
-                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-black">待审核: {auditQueue.length}</span>
+                  <div>
+                    <h3 className="font-black text-lg">IDS 选品审核中枢 (Autonomous Selection)</h3>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">v4.1 Desire Engine & Multidimensional Audit</p>
+                  </div>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={fetchAuditQueue}
+                      className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-400"
+                    >
+                      <RefreshCw size={18} />
+                    </button>
+                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-black flex items-center">
+                      待审核: {filteredQueue.length} / {auditQueue.length}
+                    </span>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left">
+                  <table className="w-full text-left min-w-[1400px]">
                     <thead className="bg-gray-50 text-[10px] uppercase text-gray-400 font-black tracking-widest">
                       <tr>
-                        <th className="px-6 py-4">商品名 / 策略</th>
-                        <th className="px-6 py-4">成本 (CNY)</th>
-                        <th className="px-6 py-4">预计售价</th>
-                        <th className="px-6 py-4">利润比</th>
-                        <th className="px-6 py-4 text-right">操作</th>
+                        <th className="px-6 py-4">ID / 状态</th>
+                        <th className="px-6 py-4">商品预览 / 趋势证据 (Selection & Evidence)</th>
+                        <th className="px-6 py-4">供应商 (Supplier)</th>
+                        <th className="px-6 py-4">分类 / 策略</th>
+                        <th className="px-6 py-4">财务模型 (Financials)</th>
+                        <th className="px-6 py-4">欲望文案预览 (Psychological Sniper)</th>
+                        <th className="px-6 py-4 text-right">决策控制 (Control)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {auditQueue.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                      {filteredQueue.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-12 text-center text-gray-400 font-black italic">
+                            该分类下没有待审核选品，请尝试切换分类或刷新同步。
+                          </td>
+                        </tr>
+                      ) : filteredQueue.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              {item.images && item.images.length > 0 && (
-                                <img src={item.images[0]} alt="prod" className="w-10 h-10 rounded-lg object-cover bg-gray-100" />
+                            <span className="text-[10px] font-black text-gray-300">#{item.id}</span>
+                            <div className="mt-1 flex items-center gap-1.5">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-[9px] font-black uppercase text-blue-600">Pending</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-4">
+                              <div className="relative">
+                                {item.images && item.images.length > 0 ? (
+                                  <img src={item.images[0]} alt="prod" className="w-20 h-20 rounded-2xl object-cover bg-gray-100 shadow-md border-2 border-white group-hover:scale-110 transition-transform" />
+                                ) : (
+                                  <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-300">
+                                    <ShoppingBag size={24} />
+                                  </div>
+                                )}
+                                {item.discovery_evidence?.trend_score >= 95 && (
+                                  <div className="absolute -top-2 -right-2 bg-orange-600 text-white p-1 rounded-full shadow-lg">
+                                    <TrendingUp size={12} />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="max-w-[280px]">
+                                <p className="font-black text-sm leading-tight mb-2">{item.name}</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {item.discovery_evidence?.trend_score && (
+                                    <span className="px-2 py-0.5 bg-green-50 text-green-600 rounded-lg text-[8px] font-black uppercase">
+                                      Score: {item.discovery_evidence.trend_score}
+                                    </span>
+                                  )}
+                                  {item.discovery_evidence?.tiktok_views && (
+                                    <span className="px-2 py-0.5 bg-pink-50 text-pink-600 rounded-lg text-[8px] font-black uppercase">
+                                      TikTok: {item.discovery_evidence.tiktok_views}
+                                    </span>
+                                  )}
+                                  {item.discovery_evidence?.reddit_upvotes && (
+                                    <span className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded-lg text-[8px] font-black uppercase">
+                                      Reddit: {item.discovery_evidence.reddit_upvotes}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="max-w-[200px]">
+                              <p className="text-xs font-black text-gray-800 truncate">{item.supplier_info?.name || '未知源工厂'}</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="text-[10px] font-bold text-gray-400">1688 ID: {item.product_id_1688}</span>
+                                {item.supplier_info?.is_strength && (
+                                  <span className="bg-amber-100 text-amber-700 text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase">实力商家</span>
+                                )}
+                              </div>
+                              {item.supplier_info?.rating && (
+                                <div className="mt-1 flex gap-0.5 text-amber-400">
+                                  {[...Array(5)].map((_, i) => (
+                                    <span key={i} className={`text-xs ${i < Math.floor(item.supplier_info.rating) ? 'opacity-100' : 'opacity-20'}`}>★</span>
+                                  ))}
+                                </div>
                               )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-2">
                               <div>
-                                <p className="font-black text-sm">{item.name}</p>
-                                <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
-                                  item.discovery_source === 'IDS_SPY' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Market Category</p>
+                                <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-lg text-[10px] font-black uppercase">{item.category || 'OTHER'}</span>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Signal Source</p>
+                                <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase ${
+                                  item.discovery_source === 'IDS_SPY' ? 'bg-orange-100 text-orange-600' : 
+                                  item.discovery_source === 'C2M_WISH' ? 'bg-purple-100 text-purple-600' : 
+                                  'bg-blue-100 text-blue-600'
                                 }`}>
                                   {item.discovery_source}
                                 </span>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 font-bold text-gray-500">¥{item.cost_cny}</td>
-                          <td className="px-6 py-4 font-black text-black">${item.estimated_sale_price?.toFixed(2) || 'N/A'}</td>
                           <td className="px-6 py-4">
-                            <span className={`font-black ${item.profit_ratio >= 4.0 ? 'text-green-600' : 'text-orange-600'}`}>
-                              {item.profit_ratio ? item.profit_ratio.toFixed(1) : 'N/A'}x
-                            </span>
+                            <div className="w-[180px] p-3 bg-gray-50 rounded-2xl space-y-2 border border-gray-100">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[9px] font-black text-gray-400 uppercase">Cost (CNY)</span>
+                                <span className="text-xs font-bold text-gray-700">¥{item.cost_cny}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-[9px] font-black text-gray-400 uppercase">Sale (USD)</span>
+                                <span className="text-sm font-black text-black">${item.estimated_sale_price?.toFixed(2)}</span>
+                              </div>
+                              <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
+                                <span className="text-[9px] font-black text-gray-400 uppercase">Margin Factor</span>
+                                <span className={`text-xs font-black ${item.profit_ratio >= 10.0 ? 'text-green-600' : 'text-orange-600'}`}>
+                                  {item.profit_ratio?.toFixed(1)}x
+                                </span>
+                              </div>
+                            </div>
                           </td>
-                          <td className="px-6 py-4 text-right flex gap-2 justify-end">
-                            <button 
-                              onClick={() => handleReject(item.id)}
-                              className="text-gray-400 hover:text-red-600 px-3 py-1.5 rounded-lg text-xs font-black transition-colors"
-                            >
-                              拒绝
-                            </button>
-                            <button 
-                              onClick={() => handleApprove(item.id)}
-                              className="bg-black text-white px-4 py-1.5 rounded-lg text-xs font-black hover:bg-gray-800 transition-colors"
-                            >
-                              批准并同步
-                            </button>
+                          <td className="px-6 py-4">
+                            <div className="max-w-[320px] space-y-2 group/text">
+                              <div className="p-2 bg-blue-50/30 rounded-lg border border-blue-50">
+                                <p className="text-[9px] font-black text-blue-400 uppercase mb-1">The Hook</p>
+                                <p className="text-[11px] text-gray-600 leading-tight line-clamp-2">{item.desire_hook || 'AI 润色中...'}</p>
+                              </div>
+                              <div className="p-2 bg-orange-50/30 rounded-lg border border-orange-50">
+                                <p className="text-[9px] font-black text-orange-400 uppercase mb-1">The Logic</p>
+                                <p className="text-[11px] text-gray-600 leading-tight line-clamp-2">{item.desire_logic || 'AI 逻辑计算中...'}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex flex-col gap-2 items-end">
+                              <button 
+                                onClick={() => handleApprove(item.id)}
+                                className="w-full px-5 py-3 bg-black text-white rounded-2xl text-[11px] font-black hover:bg-orange-600 shadow-lg shadow-black/10 transition-all flex items-center justify-center gap-2 group/btn active:scale-95"
+                              >
+                                <Zap size={14} fill="currentColor" className="group-hover/btn:animate-pulse" />
+                                立即批准上架
+                              </button>
+                              <div className="flex gap-2">
+                                <button 
+                                  onClick={() => setEditingCandidate(item)}
+                                  className="flex-1 py-2 px-4 rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all text-[10px] font-black uppercase flex items-center justify-center gap-2 border border-gray-100"
+                                >
+                                  <Edit3 size={12} />
+                                  精修
+                                </button>
+                                <button 
+                                  onClick={() => handleReject(item.id)}
+                                  className="px-4 py-2 bg-gray-50 text-gray-400 rounded-xl text-[10px] font-bold hover:bg-red-50 hover:text-red-600 transition-colors"
+                                >
+                                  不符合要求
+                                </button>
+                                <button className="p-2 bg-gray-50 text-gray-300 rounded-xl hover:bg-gray-100 hover:text-gray-500 transition-colors">
+                                  <Settings size={14} />
+                                </button>
+                              </div>
+                            </div>
                           </td>
                         </tr>
                       ))}

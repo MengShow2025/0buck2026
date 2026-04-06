@@ -283,6 +283,16 @@ def update_persona_template(data: PersonaTemplateUpdate, db: Session = Depends(g
     db.commit()
     return {"status": "success", "template_id": data.id}
 
+class CandidateUpdate(BaseModel):
+    title_zh: Optional[str] = None
+    title_en_preview: Optional[str] = None
+    desire_hook: Optional[str] = None
+    desire_logic: Optional[str] = None
+    desire_closing: Optional[str] = None
+    images: Optional[List[str]] = None
+    variants_raw: Optional[List[Dict]] = None
+    category: Optional[str] = None
+
 # --- Autonomous Sourcing Decision Engine (v3.9.0) ---
 
 @router.get("/sourcing/candidates")
@@ -297,6 +307,20 @@ def list_sourcing_candidates(
         .order_by(CandidateProduct.created_at.desc())\
         .offset(skip).limit(limit).all()
     return candidates
+
+@router.patch("/sourcing/candidates/{candidate_id}")
+def update_sourcing_candidate(candidate_id: int, data: CandidateUpdate, db: Session = Depends(get_db)):
+    """v3.9.5: Update candidate details (images order, variants, etc.) before approval"""
+    candidate = db.query(CandidateProduct).filter_by(id=candidate_id).first()
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    
+    update_data = data.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(candidate, key, value)
+    
+    db.commit()
+    return {"status": "success"}
 
 @router.post("/sourcing/candidates/{candidate_id}/approve")
 async def approve_sourcing_candidate(candidate_id: int, db: Session = Depends(get_db)):

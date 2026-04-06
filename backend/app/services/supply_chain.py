@@ -34,8 +34,27 @@ class SupplyChainService:
     async def fetch_product_details(self, source_product_id: str) -> Dict[str, Any]:
         """
         Fetch product details from the supply library.
+        v3.9.5: Check CandidateProduct pool first for pre-enriched data.
         """
-        # Mock response with rich v3.1.5 data
+        # 1. Check if we have this in the candidate pool already
+        candidate = self.db.query(CandidateProduct).filter_by(product_id_1688=source_product_id).first()
+        if candidate:
+            return {
+                "id": candidate.product_id_1688,
+                "title": candidate.title_zh,
+                "description": candidate.description_zh,
+                "price": candidate.cost_cny,
+                "images": candidate.images if isinstance(candidate.images, list) else json.loads(candidate.images or "[]"),
+                "media": candidate.images if isinstance(candidate.images, list) else json.loads(candidate.images or "[]"),
+                "variants": candidate.variants_raw if isinstance(candidate.variants_raw, list) else json.loads(candidate.variants_raw or "[]"),
+                "category": candidate.category or "Artisan Choice",
+                "supplier": {
+                    "id": candidate.supplier_id_1688,
+                    **(candidate.supplier_info if isinstance(candidate.supplier_info, dict) else json.loads(candidate.supplier_info or "{}"))
+                }
+            }
+
+        # Mock response fallback with rich v3.1.5 data
         return {
             "id": source_product_id,
             "title": "Supply Library Item",
@@ -567,12 +586,17 @@ class SupplyChainService:
         
         return results
 
-    async def sync_product(self, source_product_id: str, comp_price_usd: float = None, cost_cny: float = None, title: str = None, strategy_tag: str = "IDS_FOLLOWING", category_type: str = "PROFIT", is_cashback_eligible: bool = None):
+    async def sync_product(self, source_product_id: str, comp_price_usd: float = None, cost_cny: float = None, title: str = None, strategy_tag: str = "IDS_FOLLOWING", category_type: str = "PROFIT", is_cashback_eligible: bool = None, variants_override: List[Dict] = None, images_override: List[str] = None):
         raw_data = await self.fetch_product_details(source_product_id)
         if cost_cny:
             raw_data["price"] = cost_cny
         if title:
             raw_data["title"] = title
+        if images_override:
+            raw_data["images"] = images_override
+            raw_data["media"] = images_override
+        if variants_override:
+            raw_data["variants"] = variants_override
         
         enriched_data = await self.translate_and_enrich(raw_data, strategy_tag)
         
@@ -585,16 +609,16 @@ class SupplyChainService:
             else:
                 return {"error": "MARGIN_BELOW_RED_LINE", "product_id": source_product_id}
             
-        supplier = self.db.query(Supplier).filter_by(supplier_id_1688=enriched_data["supplier"]["id"]).first()
+        supplier = self.db.query(Supplier).filter_by(supplier_id_1688=raw_data["supplier"]["id"]).first()
         if not supplier:
-            location_province = enriched_data["supplier"].get("province", "Guangdong")
-            location_city = enriched_data["supplier"].get("city", "Shenzhen")
+            location_province = raw_data["supplier"].get("province", "Guangdong")
+            location_city = raw_data["supplier"].get("city", "Shenzhen")
             warehouse = find_closest_warehouse(location_province, location_city)
             
             supplier = Supplier(
-                supplier_id_1688=enriched_data["supplier"]["id"],
-                name=enriched_data["supplier"]["name"],
-                rating=enriched_data["supplier"]["rating"],
+                supplier_id_1688=raw_data["supplier"]["id"],
+                name=raw_data["supplier"]["name"],
+                rating=raw_data["supplier"]["rating"],
                 location_province=location_province,
                 location_city=location_city,
                 warehouse_anchor=warehouse["name"]
@@ -721,7 +745,7 @@ class SupplyChainService:
 
         try:
             # 1. Full AI Enrichment & Translation
-            # Reuse sync_product logic
+            # Reuse sync_product logic with potential admin overrides
             product = await self.sync_product(
                 source_product_id=candidate.product_id_1688,
                 comp_price_usd=candidate.comp_price_usd,
@@ -729,7 +753,9 @@ class SupplyChainService:
                 title=candidate.title_zh,
                 strategy_tag=candidate.discovery_source,
                 category_type="PROFIT", # Default
-                is_cashback_eligible=True
+                is_cashback_eligible=True,
+                variants_override=candidate.variants_raw,
+                images_override=candidate.images
             )
 
             # 2. Sync to Shopify
