@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from typing import Optional, List, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.core.config import settings
@@ -10,7 +11,14 @@ import pyotp
 import qrcode
 import io
 import base64
+import logging
+import threading
+import redis
+from datetime import datetime, timedelta
 from app.models.ledger import UserExt
+from app.api.deps import get_current_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -63,17 +71,11 @@ async def check_2fa_status(request: Request, db: Session = Depends(get_db)):
 
 @router.post("/2fa/setup")
 async def setup_2fa(request: Request, db: Session = Depends(get_db)):
-    # v3.7.6: In production, we extract user_id from the JWT token.
-    # For setup, the user MUST be logged in.
-    from app.api.deps import get_current_user
-    try:
-        # Get the token from cookies or header to find who is setting up 2FA
-        # This is a bit tricky for a direct POST if not using Depends(get_current_user)
-        # So we refactor to use the dependency
-        pass
-    except:
-        pass
-
+    """
+    v3.7.6: In production, we extract user_id from the JWT token.
+    For setup, the user MUST be logged in.
+    Refactored to use Depends(get_current_user).
+    """
     return {"error": "Use the authenticated setup endpoint"}
 
 @router.post("/2fa/setup-authenticated")
@@ -131,12 +133,18 @@ async def enable_2fa(
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
 @router.post("/2fa/disable")
-async def disable_2fa(request: Request, db: Session = Depends(get_db)):
+async def disable_2fa(
+    request: Request, 
+    db: Session = Depends(get_db),
+    current_user: UserExt = Depends(get_current_user)
+):
+    """
+    v3.7.6: Disable 2FA for the CURRENT authenticated user.
+    """
     data = await request.json()
     code = data.get("code")
-    user_id = 8829
+    user = current_user
     
-    user = db.query(UserExt).filter(UserExt.customer_id == user_id).first()
     if not user or not user.is_two_factor_enabled:
         return {"status": "success"}
 
@@ -149,18 +157,14 @@ async def disable_2fa(request: Request, db: Session = Depends(get_db)):
     else:
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
-import threading
-import redis
-import json
-from datetime import datetime, timedelta
-
 # v3.5.0: Redis-based Global Rate Limiter for Brute-Force Defense
 # Supports multi-process deployments (e.g. Railway, Docker)
 try:
     redis_client = redis.from_url(settings.REDIS_URI, decode_responses=True)
     redis_client.ping()
     HAS_REDIS = True
-except Exception:
+except Exception as e:
+    logger.error(f"Redis connection failed: {e}")
     HAS_REDIS = False
     # Fallback to In-Memory for dev if Redis is missing
     login_attempts = {}
@@ -190,8 +194,8 @@ def check_rate_limit(email: str, ip: Optional[str] = None) -> bool:
                     ip_attempts = int(ip_data)
                     if ip_attempts >= 20: # Limit 20 attempts per 5 mins per IP
                         return True
-        except:
-            pass
+        except Exception as e:
+            logger.error(f"Rate limit check failed for {email}: {e}")
         return False
     else:
         # Fallback to In-Memory
@@ -223,8 +227,8 @@ def record_login_attempt(email: str, success: bool, ip: Optional[str] = None):
                 if ip_key:
                     redis_client.incr(ip_key)
                     redis_client.expire(ip_key, 300)
-        except:
-            pass
+        except Exception as e:
+            logger.error(f"Failed to record login attempt for {email}: {e}")
     else:
         with login_attempts_lock:
             if success:
@@ -239,7 +243,11 @@ def record_login_attempt(email: str, success: bool, ip: Optional[str] = None):
                 login_attempts[email] = attempts
 
 @router.post("/2fa/verify-login")
-async def verify_login_2fa(request: Request, db: Session = Depends(get_db)):
+async def verify_login_2fa(
+    request: Request, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
     """
     v3.7.6: Secure 2FA verification with email-specific lookup.
     v3.8.2: Enhanced with IP Throttling and New IP Detection.
@@ -270,7 +278,11 @@ async def verify_login_2fa(request: Request, db: Session = Depends(get_db)):
         if user.last_login_ip and user.last_login_ip != current_ip:
             msg = f"🔔 Security Notice: New login detected from IP {current_ip}. If this wasn't you, please secure your account."
             print(f"NEW IP ALERT for User {user.customer_id}: {msg}")
-            # BackgroundTask: social_service.send_nudge(user.customer_id, msg)
+            
+            # Use BackgroundTask for alert to avoid latency
+            from app.services.social_automation import SocialAutomationService
+            social_service = SocialAutomationService(db)
+            background_tasks.add_task(social_service.send_nudge, user.customer_id, msg)
         
         user.last_login_ip = current_ip
         user.last_login_at = datetime.utcnow()
@@ -374,6 +386,7 @@ async def verify_payment_password_endpoint(
 @router.post("/payment-password/reset-with-2fa")
 async def reset_payment_password_2fa(
     request: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: UserExt = Depends(get_current_user)
 ):
@@ -403,9 +416,6 @@ async def reset_payment_password_2fa(
     current_user.payment_pass_locked_until = None
     
     # v3.8.1: Record Event and Sync Alert
-    from app.services.social_automation import SocialAutomationService
-    social_service = SocialAutomationService(db)
-    
     # 1. Log to Security Trail
     from app.models.ledger import AdminAuditLog
     audit = AdminAuditLog(
@@ -417,11 +427,14 @@ async def reset_payment_password_2fa(
     db.add(audit)
     db.commit()
 
-    # 2. Sync Alert via Dumbo AI (Background task simulation)
+    # 2. Sync Alert via Dumbo AI (Background task)
     # Notify user on all channels about this sensitive change
     msg = "⚠️ Security Alert: Your payment password was just reset via 2FA. If this wasn't you, please freeze your account immediately via Dumbo AI Concierge!"
-    # In a real async flow, we'd use BackgroundTasks
-    # await social_service.send_nudge(current_user.customer_id, msg)
+    
+    from app.services.social_automation import SocialAutomationService
+    social_service = SocialAutomationService(db)
+    background_tasks.add_task(social_service.send_nudge, current_user.customer_id, msg)
+    
     print(f"SECURITY ALERT SENT TO USER {current_user.customer_id}: {msg}")
 
     return {"status": "success", "message": "Payment password reset automatically. Security alerts sent."}

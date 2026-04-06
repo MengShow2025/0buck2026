@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Any, Dict, List, Optional
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.db.session import get_db
 from app.models.ledger import CheckinPlan, GroupBuyCampaign, Order

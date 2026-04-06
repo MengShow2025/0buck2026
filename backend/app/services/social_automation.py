@@ -117,6 +117,31 @@ class SocialAutomationService:
             except Exception as e:
                 logger.error(f"Failed to send GB nudge: {e}")
 
+    async def send_nudge(self, user_id: int, message: str, type: str = "security_alert"):
+        """
+        v3.8.1: Generic nudge for security alerts or business notifications.
+        Sends to Stream Concierge and records in Square Feed.
+        """
+        user = self.db.query(UserExt).filter_by(customer_id=user_id).first()
+        if not user: return
+
+        # 1. Send to Stream Concierge
+        try:
+            concierge = stream_chat_service.server_client.channel("concierge", f"butler_{user_id}")
+            concierge.send_message({"text": message}, user_id="0buck_system")
+        except Exception as e:
+            logger.error(f"Failed to send nudge to Stream: {e}")
+
+        # 2. Record in Square Feed (Private)
+        activity = SquareActivity(
+            user_id=user_id,
+            type=type,
+            content=message,
+            metadata_json={"timestamp": datetime.now().isoformat()}
+        )
+        self.db.add(activity)
+        self.db.commit()
+
     async def notify_abandoned_draft(self, user_id: int, invoice_url: str):
         """
         v3.6.0: AI Nudge for abandoned Draft Orders.

@@ -10,8 +10,11 @@ from app.models.product import Product
 import hmac
 import hashlib
 import json
+import logging
 from decimal import Decimal
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

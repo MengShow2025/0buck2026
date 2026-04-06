@@ -9,10 +9,14 @@ class UserExt(Base):
 
     customer_id = Column(BigInteger, primary_key=True, index=True) # Shopify Customer ID
     inviter_id = Column(BigInteger, ForeignKey("users_ext.customer_id"), nullable=True)
+    email = Column(String(255), unique=True, index=True)
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
     referral_code = Column(String(20), unique=True, index=True)
     user_type = Column(String, default="customer") # 'customer', 'kol'
     user_tier = Column(String, default="silver") # 'silver', 'gold', 'platinum'
     kol_status = Column(String, default="none") # 'none', 'pending', 'approved', 'rejected'
+    is_active = Column(Boolean, default=True)
     
     # v3.4.6: Google 2FA
     two_factor_secret = Column(String(32), nullable=True)
@@ -247,8 +251,8 @@ class SourcingOrder(Base):
 class PriceWish(Base):
     __tablename__ = "price_wishes"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True)
-    product_id = Column(Integer, index=True)
+    user_id = Column(BigInteger, index=True)
+    product_id = Column(BigInteger, index=True)
     wish_price = Column(Numeric(12, 2))
     status = Column(String, default="active") # active, fulfilled, cancelled
     created_at = Column(DateTime, default=func.now())
