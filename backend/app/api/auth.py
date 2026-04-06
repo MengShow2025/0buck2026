@@ -128,9 +128,14 @@ async def disable_2fa(request: Request, db: Session = Depends(get_db)):
     else:
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
-# v3.5.0: Simple In-Memory Rate Limiter for Brute-Force Defense
-# In production, this should be replaced by Redis
+import threading
+from datetime import datetime, timedelta
+
+# v3.5.0: In-Memory Rate Limiter for Brute-Force Defense
+# NOTE: In production, this MUST be replaced by Redis to support multi-process deployments.
+# Thread-safe dictionary for single-process rate limiting
 login_attempts = {}
+login_attempts_lock = threading.Lock()
 
 @router.post("/2fa/verify-login")
 async def verify_login_2fa(request: Request, db: Session = Depends(get_db)):
@@ -144,17 +149,19 @@ async def verify_login_2fa(request: Request, db: Session = Depends(get_db)):
     if not email:
         raise HTTPException(status_code=400, detail="Email required")
         
-    # 1. Rate Limiting Check
+    # 1. Thread-safe Rate Limiting Check
     now = datetime.now()
-    attempts = login_attempts.get(email, {"count": 0, "last_attempt": now})
-    
-    # If more than 5 failed attempts in last 5 minutes, block for 15 mins
-    if attempts["count"] >= 5 and (now - attempts["last_attempt"]).seconds < 300:
-        raise HTTPException(status_code=429, detail="Too many attempts. Please try again in 5 minutes.")
-    
-    # Reset count if last attempt was long ago
-    if (now - attempts["last_attempt"]).seconds > 300:
-        attempts["count"] = 0
+    with login_attempts_lock:
+        attempts = login_attempts.get(email, {"count": 0, "last_attempt": now})
+        
+        # If more than 5 failed attempts in last 5 minutes, block for 5 mins
+        if attempts["count"] >= 5 and (now - attempts["last_attempt"]).seconds < 300:
+            raise HTTPException(status_code=429, detail="Too many attempts. Please try again in 5 minutes.")
+        
+        # Reset count if last attempt was long ago
+        if (now - attempts["last_attempt"]).seconds > 300:
+            attempts["count"] = 0
+            login_attempts[email] = attempts
 
     # In a real app, find user by email. Here we use 8829.
     user = db.query(UserExt).filter(UserExt.customer_id == 8829).first()
@@ -163,30 +170,38 @@ async def verify_login_2fa(request: Request, db: Session = Depends(get_db)):
 
     totp = pyotp.TOTP(user.two_factor_secret)
     if totp.verify(code):
-        # Success! Reset attempts
-        login_attempts[email] = {"count": 0, "last_attempt": now}
+        # Success! Reset attempts in thread-safe manner
+        with login_attempts_lock:
+            login_attempts[email] = {"count": 0, "last_attempt": now}
         
         # Issue JWT for v3.5.0 Security
         access_token = create_access_token(subject=user.customer_id)
         
         response = Response(content=json.dumps({"status": "success", "user_id": user.customer_id}), media_type="application/json")
         
-        # Set HttpOnly Cookie for Secure Auth
+        # v3.5.0 Secure Cookie Configuration for Production
+        is_prod = settings.ENVIRONMENT == "production"
         response.set_cookie(
             key="access_token",
             value=access_token,
             httponly=True,
-            max_age=60 * 24 * 7 * 60,
+            max_age=60 * 24 * 7 * 60, # 7 days
             samesite="lax",
-            secure=True
+            secure=is_prod, # Only enforce secure over HTTPS in production
+            path="/",
+            domain=settings.COOKIE_DOMAIN if hasattr(settings, "COOKIE_DOMAIN") else None
         )
         return response
     else:
-        # Failed attempt: Increment count
-        attempts["count"] += 1
-        attempts["last_attempt"] = now
-        login_attempts[email] = attempts
-        raise HTTPException(status_code=400, detail=f"Invalid verification code. {5 - attempts['count']} attempts remaining.")
+        # Failed attempt: Increment count in thread-safe manner
+        with login_attempts_lock:
+            attempts = login_attempts.get(email, {"count": 0, "last_attempt": now})
+            attempts["count"] += 1
+            attempts["last_attempt"] = now
+            login_attempts[email] = attempts
+        
+        remaining = 5 - attempts['count']
+        raise HTTPException(status_code=400, detail=f"Invalid verification code. {max(0, remaining)} attempts remaining.")
 
 @router.get("/login/{provider}")
 async def login(provider: str, request: Request):
@@ -232,7 +247,8 @@ async def auth_callback(provider: str, request: Request, db: Session = Depends(g
     
     response = RedirectResponse(url=f"{frontend_url}/?auth_success=true&email={email}")
     
-    # Set HttpOnly Cookie for Secure Auth
+    # v3.5.0 Secure Cookie Configuration for Production
+    is_prod = settings.ENVIRONMENT == "production"
     response.set_cookie(
         key="access_token",
         value=access_token,
@@ -240,6 +256,8 @@ async def auth_callback(provider: str, request: Request, db: Session = Depends(g
         max_age=60 * 24 * 7 * 60, # 7 days
         expires=60 * 24 * 7 * 60,
         samesite="lax",
-        secure=True # Set to True in production with HTTPS
+        secure=is_prod, # Only enforce secure over HTTPS in production
+        path="/",
+        domain=settings.COOKIE_DOMAIN if hasattr(settings, "COOKIE_DOMAIN") else None
     )
     return response

@@ -13,67 +13,65 @@ from app.models.ledger import (
     UserExt, Wallet, WalletTransaction, CheckinPlan, CheckinLog, ReferralRelationship, GroupBuyCampaign, Order
 )
 
+def enforce_idor(owner_id_field: str = "user_id"):
+    """
+    v3.5.0: Insecure Direct Object Reference (IDOR) Protection Decorator.
+    Ensures the current user only accesses their own resources.
+    """
+    def decorator(func: Callable):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            # In v3.5 we'd extract current_user from a context or JWT
+            # For now, we assume the first arg after 'self' is customer_id/user_id
+            # This is a placeholder for the actual zero-trust implementation
+            return func(self, *args, **kwargs)
+        return wrapper
+    return decorator
+
+def admin_audit(action: str):
+    """
+    v3.5.0: Admin Audit Trail Decorator.
+    Logs every administrative action to the database for accountability.
+    """
+    def decorator(func: Callable):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            # 1. Execute the function first
+            result = func(self, *args, **kwargs)
+            
+            # 2. Persist the audit log
+            from app.models.ledger import AdminAuditLog
+            import json
+            
+            # In v3.5 we'd extract admin_id from a global context/JWT
+            # For now, we use a placeholder admin_id
+            admin_id = 1 # System Admin
+            
+            try:
+                # Extract target_id from args (usually first arg is customer_id)
+                target_id = str(args[0]) if args else None
+                
+                audit = AdminAuditLog(
+                    admin_id=admin_id,
+                    action=action,
+                    target_id=target_id,
+                    payload={"args": [str(a) for a in args], "kwargs": {k: str(v) for k, v in kwargs.items()}}
+                )
+                self.db.add(audit)
+                self.db.commit()
+            except Exception as e:
+                print(f"FAILED TO LOG AUDIT: {e}")
+                self.db.rollback()
+            
+            return result
+        return wrapper
+    return decorator
+
 class RewardsService:
     def __init__(self, db: Session):
         self.db = db
         from app.services.config_service import ConfigService
         self.config_service = ConfigService(db)
-
-    @staticmethod
-    def enforce_idor(owner_id_field: str = "user_id"):
-        """
-        v3.5.0: Insecure Direct Object Reference (IDOR) Protection Decorator.
-        Ensures the current user only accesses their own resources.
-        """
-        def decorator(func: Callable):
-            @wraps(func)
-            def wrapper(self, *args, **kwargs):
-                # In v3.5 we'd extract current_user from a context or JWT
-                # For now, we assume the first arg after 'self' is customer_id/user_id
-                # This is a placeholder for the actual zero-trust implementation
-                return func(self, *args, **kwargs)
-            return wrapper
-        return decorator
-
-    @staticmethod
-    def admin_audit(action: str):
-        """
-        v3.5.0: Admin Audit Trail Decorator.
-        Logs every administrative action to the database for accountability.
-        """
-        def decorator(func: Callable):
-            @wraps(func)
-            def wrapper(self, *args, **kwargs):
-                # 1. Execute the function first
-                result = func(self, *args, **kwargs)
-                
-                # 2. Persist the audit log
-                from app.models.ledger import AdminAuditLog
-                import json
-                
-                # In v3.5 we'd extract admin_id from a global context/JWT
-                # For now, we use a placeholder admin_id
-                admin_id = 1 # System Admin
-                
-                try:
-                    # Extract target_id from args (usually first arg is customer_id)
-                    target_id = str(args[0]) if args else None
-                    
-                    audit = AdminAuditLog(
-                        admin_id=admin_id,
-                        action=action,
-                        target_id=target_id,
-                        payload={"args": [str(a) for a in args], "kwargs": {k: str(v) for k, v in kwargs.items()}}
-                    )
-                    self.db.add(audit)
-                    self.db.commit()
-                except Exception as e:
-                    print(f"FAILED TO LOG AUDIT: {e}")
-                    self.db.rollback()
-                
-                return result
-            return wrapper
-        return decorator
 
     def _generate_v3_plan_config(self) -> List[dict]:
         """

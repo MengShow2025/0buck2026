@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     EXCHANGE_RATE: float = 0.14 # 1 CNY to USD
     EXCHANGE_BUFFER: float = 0.005 # 0.5% buffer for fluctuations
 
+    # Environment
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development") # "development" or "production"
+    COOKIE_DOMAIN: Optional[str] = os.getenv("COOKIE_DOMAIN")
+
     class Config:
         case_sensitive = True
         env_file = ".env"
