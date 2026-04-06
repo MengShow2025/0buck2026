@@ -54,7 +54,10 @@ def sync_db_schema():
             Column("desire_hook", Text()),
             Column("desire_logic", Text()),
             Column("desire_closing", Text()),
-            Column("detail_images", JSONB(), server_default=text("'[]'::jsonb"))
+            Column("detail_images", JSONB(), server_default=text("'[]'::jsonb")),
+            Column("origin_video_url", Text()),
+            Column("certificate_images", JSONB(), server_default=text("'[]'::jsonb")),
+            Column("metafields", JSONB(), server_default=text("'{}'::jsonb"))
         ]
         for col in cols_product:
             try:
@@ -75,7 +78,13 @@ def sync_db_schema():
         cols_candidate = [
             Column("desire_hook", Text()),
             Column("desire_logic", Text()),
-            Column("desire_closing", Text())
+            Column("desire_closing", Text()),
+            Column("origin_video_url", Text()),
+            Column("certificate_images", JSONB(), server_default=text("'[]'::jsonb")),
+            Column("attributes", JSONB(), server_default=text("'[]'::jsonb")),
+            Column("logistics_data", JSONB(), server_default=text("'{}'::jsonb")),
+            Column("structural_data", JSONB(), server_default=text("'{}'::jsonb")),
+            Column("mirror_assets", JSONB(), server_default=text("'{}'::jsonb"))
         ]
         for col in cols_candidate:
             try:
@@ -85,6 +94,22 @@ def sync_db_schema():
                 print(f"✅ Added column {col.name} to candidate_products table.")
             except Exception:
                 pass # Column already exists
+
+        # 3. Create GIN Indexes for JSONB fields (PostgreSQL only)
+        if engine.dialect.name == 'postgresql':
+            index_stmts = [
+                "CREATE INDEX IF NOT EXISTS idx_product_attributes ON products USING gin (attributes)",
+                "CREATE INDEX IF NOT EXISTS idx_product_structural_data ON products USING gin (structural_data)",
+                "CREATE INDEX IF NOT EXISTS idx_candidate_attributes ON candidate_products USING gin (attributes)",
+                "CREATE INDEX IF NOT EXISTS idx_candidate_structural_data ON candidate_products USING gin (structural_data)"
+            ]
+            for stmt in index_stmts:
+                try:
+                    conn.execute(text(stmt))
+                    conn.commit()
+                    print(f"✅ Executed index statement: {stmt}")
+                except Exception as e:
+                    print(f"⚠️ Index creation failed (might already exist): {e}")
 
 sync_db_schema()
 

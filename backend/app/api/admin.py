@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional, Any, Dict
@@ -17,7 +17,7 @@ from app.services.discount_service import DiscountSyncService
 from app.services.c2m_service import C2MService
 from app.services.supply_chain import SupplyChainService
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_admin)])
 
 # --- Pydantic Schemas ---
 
@@ -190,11 +190,18 @@ def get_dashboard_kpis(db: Session = Depends(get_db)):
     
     melting_count = db.query(func.count(Product.id)).filter(Product.is_melted == True).scalar() or 0
     
+    # v4.6: 1688 API Status check
+    from app.services.config_service import ConfigService
+    config_service = ConfigService(db)
+    api_key = config_service.get_api_key("ALIBABA_1688_API_KEY")
+    api_status = "Active" if api_key else "Simulation"
+
     return {
         "orders_today": orders_today,
         "profit_mtd": round(float(profit_mtd), 2),
         "ids_conversion": ids_conversion,
-        "melting_count": melting_count
+        "melting_count": melting_count,
+        "api_status": api_status
     }
 
 # --- Product Management ---
@@ -303,6 +310,9 @@ class CandidateUpdate(BaseModel):
     desire_closing: Optional[str] = None
     images: Optional[List[str]] = None
     variants_raw: Optional[List[Dict]] = None
+    attributes: Optional[List[Dict]] = None
+    logistics_data: Optional[Dict] = None
+    structural_data: Optional[Dict] = None
     category: Optional[str] = None
 
 # --- Autonomous Sourcing Decision Engine (v3.9.0) ---
@@ -328,6 +338,18 @@ def list_sourcing_candidates(
         if isinstance(c.variants_raw, str):
             try: c.variants_raw = json.loads(c.variants_raw)
             except: c.variants_raw = []
+        if isinstance(c.attributes, str):
+            try: c.attributes = json.loads(c.attributes)
+            except: c.attributes = []
+        if isinstance(c.logistics_data, str):
+            try: c.logistics_data = json.loads(c.logistics_data)
+            except: c.logistics_data = {}
+        if isinstance(c.structural_data, str):
+            try: c.structural_data = json.loads(c.structural_data)
+            except: c.structural_data = {}
+        if hasattr(c, 'mirror_assets') and isinstance(c.mirror_assets, str):
+            try: c.mirror_assets = json.loads(c.mirror_assets)
+            except: c.mirror_assets = {}
             
     return candidates
 

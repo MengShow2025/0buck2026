@@ -6,7 +6,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 
 interface LoginViewProps {
-  onLogin: (email: string) => void;
+  onLogin: (email: string, user_data?: any) => void;
   onGoRegister: () => void;
   onGuestAccess?: () => void;
   onInteraction?: () => void;
@@ -42,22 +42,30 @@ export default function LoginView({
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsVerifying(true);
     
     try {
-      // v3.4.6: Dynamic 2FA Check
-      const url = getApiUrl('/v1/auth/check-2fa');
-      console.log('Checking 2FA status at:', url, 'for email:', email);
-      const res = await axios.post(url, { email });
-      console.log('2FA Check Response:', res.data);
-      if (res.data.required) {
-        setStep('2fa');
-      } else {
-        onLogin(email);
+      // v4.6: Integrated Backend Login with Password Support
+      const url = getApiUrl('/v1/auth/login');
+      console.log('Authenticating at:', url, 'for email:', email);
+      
+      const res = await axios.post(url, { 
+        email,
+        password // Now sending the actual password
+      });
+      
+      console.log('Login Response:', res.data);
+      
+      if (res.data.status === 'success') {
+        // If successful, pass the full user object back
+        onLogin(email, res.data.user);
       }
-    } catch (err) {
-      console.error('Login check failed:', err);
-      // Fallback to normal login if check fails
-      onLogin(email);
+    } catch (err: any) {
+      console.error('Login failed:', err);
+      const detail = err.response?.data?.detail || 'Authentication failed. Please check your credentials.';
+      setError(detail);
+    } finally {
+      setIsVerifying(false);
     }
   };
 

@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     EXCHANGE_RATE: float = 0.14 # 1 CNY to USD
     EXCHANGE_BUFFER: float = 0.005 # 0.5% buffer for fluctuations
 
+    # v4.6.6: Default Admin (Bootstrap)
+    DEFAULT_ADMIN_EMAIL: str = os.getenv("DEFAULT_ADMIN_EMAIL", "")
+    DEFAULT_ADMIN_PASSWORD: str = os.getenv("DEFAULT_ADMIN_PASSWORD", "")
+
     # Redis
     REDIS_URL: Optional[str] = os.getenv("REDIS_URL")
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")

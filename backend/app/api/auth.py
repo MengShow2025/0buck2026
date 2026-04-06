@@ -51,6 +51,76 @@ oauth.register(
     client_kwargs={'scope': 'name email'}
 )
 
+from pydantic import BaseModel, EmailStr
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+@router.post("/login")
+async def login_v46(
+    login_data: LoginRequest,
+    response: Response,
+    db: Session = Depends(get_db)
+):
+    """
+    v4.6: Secure Admin & User Login.
+    Supports default admin from ENV.
+    """
+    user = db.query(UserExt).filter(UserExt.email == login_data.email).first()
+    
+    # 1. Default Admin Logic (Bootstrap)
+    if login_data.email == settings.DEFAULT_ADMIN_EMAIL and login_data.password == settings.DEFAULT_ADMIN_PASSWORD:
+        if not user:
+            # Create the admin user if it doesn't exist
+            user = UserExt(
+                email=settings.DEFAULT_ADMIN_EMAIL,
+                first_name="Admin",
+                last_name="Boss",
+                user_type="admin",
+                is_active=True,
+                referral_code="ADMIN01"
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        else:
+            # Ensure the existing user has admin type
+            if user.user_type != "admin":
+                user.user_type = "admin"
+                db.commit()
+    
+    # 2. General Authentication (placeholder for real hashed password check if needed)
+    # For now, we only allow the hardcoded admin or existing users via OAuth.
+    if login_data.email == settings.DEFAULT_ADMIN_EMAIL and login_data.password == settings.DEFAULT_ADMIN_PASSWORD:
+        pass
+    else:
+        raise HTTPException(status_code=401, detail="Invalid credentials or please use OAuth")
+
+    # 3. Issue JWT
+    access_token = create_access_token(subject=user.customer_id)
+    
+    # 4. Set Secure Cookie
+    is_prod = settings.ENVIRONMENT == "production"
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=60 * 24 * 7 * 60,
+        samesite="lax",
+        secure=is_prod,
+        path="/"
+    )
+    
+    return {
+        "status": "success",
+        "user": {
+            "email": user.email,
+            "user_type": user.user_type,
+            "customer_id": user.customer_id
+        }
+    }
+
 @router.post("/check-2fa")
 async def check_2fa_status(request: Request, db: Session = Depends(get_db)):
     data = await request.json()

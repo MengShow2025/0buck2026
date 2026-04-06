@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, JSON, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, DateTime, JSON, ForeignKey, Boolean, Text, Computed, Index
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 
@@ -63,12 +64,25 @@ class Product(Base):
     weight = Column(Float, default=0.5) # Default 0.5kg (grams: 500)
     is_taxable = Column(Boolean, default=True)
     
-    # v3.1.5 Professional Meta-Sync Extensions
-    media = Column(JSON, default=list) # Full list of image/video URLs
-    certificate_images = Column(JSON, default=list) # v3.1: Certificates/Legal images
-    variants_data = Column(JSON, default=list) # Structured multi-variants (options, prices, weights)
-    metafields = Column(JSON, default=dict) # Complex attributes (CE, Materials, etc.)
-    origin_video_url = Column(String)
+    # v4.1: Media & Compliance Assets
+    origin_video_url = Column(String, nullable=True)
+    certificate_images = Column(JSON, default=list)
+    metafields = Column(JSON, default=dict)
+    
+    # v4.5 "Artisan-Master" Asset Base
+    # Business Tier: Logic & UI
+    attributes = Column(JSONB, server_default='[]')
+    variants_data = Column(JSONB, server_default='[]')
+    logistics_data = Column(JSONB, server_default='{}')
+    
+    # Asset Tier: Visual & Evidence
+    mirror_assets = Column(JSONB, server_default='{}')
+    
+    # Black Box: Evidence, Social Proof, Tier Pricing
+    structural_data = Column(JSONB, server_default='{}')
+    
+    # Computed Index (Generated Columns)
+    # repurchase_rate = Column(Float, Computed("(structural_data->'social'->>'repurchase_rate')::float"))
     
     # v3.1 Industrial-grade Enhancements
     strategy_tag = Column(String, index=True) # 'IDS_FOLLOWING', 'IDS_SPY', 'IDS_VECTOR'
@@ -103,6 +117,11 @@ class Product(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+# v4.5 GIN Indexes for High-Speed "Bubble Search"
+Index('idx_product_attributes', Product.attributes, postgresql_using='gin')
+Index('idx_product_variants_data', Product.variants_data, postgresql_using='gin')
+Index('idx_product_structural_data', Product.structural_data, postgresql_using='gin')
+
 class ProductVector(Base):
     __tablename__ = "product_vectors"
     
@@ -131,7 +150,6 @@ class CandidateProduct(Base):
     title_zh = Column(String)
     description_zh = Column(String)
     images = Column(JSON)
-    variants_raw = Column(JSON)
     
     # Financial Analysis (Pre-audit)
     cost_cny = Column(Float)
@@ -147,14 +165,36 @@ class CandidateProduct(Base):
     title_en_preview = Column(String, nullable=True)
     description_en_preview = Column(String, nullable=True)
     
+    # v4.1: Media & Compliance Assets
+    origin_video_url = Column(String, nullable=True)
+    certificate_images = Column(JSON, default=list)
+    
     # v4.0: Desire Engine Snippets
     desire_hook = Column(String, nullable=True) # The Hook: Zapping the pain point
     desire_logic = Column(String, nullable=True) # The Logic: Brand tax deconstruction
     desire_closing = Column(String, nullable=True) # The Closing: FOMO & Ritual
     
-    # Metadata
+    # v4.5 "Artisan-Master" Asset Base
     category = Column(String)
+    # Business Tier: Logic & UI
+    attributes = Column(JSONB, server_default='[]')
+    variants_raw = Column(JSONB, server_default='[]')
+    logistics_data = Column(JSONB, server_default='{}')
+    
+    # Asset Tier: Visual & Evidence
+    mirror_assets = Column(JSONB, server_default='{}')
+    
+    # Black Box: Evidence, Social Proof, Tier Pricing
+    structural_data = Column(JSONB, server_default='{}')
+    
+    # Computed Index (Generated Columns)
+    # repurchase_rate = Column(Float, Computed("(structural_data->'social'->>'repurchase_rate')::float"))
+    
     audit_notes = Column(String, nullable=True)
     
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+# v4.5 GIN Indexes for Candidate Pool Exploration
+Index('idx_candidate_attributes', CandidateProduct.attributes, postgresql_using='gin')
+Index('idx_candidate_structural_data', CandidateProduct.structural_data, postgresql_using='gin')

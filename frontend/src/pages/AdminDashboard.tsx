@@ -18,9 +18,29 @@ import {
   ChevronRight,
   GripVertical,
   Trash2,
-  Edit3
+  Edit3,
+  Star,
+  PlayCircle,
+  Truck,
+  Layers
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, Reorder } from 'framer-motion';
+
+// v4.6.3: Helper for authenticated fetch (legacy fallback)
+const fetchWithAuth = async (url: string, options: any = {}) => {
+  const res = await fetch(url, {
+    ...options,
+    credentials: 'include'
+  });
+  
+  if (res.status === 401 || res.status === 403) {
+    console.log("[AdminDashboard] Auth failed, redirecting...");
+    window.location.href = '/login';
+  }
+  
+  return res;
+};
+
 import { Link } from 'react-router-dom';
 import WishingWellProgressBar from '../components/WishingWellProgressBar';
 
@@ -29,6 +49,7 @@ interface Summary {
   profit_mtd: number;
   ids_conversion: { [key: string]: number };
   melting_count: number;
+  api_status: string;
 }
 
 interface Coupon {
@@ -104,6 +125,10 @@ interface AuditCandidate {
   images: string[];
   variants_raw: any[];
   category: string;
+  attributes?: any[];
+  logistics_data?: any;
+  mirror_assets?: any;
+  structural_data?: any;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -144,7 +169,7 @@ const AdminDashboard: React.FC = () => {
       const keys = ['C2M_ENABLED', 'C2M_VOTE_THRESHOLD', 'C2M_WISH_EXPIRY_HOURS'];
       const config: any = {};
       for (const k of keys) {
-        const res = await fetch(`/api/v1/admin/config/global?key=${k}`);
+        const res = await fetchWithAuth(`/api/v1/admin/config/global?key=${k}`);
         // This is a simplified fetch, assuming backend handles single key query if needed
         // Or we can just use the existing updateGlobalConfig style
       }
@@ -159,21 +184,21 @@ const AdminDashboard: React.FC = () => {
 
   const fetchWishes = async () => {
     try {
-      const res = await fetch('/api/v1/admin/c2m/wishes');
+      const res = await fetchWithAuth('/api/v1/admin/c2m/wishes');
       setWishes(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchInsights = async () => {
     try {
-      const res = await fetch('/api/v1/admin/c2m/insights');
+      const res = await fetchWithAuth('/api/v1/admin/c2m/insights');
       setInsights(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchAuditQueue = async () => {
     try {
-      const res = await fetch('/api/v1/admin/sourcing/candidates?status=new');
+      const res = await fetchWithAuth('/api/v1/admin/sourcing/candidates?status=new');
       const data = await res.json();
       // v3.9.1: Fix title vs name mapping for consistency
       const formatted = data.map((item: any) => ({
@@ -191,7 +216,7 @@ const AdminDashboard: React.FC = () => {
 
   const fetchMeltedQueue = async () => {
     try {
-      const res = await fetch('/api/v1/admin/melting/queue');
+      const res = await fetchWithAuth('/api/v1/admin/melting/queue');
       setMeltedProducts(await res.json());
     } catch (e) { console.error(e); }
   };
@@ -199,7 +224,7 @@ const AdminDashboard: React.FC = () => {
   const handleApprove = async (id: number) => {
     if (!confirm(`确认同步并上架此候选商品吗？\n(注意：这可能需要 5-15 秒，请耐心等待)`)) return;
     try {
-      const res = await fetch(`/api/v1/admin/sourcing/candidates/${id}/approve`, { method: 'POST' });
+      const res = await fetchWithAuth(`/api/v1/admin/sourcing/candidates/${id}/approve`, { method: 'POST' });
       const data = await res.json();
       if (res.ok && data.status === 'success') {
         alert('上架成功！已同步至 Shopify 并备份到 Notion');
@@ -214,7 +239,7 @@ const AdminDashboard: React.FC = () => {
     const reason = prompt('请输入拒绝原因:');
     if (!reason) return;
     try {
-      const res = await fetch(`/api/v1/admin/sourcing/candidates/${id}/reject?reason=${encodeURIComponent(reason)}`, { method: 'POST' });
+      const res = await fetchWithAuth(`/api/v1/admin/sourcing/candidates/${id}/reject?reason=${encodeURIComponent(reason)}`, { method: 'POST' });
       if (res.ok) {
         alert('已拒绝并归档');
         fetchAuditQueue();
@@ -226,7 +251,7 @@ const AdminDashboard: React.FC = () => {
     if (!editingCandidate) return;
     setIsUpdating(true);
     try {
-      const res = await fetch(`/api/v1/admin/sourcing/candidates/${editingCandidate.id}`, {
+      const res = await fetchWithAuth(`/api/v1/admin/sourcing/candidates/${editingCandidate.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -237,6 +262,10 @@ const AdminDashboard: React.FC = () => {
           desire_closing: editingCandidate.desire_closing,
           images: editingCandidate.images,
           variants_raw: editingCandidate.variants_raw,
+          attributes: editingCandidate.attributes,
+          logistics_data: editingCandidate.logistics_data,
+          mirror_assets: editingCandidate.mirror_assets,
+          structural_data: editingCandidate.structural_data,
           category: editingCandidate.category
         })
       });
@@ -254,21 +283,21 @@ const AdminDashboard: React.FC = () => {
 
   const fetchPersonaTemplates = async () => {
     try {
-      const res = await fetch('/api/v1/admin/ai/persona-templates');
+      const res = await fetchWithAuth('/api/v1/admin/ai/persona-templates');
       setPersonaTemplates(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchAIUsageStats = async () => {
     try {
-      const res = await fetch('/api/v1/admin/ai/usage-stats');
+      const res = await fetchWithAuth('/api/v1/admin/ai/usage-stats');
       setAIUsageStats(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const handleUpdateTemplate = async (template: PersonaTemplate) => {
     try {
-      await fetch('/api/v1/admin/ai/persona-templates', {
+      await fetchWithAuth('/api/v1/admin/ai/persona-templates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(template)
@@ -281,7 +310,7 @@ const AdminDashboard: React.FC = () => {
   const fetchSummary = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/v1/admin/dashboard/kpis');
+      const response = await fetchWithAuth('/api/v1/admin/dashboard/kpis');
       const data = await response.json();
       setSummary(data);
     } catch (error) {
@@ -294,8 +323,8 @@ const AdminDashboard: React.FC = () => {
   const fetchAIData = async () => {
     try {
       const [contRes, auditRes] = await Promise.all([
-        fetch('/api/v1/admin/ai/contributions'),
-        fetch('/api/v1/admin/ai/shield-audit')
+        fetchWithAuth('/api/v1/admin/ai/contributions'),
+        fetchWithAuth('/api/v1/admin/ai/shield-audit')
       ]);
       setContributions(await contRes.json());
       setShieldAudit(await auditRes.json());
@@ -306,7 +335,7 @@ const AdminDashboard: React.FC = () => {
 
   const fetchCoupons = async () => {
     try {
-      const response = await fetch('/api/v1/admin/coupons');
+      const response = await fetchWithAuth('/api/v1/admin/coupons');
       const data = await response.json();
       setCoupons(data);
     } catch (error) {
@@ -316,7 +345,7 @@ const AdminDashboard: React.FC = () => {
 
   const fetchAIRules = async () => {
     try {
-      const response = await fetch('/api/v1/admin/config/ai-rules');
+      const response = await fetchWithAuth('/api/v1/admin/config/ai-rules');
       const data = await response.json();
       setAIRules(data);
     } catch (error) {
@@ -326,7 +355,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleSyncCoupons = async () => {
     try {
-      const res = await fetch('/api/v1/admin/coupons/sync');
+      const res = await fetchWithAuth('/api/v1/admin/coupons/sync');
       const data = await res.json();
       alert(`已同步 ${data.synced_count} 个优惠券`);
       fetchCoupons();
@@ -337,7 +366,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleAssignCategory = async (code: string, category: string, permission: string) => {
     try {
-      await fetch(`/api/v1/admin/coupons/${code}/assign-category`, {
+      await fetchWithAuth(`/api/v1/admin/coupons/${code}/assign-category`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ai_category: category, ai_issuance_permission: permission })
@@ -357,7 +386,7 @@ const AdminDashboard: React.FC = () => {
       if (typeof value === 'number') parsedValue = parseFloat(newValue);
       if (typeof value === 'object') parsedValue = JSON.parse(newValue);
 
-      await fetch('/api/v1/admin/config/global', {
+      await fetchWithAuth('/api/v1/admin/config/global', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, value: parsedValue })
@@ -371,9 +400,10 @@ const AdminDashboard: React.FC = () => {
 
   const stats = [
     { label: '今日订单', value: summary?.orders_today || 0, icon: ShoppingBag, color: 'blue' },
-    { label: '本月估算利润', value: `$${summary?.profit_mtd.toFixed(2) || '0.00'}`, icon: TrendingUp, color: 'green' },
+    { label: '本月估算利润', value: `$${summary?.profit_mtd?.toFixed(2) || '0.00'}`, icon: TrendingUp, color: 'green' },
     { label: '爆款策略覆盖', value: Object.keys(summary?.ids_conversion || {}).length, icon: Database, color: 'purple' },
-    { label: '熔断预警', value: summary?.melting_count || 0, icon: Activity, color: 'red' }
+    { label: '熔断预警', value: summary?.melting_count || 0, icon: Activity, color: 'red' },
+    { label: 'API 状态', value: summary?.api_status || 'Simulation', icon: Shield, color: 'orange' }
   ];
 
   return (
@@ -413,9 +443,18 @@ const AdminDashboard: React.FC = () => {
                       <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em]">视觉画廊 (拖拽排序预研)</h4>
                       <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">首图锁定</span>
                     </div>
-                    <div className="grid grid-cols-4 gap-3">
+                    <Reorder.Group 
+                      axis="x" 
+                      values={editingCandidate.images} 
+                      onReorder={(newImages) => setEditingCandidate({...editingCandidate, images: newImages})}
+                      className="grid grid-cols-4 gap-3"
+                    >
                       {editingCandidate.images.map((img, idx) => (
-                        <div key={idx} className="relative aspect-square group">
+                        <Reorder.Item 
+                          key={img} 
+                          value={img}
+                          className="relative aspect-square group cursor-grab active:cursor-grabbing"
+                        >
                           <img 
                             src={img} 
                             alt="gallery" 
@@ -423,7 +462,8 @@ const AdminDashboard: React.FC = () => {
                           />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity flex items-center justify-center gap-2">
                             <button 
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 if (confirm('确认删除此图片吗？')) {
                                   const newImages = editingCandidate.images.filter((_, i) => i !== idx);
                                   setEditingCandidate({...editingCandidate, images: newImages});
@@ -433,16 +473,16 @@ const AdminDashboard: React.FC = () => {
                             >
                               <Trash2 size={14} />
                             </button>
-                            <button className="p-1.5 bg-white rounded-lg text-black cursor-move">
+                            <div className="p-1.5 bg-white rounded-lg text-black">
                               <GripVertical size={14} />
-                            </button>
+                            </div>
                           </div>
                           {idx === 0 && (
                             <div className="absolute top-2 left-2 bg-orange-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow-sm uppercase tracking-tighter">Cover</div>
                           )}
-                        </div>
+                        </Reorder.Item>
                       ))}
-                    </div>
+                    </Reorder.Group>
                   </section>
 
                   <section>
@@ -470,19 +510,113 @@ const AdminDashboard: React.FC = () => {
                             />
                           </div>
                           <div className="text-right">
-                            <p className="text-[9px] font-black text-gray-300 uppercase mb-1">估价</p>
-                            <p className="text-sm font-black text-orange-600">${editingCandidate.estimated_sale_price.toFixed(2)}</p>
+                            <p className="text-[9px] font-black text-gray-300 uppercase mb-1">物流 / 估价</p>
+                            <div className="flex flex-col items-end">
+                              <span className="text-[10px] font-bold text-blue-500 uppercase">{v.logistics?.weight_g || editingCandidate.logistics_data?.weight_g || '0'}g</span>
+                              <p className="text-sm font-black text-orange-600">${editingCandidate.estimated_sale_price?.toFixed(2) || '0.00'}</p>
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
+                  </section>
+
+                  <section>
+                    <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4">镜像资产与社交证据 (1:1 Mirror & Social Proof)</h4>
+                    
+                    {/* Video Asset */}
+                    {editingCandidate.structural_data?.video_url && (
+                      <div className="mb-4 bg-orange-50/50 rounded-2xl p-4 border border-orange-100 flex items-center gap-4">
+                        <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
+                          <PlayCircle size={20} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-black text-orange-900">HD Video Captured</p>
+                          <p className="text-[9px] font-bold text-orange-600 uppercase">1:1 High Fidelity Media</p>
+                        </div>
+                        <button 
+                          onClick={() => window.open(editingCandidate.structural_data.video_url, '_blank')}
+                          className="px-3 py-1.5 bg-white border border-orange-200 rounded-lg text-[10px] font-black text-orange-600 hover:bg-orange-50 transition-all uppercase tracking-wider"
+                        >
+                          Preview
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Attributes Grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {editingCandidate.attributes?.slice(0, 12).map((attr, idx) => (
+                        <div key={idx} className="p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                          <p className="text-[9px] font-black text-gray-400 uppercase mb-1">{attr.label}</p>
+                          <p className="text-xs font-bold text-gray-600 truncate">{attr.value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Social Proof Snippet */}
+                    {editingCandidate.structural_data?.reviews && (
+                      <div className="mt-4 p-4 bg-purple-50/30 rounded-2xl border border-purple-100/50">
+                        <h5 className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <Star size={12} fill="currentColor" /> 社交证据 (Social Proof)
+                        </h5>
+                        <div className="space-y-3">
+                          {editingCandidate.structural_data.reviews.slice(0, 2).map((rev: any, i: number) => (
+                            <div key={i} className="text-[10px] text-purple-900/70 font-medium italic leading-relaxed border-l-2 border-purple-200 pl-3">
+                              "{rev.text?.substring(0, 80)}..."
+                            </div>
+                          ))}
+                          <div className="flex gap-2 mt-2">
+                            {editingCandidate.structural_data.reviews.flatMap((r: any) => r.images || []).slice(0, 4).map((img: string, i: number) => (
+                              <div key={i} className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden border border-white shadow-sm">
+                                <img src={img} className="w-full h-full object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Logistics Radar */}
+                    {editingCandidate.logistics_data && (
+                      <div className="mt-4 p-4 bg-blue-50/30 rounded-2xl border border-blue-100/50">
+                        <h5 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                          <Shield size={12} /> 物流雷达 (Logistics Data)
+                        </h5>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[9px] font-black text-blue-400 uppercase mb-1">预估重量</p>
+                            <p className="text-xs font-black text-blue-900">{editingCandidate.logistics_data.weight_g || '1800'}g</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-black text-blue-400 uppercase mb-1">货物属性</p>
+                            <p className="text-xs font-black text-blue-900">普货 (General)</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </section>
                 </div>
 
                 {/* Right: Desire Engine Texts */}
                 <div className="space-y-8">
                   <section className="space-y-6">
-                    <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em]">欲望文案精修 (Desire Engine v4.0)</h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em]">欲望文案精修 (Desire Engine v4.0)</h4>
+                      <button 
+                        onClick={() => {
+                          // v4.6.5: Smart AI Auto-fill Simulation
+                          setEditingCandidate({
+                            ...editingCandidate,
+                            desire_hook: "Stop paying for brand tax! This high-fidelity curtain motor delivers industrial performance at 1/4 the retail cost.",
+                            desire_logic: "Direct from the source. We deconstruct the BOM to prove that quality doesn't have to be expensive.",
+                            desire_closing: "Limited stock for the first batch. Secure your node in the smart home ecosystem today."
+                          });
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all shadow-sm shadow-orange-500/20"
+                      >
+                        <Zap size={10} fill="currentColor" /> AI 自动润色
+                      </button>
+                    </div>
                     
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest ml-1">The Hook (痛点重现)</label>
@@ -582,11 +716,21 @@ const AdminDashboard: React.FC = () => {
             ))}
           </nav>
 
-          <div className="mt-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-            <p className="text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">v3.1 系统状态</p>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs font-bold">工业级运行中</span>
+          <div className="mt-6 p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-4">
+            <div>
+              <p className="text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">v4.6 系统状态</p>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs font-bold">工业级运行中</span>
+              </div>
+            </div>
+            
+            <div className="pt-4 border-t border-gray-200">
+              <p className="text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">1688 API 引擎</p>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${stats.find(s => s.label === 'API 状态')?.value === 'Active' ? 'bg-blue-500' : 'bg-orange-400'}`}></div>
+                <span className="text-xs font-bold">{stats.find(s => s.label === 'API 状态')?.value || '模拟模式'}</span>
+              </div>
             </div>
           </div>
         </aside>
@@ -988,7 +1132,7 @@ const AdminDashboard: React.FC = () => {
                     {aiUsageStats.map((stat) => (
                       <div key={stat.task_type} className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                         <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{stat.task_type}</p>
-                        <p className="text-xl font-black">${stat.cost_usd.toFixed(4)}</p>
+                        <p className="text-xl font-black">${stat.cost_usd?.toFixed(4) || '0.0000'}</p>
                         <p className="text-[10px] text-gray-500 font-bold">{(stat.tokens_in + stat.tokens_out).toLocaleString()} Tokens</p>
                       </div>
                     ))}
@@ -1183,7 +1327,7 @@ const AdminDashboard: React.FC = () => {
                         {contributions.map((c) => (
                           <tr key={c.user_id} className="hover:bg-gray-50/50 transition-colors">
                             <td className="px-6 py-4 font-bold text-sm">#{c.user_id}</td>
-                            <td className="px-6 py-4 font-black text-green-600">${c.usd_saved.toFixed(2)}</td>
+                            <td className="px-6 py-4 font-black text-green-600">${c.usd_saved?.toFixed(2) || '0.00'}</td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2">
                                 <div className="flex gap-1">

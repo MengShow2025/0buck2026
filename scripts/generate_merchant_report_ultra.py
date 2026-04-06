@@ -1,0 +1,286 @@
+import json
+import os
+from datetime import datetime
+
+# Path Configuration
+project_root = "/Volumes/SAMSUNG 970/AccioWork/coder/0buck"
+output_html = os.path.join(project_root, "deliverables/mirror_reports/honglang_merchant_ultra.html")
+
+# The Scraped Data
+ultra_data = {
+    "基础信息": {
+        "公司全称": "宁波市海曙高桥鸿朗工艺品厂",
+        "法定代表人": "李斌 (经营者/负责人)",
+        "成立日期": "2013-05-10",
+        "注册资本": "1.0万人民币",
+        "经营期限": "9年+ (2013年成立至今)",
+        "办公地址": "浙江省宁波市庄桥新桥三路11号2楼"
+    },
+    "工厂实力": {
+        "工厂面积": "3400m²",
+        "员工人数": "11 - 50 人",
+        "生产能力": "优秀",
+        "研发能力": "中等",
+        "经营模式": "生产厂家",
+        "主要客户": "超市、礼品店、文具店",
+        "主要市场": "全国及跨境出口"
+    },
+    "资质荣誉": {
+        "深度验厂": "是 (深度解读评级为优秀)",
+        "核心认证": [
+            "BSCI 商业社会标准认证 (欧盟准入)",
+            "阿里巴巴 AAA 级企业诚信通",
+            "行业 TOP 5% 优质工厂",
+            "芝麻信用认证"
+        ],
+        "信用等级": "AAA 极高信用",
+        "违约风险": "极低"
+    },
+    "经营数据": {
+        "3个月复购率 (回头率)": "43.00%",
+        "服务响应分 (3分钟响应率)": "89.57%",
+        "纠纷率": "0.00%",
+        "品质退货率": "0.00%",
+        "年交易额等级": "¥701万 - ¥1000万",
+        "48H 揽收率": "75.60%",
+        "48H 履约率": "100.00%"
+    },
+    "品类优势": {
+        "主营行业": "灯饰照明 / 工艺礼品",
+        "核心关键词": ["星空投影灯", "宇航员夜灯", "装饰台灯", "氛围投影灯", "月球灯"]
+    },
+    "视觉资产": {
+        "main_image": "https://cbu01.alicdn.com/img/ibank/O1CN01C1M4yh1olsbdeo0uz_!!3254115266-0-cib.jpg"
+    }
+}
+
+def generate_ultra_merchant_html(data, output_path):
+    base = data["基础信息"]
+    factory = data["工厂实力"]
+    certs = data["资质荣誉"]
+    metrics = data["经营数据"]
+    categories = data["品类优势"]
+    visuals = data["视觉资产"]
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="zh">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>0Buck Ultra Merchant Mirror - {base['公司全称']}</title>
+        <style>
+            :root {{ 
+                --primary: #1A73E8; 
+                --primary-dark: #0D47A1;
+                --secondary: #1E8E3E; 
+                --accent: #D93025; 
+                --gold: #F9AB00; 
+                --bg: #f8f9fc;
+                --card-bg: #ffffff;
+                --text-main: #202124;
+                --text-sub: #5f6368;
+                --border: #e0e0e0;
+            }}
+            body {{ 
+                font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+                line-height: 1.6; 
+                color: var(--text-main); 
+                max-width: 1000px; 
+                margin: 0 auto; 
+                padding: 40px 20px; 
+                background: var(--bg); 
+            }}
+            .card {{ 
+                background: var(--card-bg); 
+                padding: 50px; 
+                border-radius: 20px; 
+                box-shadow: 0 10px 40px rgba(0,0,0,0.06); 
+                position: relative; 
+                overflow: hidden;
+            }}
+            .top-bar {{
+                height: 10px;
+                background: linear-gradient(90deg, var(--primary), var(--secondary));
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+            }}
+            
+            .header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }}
+            .header-info h1 {{ margin: 0; font-size: 36px; font-weight: 800; letter-spacing: -1px; }}
+            .header-info .location {{ color: var(--text-sub); font-size: 16px; margin-top: 8px; display: flex; align-items: center; gap: 5px; }}
+            
+            .badge-verified {{ 
+                background: var(--secondary); 
+                color: white; 
+                padding: 8px 16px; 
+                border-radius: 50px; 
+                font-size: 14px; 
+                font-weight: bold; 
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                box-shadow: 0 4px 10px rgba(30, 142, 62, 0.2);
+            }}
+
+            .main-grid {{ display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; margin-bottom: 40px; }}
+            
+            /* Stats Section */
+            .highlight-section {{ 
+                background: #f1f3f4; 
+                padding: 30px; 
+                border-radius: 16px; 
+                display: grid; 
+                grid-template-columns: 1fr 1fr; 
+                gap: 20px;
+            }}
+            .stat-card {{ background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); }}
+            .stat-val {{ font-size: 32px; font-weight: 800; color: var(--primary); display: block; }}
+            .stat-label {{ font-size: 12px; color: var(--text-sub); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }}
+            
+            /* Repeat Rate Hero */
+            .repeat-hero {{ 
+                background: linear-gradient(135deg, var(--primary-dark), var(--primary)); 
+                color: white; 
+                padding: 35px; 
+                border-radius: 16px; 
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                position: relative;
+            }}
+            .repeat-hero .val {{ font-size: 64px; font-weight: 900; line-height: 1; }}
+            .repeat-hero .label {{ font-size: 16px; font-weight: 600; opacity: 0.9; margin-bottom: 5px; }}
+            .repeat-hero .bench {{ font-size: 12px; opacity: 0.7; border-top: 1px solid rgba(255,255,255,0.2); margin-top: 15px; padding-top: 10px; }}
+            
+            /* Detail Lists */
+            .section-title {{ 
+                font-size: 20px; 
+                font-weight: 800; 
+                color: var(--text-main); 
+                margin-bottom: 20px; 
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }}
+            .section-title::after {{ content: ''; flex-grow: 1; height: 1px; background: var(--border); }}
+            
+            .info-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 15px 40px; margin-bottom: 40px; }}
+            .info-item {{ border-bottom: 1px solid #f1f3f4; padding: 12px 0; display: flex; justify-content: space-between; }}
+            .info-key {{ color: var(--text-sub); font-size: 14px; }}
+            .info-val {{ font-weight: 600; font-size: 14px; text-align: right; }}
+
+            /* Certs and Badges */
+            .badge-container {{ display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 40px; }}
+            .cert-badge {{ 
+                background: #E8F0FE; 
+                color: var(--primary); 
+                padding: 10px 20px; 
+                border-radius: 8px; 
+                font-size: 14px; 
+                font-weight: 600; 
+                border: 1px solid #d2e3fc;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }}
+
+            /* Visual Asset */
+            .factory-preview {{ margin-top: 40px; border-radius: 16px; overflow: hidden; height: 250px; position: relative; }}
+            .factory-preview img {{ width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }}
+            .preview-overlay {{ 
+                position: absolute; bottom: 0; left: 0; right: 0; 
+                background: linear-gradient(transparent, rgba(0,0,0,0.8)); 
+                padding: 30px; color: white; 
+            }}
+            
+            .footer {{ text-align: center; margin-top: 60px; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 30px; }}
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="top-bar"></div>
+            
+            <div class="header">
+                <div class="header-info">
+                    <h1>{base['公司全称']}</h1>
+                    <div class="location">浙江省宁波市 · 成立自 {base['成立日期']} · {base['注册资本']} 注册</div>
+                </div>
+                <div class="badge-verified">
+                    🛡️ DEEP AUDIT VERIFIED
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <div class="repeat-hero">
+                    <div class="label">3-Month Repeat Rate (回头率)</div>
+                    <div class="val">{metrics['3个月复购率 (回头率)']}</div>
+                    <div class="bench">行业标杆级 · 属于类目 TOP 5% 级稳定货源供应商</div>
+                </div>
+                <div class="highlight-section">
+                    <div class="stat-card">
+                        <span class="stat-val">3400m²</span>
+                        <span class="stat-label">Factory Area</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-val">{metrics['纠纷率']}</span>
+                        <span class="stat-label">Dispute Rate</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-val">{metrics['48H 履约率']}</span>
+                        <span class="stat-label">48H Fulfillment</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-val">{metrics['服务响应分 (3分钟响应率)']}</span>
+                        <span class="stat-label">Response Rate</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Corporate Assets (企业核心资产)</div>
+                <div class="info-grid">
+                    <div class="info-item"><span class="info-key">法定代表人</span><span class="info-val">{base['法定代表人']}</span></div>
+                    <div class="info-item"><span class="info-key">员工人数</span><span class="info-val">{factory['员工人数']}</span></div>
+                    <div class="info-item"><span class="info-key">生产能力</span><span class="info-val">{factory['生产能力']} (已验厂)</span></div>
+                    <div class="info-item"><span class="info-key">年交易额等级</span><span class="info-val">{metrics['年交易额等级']}</span></div>
+                    <div class="info-item"><span class="info-key">办公地址</span><span class="info-val">{base['办公地址']}</span></div>
+                    <div class="info-item"><span class="info-key">主营行业</span><span class="info-val">{categories['主营行业']}</span></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Certification & Authority (资质荣誉)</div>
+                <div class="badge-container">
+                    {"".join([f'<div class="cert-badge">🏷️ {c}</div>' for c in certs['核心认证']])}
+                    <div class="cert-badge" style="background:#E6F4EA; color:#1E8E3E; border-color:#ceead6;">✅ {certs['深度验厂']}</div>
+                    <div class="cert-badge" style="background:#FEF7E0; color:#B06000; border-color:#fde293;">💎 {certs['信用等级']}</div>
+                </div>
+            </div>
+
+            <div class="factory-preview">
+                <img src="{visuals['main_image']}" alt="Factory Preview">
+                <div class="preview-overlay">
+                    <h3 style="margin:0">Official Production Facility Preview</h3>
+                    <p style="margin:5px 0 0; opacity:0.8">0Buck Mirror Extraction: High-fidelity visual asset for trust establishment.</p>
+                </div>
+            </div>
+
+            <div class="footer">
+                &copy; 2026 0Buck Project | Merchant Mirror v2.0 Ultra | Generated at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                <br>
+                Source: 1688 Deep-Core Data API | Confidential Intelligence
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html_content)
+    print(f"✅ Ultra Merchant HTML generated: {output_path}")
+
+if __name__ == "__main__":
+    generate_ultra_merchant_html(ultra_data, output_html)

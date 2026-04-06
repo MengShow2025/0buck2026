@@ -105,38 +105,60 @@ class SyncShopifyService:
 
     def format_description_html(self, description_en: str, product: Product) -> str:
         """
-        Converts the AI-generated English description into a clean HTML format 
-        that looks professional on Shopify and provides clear specifications 
-        to help win disputes.
+        v4.1.2: Converts the AI-generated English description into a clean HTML format.
+        Integrates the 3-Part Desire Script: [The Hook], [The Logic], [The Closing].
         """
-        # Start with the main sales copy
-        html = f'<div class="product-description" style="font-family: inherit; line-height: 1.6;">\n'
+        html = f'<div class="product-description" style="font-family: inherit; line-height: 1.6; color: #333;">\n'
         
-        # v3.2: Move replace completely out of potential f-string evaluation
-        # to ensure compatibility with all Python versions (<3.12)
+        # 1. [The Hook] - Bold, Emotional Zapper
+        if getattr(product, 'desire_hook', None):
+            html += f'  <div class="desire-hook" style="margin-bottom: 20px; font-size: 1.2em; font-weight: 700; color: #000; border-left: 4px solid #F97316; padding-left: 15px;">\n'
+            html += f'    {product.desire_hook}\n'
+            html += f'  </div>\n'
+
+        # 2. Main Sales Copy (The Narrative)
         formatted_desc = description_en.replace("\n", "</p><p>")
-        html += "  <p>" + formatted_desc + "</p>\n"
-        
-        # Add a technical specifications section if data is available
+        html += f'  <div class="main-copy" style="margin-bottom: 25px;">\n'
+        html += f'    <p>{formatted_desc}</p>\n'
+        html += f'  </div>\n'
+
+        # 3. [The Logic] - Brand Tax Deconstruction
+        if getattr(product, 'desire_logic', None):
+            html += f'  <div class="desire-logic" style="margin-bottom: 25px; background: #f8f8f8; padding: 15px; border-radius: 8px; font-style: italic;">\n'
+            html += f'    <p style="margin: 0;"><strong>Artisan Note:</strong> {product.desire_logic}</p>\n'
+            html += f'  </div>\n'
+
+        # 4. Technical Specifications (The Evidence)
         html += f'  <div class="product-specs" style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px;">\n'
-        html += f'    <h3 style="font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px;">Specifications</h3>\n'
+        html += f'    <h3 style="font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px; color: #666;">Technical Specifications</h3>\n'
         html += f'    <ul style="list-style: none; padding: 0;">\n'
         
-        # Key data points for dispute resolution
         specs = {
             "Weight": f"{getattr(product, 'weight', 0.5)} kg",
             "Category": product.category or "General",
-            "Origin": "International Sourcing (Premium Library)",
-            "SKU": f"1688-{product.product_id_1688}"
+            "Sourcing": "0Buck Verified Artisan",
+            "Catalog ID": f"SH-{product.product_id_1688}"
         }
         
+        # v4.5: Use the new "Three-in-One" Attributes JSONB
+        if hasattr(product, 'attributes') and product.attributes:
+            for attr in product.attributes[:8]: # Increase to 8 for better detail
+                specs[attr.get("label")] = attr.get("value")
+
         for key, value in specs.items():
             html += f'      <li style="margin-bottom: 8px; border-bottom: 1px solid #f9f9f9; padding-bottom: 4px;">\n'
-            html += f'        <strong style="color: #666; display: inline-block; width: 120px;">{key}:</strong> {value}\n'
+            html += f'        <strong style="color: #999; display: inline-block; width: 140px;">{key}:</strong> {value}\n'
             html += f'      </li>\n'
             
         html += f'    </ul>\n'
         html += f'  </div>\n'
+
+        # 5. [The Closing] - The Ritual/FOMO
+        if getattr(product, 'desire_closing', None):
+            html += f'  <div class="desire-closing" style="margin-top: 30px; text-align: center; font-weight: 600; color: #F97316;">\n'
+            html += f'    <p>— {product.desire_closing} —</p>\n'
+            html += f'  </div>\n'
+
         html += f'</div>'
         return html
 
@@ -248,15 +270,21 @@ class SyncShopifyService:
                 # Define Options if multi-variants exist
                 local_variants = getattr(product, 'variants_data', []) or []
                 if local_variants:
+                    import re
                     options = []
-                    # Check how many options are used and assign generic names
-                    # In a real production environment, these would be mapped from 1688 'spec_attributes'
-                    if local_variants[0].get("option1"):
-                        options.append({"name": "Color"})
-                    if local_variants[0].get("option2"):
-                        options.append({"name": "Size"})
-                    if local_variants[0].get("option3"):
-                        options.append({"name": "Specification"})
+                    # v4.6: Dynamic Option Mapping from 1688 spec_attrs
+                    first_v = local_variants[0]
+                    if not first_v.get("option1") and first_v.get("spec_attrs"):
+                        parts = re.split(r'>|&gt;', first_v["spec_attrs"])
+                        for idx, p in enumerate(parts):
+                            options.append({"name": f"Option {idx+1}"})
+                    else:
+                        if first_v.get("option1"):
+                            options.append({"name": "Color"})
+                        if first_v.get("option2"):
+                            options.append({"name": "Size"})
+                        if first_v.get("option3"):
+                            options.append({"name": "Specification"})
                     sp.options = options
 
                 # v3.1 Hybrid Growth Model Tags
@@ -316,6 +344,11 @@ class SyncShopifyService:
                             except Exception as e:
                                 logging.warning(f"Variant pricing calculation failed: {str(e)}")
 
+                        # v4.5: Mirror SKU-level Logistics (Weight & Volume)
+                        v_weight = lv.get("weight", product.weight or 0.5)
+                        if "logistics" in lv and lv["logistics"].get("weight_g"):
+                            v_weight = float(lv["logistics"]["weight_g"]) / 1000.0
+
                         v_data = {
                             "title": lv.get("title", f"Option {i+1}"),
                             "price": v_price,
@@ -323,12 +356,12 @@ class SyncShopifyService:
                             "inventory_management": "shopify",
                             "inventory_policy": "deny",
                             "taxable": True,
-                            "weight": lv.get("weight", product.weight or 0.5),
+                            "weight": v_weight,
                             "weight_unit": "kg",
-                            "grams": int(lv.get("weight", product.weight or 0.5) * 1000),
-                            "option1": lv.get("option1"),
-                            "option2": lv.get("option2"),
-                            "option3": lv.get("option3"),
+                            "grams": int(v_weight * 1000),
+                            "option1": lv.get("option1") or (re.split(r'>|&gt;', lv.get("spec_attrs", ""))[0] if lv.get("spec_attrs") else None),
+                            "option2": lv.get("option2") or (re.split(r'>|&gt;', lv.get("spec_attrs", ""))[1] if lv.get("spec_attrs") and len(re.split(r'>|&gt;', lv["spec_attrs"])) > 1 else None),
+                            "option3": lv.get("option3") or (re.split(r'>|&gt;', lv.get("spec_attrs", ""))[2] if lv.get("spec_attrs") and len(re.split(r'>|&gt;', lv["spec_attrs"])) > 2 else None),
                             "cost": str(lv.get("cost_usd", product.source_cost_usd))
                         }
                         
@@ -341,14 +374,22 @@ class SyncShopifyService:
                 
                 sp.variants = variants
                 
-                # 3. Images (Full Gallery Support)
+                # 3. Images (Full Gallery Support with Strict Position)
                 all_media = getattr(product, 'media', []) or product.images or []
                 shopify_images = []
                 if all_media:
                     internal_id = product.product_id_1688
                     for i, img in enumerate(all_media):
+                        # Ensure absolute URL
+                        clean_url = img
+                        if img.startswith("//"):
+                            clean_url = f"https:{img}"
+                        elif not img.startswith("http"):
+                            # Skip invalid URLs
+                            continue
+                            
                         shopify_images.append(shopify.Image({
-                            "src": img, 
+                            "src": clean_url, 
                             "position": i+1,
                             "alt": f"SH_{internal_id}_GALLERY_{i+1}"
                         }))
@@ -359,17 +400,37 @@ class SyncShopifyService:
                 if sp.save():
                     product.shopify_product_id = str(sp.id)
                     
-                    # v3.9.5: Handle Variant-Image Mapping
-                    # Now that the product and images are saved, Shopify has assigned IDs to images.
-                    # We need to map our local image_index to these Shopify Image IDs.
+                    # v4.1.2: Advanced Variant-Image Mapping (Mirror Protocol)
                     if sp.variants and local_variants and hasattr(sp, 'images'):
+                        # Create a map of image source URLs to Shopify image IDs for fallback matching
+                        image_url_to_id = {}
+                        for s_img in sp.images:
+                            if hasattr(s_img, 'src') and s_img.src:
+                                # Shopify might modify the URL slightly, but the filename is usually preserved
+                                base_url = s_img.src.split('?')[0].split('/')[-1]
+                                image_url_to_id[base_url] = s_img.id
+
                         for i, lv in enumerate(local_variants):
+                            if i >= len(sp.variants): break
+                            
+                            v = sp.variants[i]
+                            mapped_img_id = None
+                            
+                            # Strategy A: Use Mirror-Extractor's image_index (1:1 mapping)
                             img_idx = lv.get("image_index")
-                            # v3.9.6: Added digit check and boundary validation
-                            if img_idx is not None and str(img_idx).isdigit() and 0 <= int(img_idx) < len(sp.images):
-                                # Link the variant to the specific Shopify image
-                                v = sp.variants[i]
-                                v.image_id = sp.images[int(img_idx)].id
+                            if img_idx is not None and str(img_idx).isdigit():
+                                idx = int(img_idx)
+                                if 0 <= idx < len(sp.images):
+                                    mapped_img_id = sp.images[idx].id
+                            
+                            # Strategy B: Fallback to URL matching if Strategy A fails
+                            if not mapped_img_id and lv.get("image"):
+                                v_img_url = lv["image"]
+                                v_base = v_img_url.split('?')[0].split('/')[-1]
+                                mapped_img_id = image_url_to_id.get(v_base)
+                            
+                            if mapped_img_id:
+                                v.image_id = mapped_img_id
                                 v.save()
                     
                     if sp.variants and not product.shopify_variant_id:
@@ -416,6 +477,24 @@ class SyncShopifyService:
                             "key": "material_info",
                             "value": product.metafields.get("material", "N/A") if hasattr(product, 'metafields') and product.metafields else "N/A",
                             "type": "multi_line_text_field"
+                        },
+                        {
+                            "namespace": "0buck_mirror",
+                            "key": "assets",
+                            "value": json.dumps(getattr(product, 'mirror_assets', {})),
+                            "type": "json"
+                        },
+                        {
+                            "namespace": "0buck_mirror",
+                            "key": "structural_data",
+                            "value": json.dumps(getattr(product, 'structural_data', {})),
+                            "type": "json"
+                        },
+                        {
+                            "namespace": "0buck_mirror",
+                            "key": "attributes_full",
+                            "value": json.dumps(getattr(product, 'attributes', [])),
+                            "type": "json"
                         }
                     ]
                     

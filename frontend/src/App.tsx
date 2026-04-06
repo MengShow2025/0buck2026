@@ -1,5 +1,17 @@
 import { useCallback, useMemo, useState, useEffect } from 'react';
 import axios from 'axios';
+
+// v4.6.3: Global Axios & Fetch Security Defaults
+axios.defaults.withCredentials = true;
+
+// Utility for authenticated fetch calls
+const authFetch = (input: RequestInfo | URL, init?: RequestInit) => {
+  return fetch(input, {
+    ...init,
+    credentials: 'include'
+  });
+};
+
 import { CartItem, SecurePayPayload, ViewType, Product } from './types';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
@@ -44,7 +56,8 @@ export default function App() {
   
   const [showWelcome, setShowWelcome] = useState(() => {
     // Skip welcome if accessing command center directly
-    return !window.location.pathname.startsWith('/command');
+    const path = window.location.pathname.toLowerCase();
+    return !path.startsWith('/command') && !path.startsWith('/admin');
   });
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem('0buck_auth_state') === 'true';
@@ -58,35 +71,88 @@ export default function App() {
     }
   });
   const [currentView, setCurrentView] = useState<ViewType>(() => {
-    // v3.9.1: URL Path-based routing for Command Center
-    if (window.location.pathname === '/command') return 'admin';
+    // v4.6.4: Strict Security Guard for Admin Routes
+    const path = window.location.pathname.toLowerCase().replace(/\/$/, "");
+    console.log("[App] Initial Path Check:", path);
+    
+    if (path.startsWith('/command') || path.startsWith('/admin')) {
+      const isAuth = localStorage.getItem('0buck_auth_state') === 'true';
+      const user = JSON.parse(localStorage.getItem('0buck_user') || 'null');
+      
+      if (isAuth && user?.user_type === 'admin') {
+        console.log("[App] Route match: authorized admin dashboard");
+        return 'admin';
+      } else {
+        console.log("[App] Unauthorized admin access - redirecting to login");
+        return 'login';
+      }
+    }
     
     const isAuth = localStorage.getItem('0buck_auth_state') === 'true';
     return isAuth ? 'chat' : 'login';
   });
 
-  // Sync currentView with URL for Command Center
   useEffect(() => {
-    if (location.pathname === '/command' && currentView !== 'admin') {
-      setCurrentView('admin');
-      setShowWelcome(false);
+    const path = location.pathname.toLowerCase().replace(/\/$/, "");
+    console.log("[App] Location Path Change:", path);
+    
+    // v4.6.4: Strict Security Guard for Admin Routes
+    if ((path.startsWith('/command') || path.startsWith('/admin'))) {
+      const isAuth = localStorage.getItem('0buck_auth_state') === 'true';
+      const user = JSON.parse(localStorage.getItem('0buck_user') || 'null');
+      
+      if (isAuth && user?.user_type === 'admin') {
+        if (currentView !== 'admin') {
+          console.log("[App] Syncing view to admin based on path:", path);
+          setCurrentView('admin');
+          setShowWelcome(false);
+        }
+      } else {
+        console.log("[App] Blocking unauthorized admin access - redirecting to login");
+        if (currentView !== 'login') {
+          setCurrentView('login');
+          // alert("请使用管理员账号登录访问。");
+        }
+      }
     }
-  }, [location.pathname]);
+  }, [location.pathname, currentView, isAuthenticated, currentUser]);
   const [isUserTyping, setIsUserTyping] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [onAuthSuccess, setOnAuthSuccess] = useState<{ callback: () => void } | null>(null);
 
-  const handleLogin = useCallback((email: string) => {
+  const handleLogin = useCallback((email: string, user_data?: any) => {
     if (!email) return;
-    const user = { id: email.replace(/[^a-zA-Z0-9]/g, '_'), email };
+    
+    // v4.6: Use real user data if provided by the backend login
+    const user = user_data || { 
+      id: email.replace(/[^a-zA-Z0-9]/g, '_'), 
+      email,
+      user_type: 'customer' // default
+    };
+    
     setCurrentUser(user);
     setIsAuthenticated(true);
     localStorage.setItem('0buck_auth_state', 'true');
     localStorage.setItem('0buck_user', JSON.stringify(user));
     setShowAuthModal(false);
-    setCurrentView('chat');
+    
+    // v4.5.1: Smart redirect after login
+    const path = window.location.pathname.toLowerCase();
+    if (path.startsWith('/command') || path.startsWith('/admin')) {
+      // v4.6: Verify admin privileges
+      if (user.user_type === 'admin') {
+        setCurrentView('admin');
+      } else {
+        alert("Access Denied: Admin privileges required.");
+        setCurrentView('chat');
+        window.history.replaceState({}, document.title, '/');
+      }
+    } else {
+      setCurrentView('chat');
+    }
+    
     if (onAuthSuccess) {
       onAuthSuccess.callback();
       setOnAuthSuccess(null);
@@ -108,7 +174,13 @@ export default function App() {
           } else {
             setShowWelcome(false);
           }
-          setCurrentView('chat');
+          // v4.5.1: Smart redirect for guest
+          const path = window.location.pathname.toLowerCase();
+          if (path.startsWith('/command') || path.startsWith('/admin')) {
+            setCurrentView('admin');
+          } else {
+            setCurrentView('chat');
+          }
         }}
         onInteraction={() => !isModal && setIsUserTyping(true)}
         isModal={isModal}
@@ -201,7 +273,13 @@ export default function App() {
       const timer = setTimeout(() => {
         setShowWelcome(false);
         if (currentView === 'login') {
-          setCurrentView('chat'); // Auto-enter to AI Butler as guest
+          // v4.5.1: Prevent redirect if on command path
+          const path = window.location.pathname.toLowerCase();
+          if (path.startsWith('/command') || path.startsWith('/admin')) {
+            setCurrentView('admin');
+          } else {
+            setCurrentView('chat'); // Auto-enter to AI Butler as guest
+          }
         }
       }, 5000); // Updated to 5 seconds as per Boss request
       
@@ -642,7 +720,7 @@ export default function App() {
             transition={{ duration: 0.5 }}
             className="h-full w-full relative"
           >
-            {!['login', 'register', 'admin'].includes(currentView) && location.pathname !== '/command' && (
+            {!['login', 'register', 'admin'].includes(currentView) && !location.pathname.toLowerCase().startsWith('/command') && !location.pathname.toLowerCase().startsWith('/admin') && (
               <Sidebar 
                 currentView={currentView} 
                 onViewChange={setCurrentView} 
@@ -655,7 +733,7 @@ export default function App() {
                 onClose={() => setIsSidebarOpen(false)}
               />
             )}
-            <main className={`${!['login', 'register', 'admin'].includes(currentView) && location.pathname !== '/command' ? 'lg:ml-20' : ''} h-screen flex flex-col relative overflow-hidden`}>
+            <main className={`${!['login', 'register', 'admin'].includes(currentView) && !location.pathname.toLowerCase().startsWith('/command') && !location.pathname.toLowerCase().startsWith('/admin') ? 'lg:ml-20' : ''} h-screen flex flex-col relative overflow-hidden`}>
               <TopBar 
                 {...getHeaderProps()} 
                 currentView={currentView} 

@@ -52,9 +52,11 @@ market_research/
 product_assets/
 reports/
 
-# Scripts & Test files (prevent leakage of setup logic)
-scripts/
-backend/scripts/
+# Scripts (v4.6: Keep core orchestration scripts, ignore temp ones)
+# scripts/  <-- REMOVED GLOBAL IGNORE
+scripts/temp/
+scripts/debug/
+scripts/legacy/
 test_*.py
 check_*.py
 verify_*.py

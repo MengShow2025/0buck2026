@@ -15,29 +15,26 @@ logger = logging.getLogger(__name__)
 
 async def run_scanner():
     """
-    v3.9.1: Global Smart Business & Sourcing Scanner.
+    v4.6: Global Smart Business & Sourcing Orchestrator.
     Runs every 6 hours.
+    
     1. Smart Business: Price Radar, Churn, Abandoned Drafts.
-    2. Sourcing: IDS Sniffing (Following) & Spying (Spy Mode) -> Candidate Pool.
+    2. Sourcing (Artisan-Master): IDS Sniffing & Spying -> Candidate Pool.
+    3. Asset Enrichment: AI Translation, 1:1 Mirroring & Social Evidence.
     """
-    logger.info("🚀 Starting 6-hour Global Scanner...")
+    logger.info("🚀 Starting 6-hour Global Orchestrator (v4.6)...")
     db = SessionLocal()
     try:
-        # 1. Smart Business Logic
+        # 1. Trigger all Smart Business logic (Price Radar, Churn, etc.)
         business_service = SmartBusinessService(db)
         await business_service.scan_all()
         
-        # 2. Sourcing Logic (v3.9.1: Autonomous Pipeline)
-        sc_service = SupplyChainService(db)
-        logger.info("  🕵️ Running IDS Sniffing (Following Mode)...")
-        await sc_service.ids_sniffing_and_populate()
+        # Note: business_service.scan_all() already triggers 
+        # sourcing_candidates inside, so we don't need to double-call here.
         
-        logger.info("  🕵️ Running Spy Monitor (Spy Mode)...")
-        await sc_service.spying_engine_and_populate()
-
-        logger.info("✅ Global Scanner completed successfully.")
+        logger.info("✅ Global Orchestrator completed successfully.")
     except Exception as e:
-        logger.error(f"❌ Error during Global Scan: {e}")
+        logger.error(f"❌ Error during Global Orchestrator: {e}")
     finally:
         db.close()
 
