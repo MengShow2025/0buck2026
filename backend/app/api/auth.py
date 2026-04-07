@@ -78,37 +78,78 @@ async def login_v46(
     v4.6: Secure Admin & User Login.
     Supports default admin from ENV.
     """
-    user = db.query(UserExt).filter(UserExt.email == login_data.email).first()
-    
-    # 1. Default Admin Logic (Bootstrap)
-    if settings.DEFAULT_ADMIN_EMAIL and login_data.email == settings.DEFAULT_ADMIN_EMAIL and login_data.password == settings.DEFAULT_ADMIN_PASSWORD:
-        if not user:
-            # Check if ID 1 is taken by someone else
-            conflict = db.query(UserExt).filter(UserExt.customer_id == 1).first()
-            admin_id = 1 if not conflict else 999999999
-                
-            user = UserExt(
-                customer_id=admin_id,
-                email=settings.DEFAULT_ADMIN_EMAIL,
-                first_name="Admin",
-                last_name="Boss",
-                user_type="admin",
-                is_active=True,
-                referral_code="ADMIN01"
-            )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-        else:
-            # Ensure the existing user has admin type
-            if user.user_type != "admin":
-                user.user_type = "admin"
-                db.commit()
+    try:
+        user = db.query(UserExt).filter(UserExt.email == login_data.email).first()
         
-        # v4.6.8: Return token immediately for bootstrap admin
+        # 1. Default Admin Logic (Bootstrap)
+        if settings.DEFAULT_ADMIN_EMAIL and login_data.email == settings.DEFAULT_ADMIN_EMAIL and login_data.password == settings.DEFAULT_ADMIN_PASSWORD:
+            if not user:
+                # Check if ID 1 is taken by someone else
+                conflict = db.query(UserExt).filter(UserExt.customer_id == 1).first()
+                admin_id = 1 if not conflict else 999999999
+                    
+                # v4.6.8: Use a more robust referral code generation
+                import hashlib
+                ref_hash = hashlib.md5(login_data.email.encode()).hexdigest()[:6].upper()
+                
+                user = UserExt(
+                    customer_id=admin_id,
+                    email=settings.DEFAULT_ADMIN_EMAIL,
+                    first_name="Admin",
+                    last_name="Boss",
+                    user_type="admin",
+                    is_active=True,
+                    referral_code=f"ADM{ref_hash}"
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            else:
+                # Ensure the existing user has admin type
+                if user.user_type != "admin":
+                    user.user_type = "admin"
+                    db.commit()
+            
+            # v4.6.8: Return token immediately for bootstrap admin
+            access_token = create_access_token(subject=user.customer_id)
+            
+            # Set Secure Cookie
+            is_prod = settings.ENVIRONMENT == "production"
+            response.set_cookie(
+                key="access_token",
+                value=access_token,
+                httponly=True,
+                max_age=60 * 24 * 7 * 60,
+                samesite="lax",
+                secure=is_prod,
+                path="/"
+            )
+            
+            return {
+                "status": "success",
+                "access_token": access_token,
+                "token_type": "bearer",
+                "user": {
+                    "email": user.email,
+                    "user_type": user.user_type,
+                    "customer_id": user.customer_id
+                }
+            }
+        
+        # 2. General Authentication (placeholder for real hashed password check if needed)
+        # For now, we only allow the hardcoded admin or existing users via OAuth.
+        if settings.DEFAULT_ADMIN_EMAIL and login_data.email == settings.DEFAULT_ADMIN_EMAIL and login_data.password == settings.DEFAULT_ADMIN_PASSWORD:
+            pass
+        else:
+            raise HTTPException(status_code=401, detail="Invalid credentials or please use OAuth")
+
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+
+        # 3. Issue JWT
         access_token = create_access_token(subject=user.customer_id)
         
-        # Set Secure Cookie
+        # 4. Set Secure Cookie
         is_prod = settings.ENVIRONMENT == "production"
         response.set_cookie(
             key="access_token",
@@ -122,45 +163,17 @@ async def login_v46(
         
         return {
             "status": "success",
-            "access_token": access_token,
-            "token_type": "bearer",
             "user": {
                 "email": user.email,
                 "user_type": user.user_type,
                 "customer_id": user.customer_id
             }
         }
-    
-    # 2. General Authentication (placeholder for real hashed password check if needed)
-    # For now, we only allow the hardcoded admin or existing users via OAuth.
-    if login_data.email == settings.DEFAULT_ADMIN_EMAIL and login_data.password == settings.DEFAULT_ADMIN_PASSWORD:
-        pass
-    else:
-        raise HTTPException(status_code=401, detail="Invalid credentials or please use OAuth")
-
-    # 3. Issue JWT
-    access_token = create_access_token(subject=user.customer_id)
-    
-    # 4. Set Secure Cookie
-    is_prod = settings.ENVIRONMENT == "production"
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        max_age=60 * 24 * 7 * 60,
-        samesite="lax",
-        secure=is_prod,
-        path="/"
-    )
-    
-    return {
-        "status": "success",
-        "user": {
-            "email": user.email,
-            "user_type": user.user_type,
-            "customer_id": user.customer_id
-        }
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Critical Login Error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 @router.post("/check-2fa")
 async def check_2fa_status(request: Request, db: Session = Depends(get_db)):
