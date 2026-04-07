@@ -110,22 +110,36 @@ router = APIRouter()
 
 @router.get("/feishu/test")
 async def test_feishu_connectivity():
-    """v5.5.4: Manual connectivity test for Boss"""
-    return {"status": "ok", "message": "IM Gateway is active and reachable", "encryption_active": bool(settings.FEISHU_ENCRYPT_KEY)}
+    """v5.5.15: Enhanced connectivity and credential test for Boss"""
+    app_id = settings.FEISHU_APP_ID.strip() if settings.FEISHU_APP_ID else ""
+    app_secret = settings.FEISHU_APP_SECRET.strip() if settings.FEISHU_APP_SECRET else ""
+    
+    return {
+        "status": "ok", 
+        "message": "IM Gateway is active and reachable", 
+        "encryption_active": bool(settings.FEISHU_ENCRYPT_KEY),
+        "credentials_check": {
+            "FEISHU_APP_ID_SET": bool(app_id),
+            "FEISHU_APP_SECRET_SET": bool(app_secret),
+            "BACKEND_URL_SET": bool(settings.BACKEND_URL)
+        },
+        "backend_url_value": settings.BACKEND_URL
+    }
 
 @router.post("/feishu")
 @router.post("/feishu/") # v5.5.4: Handle trailing slash variants
 async def feishu_webhook(request: Request):
     """
-    v5.5.4: Ultra-Robust Feishu Webhook Handler with Encryption Support.
+    v5.5.15: Ultra-Robust Feishu Webhook Handler with Full Payload Logging.
     """
-    logger.info("📡 Incoming Feishu Webhook Request...")
     try:
         raw_body = await request.body()
         if not raw_body:
+            logger.warning("⚠️ Received empty body from Feishu")
             return JSONResponse(content={"status": "empty"}, status_code=200)
             
         payload = json.loads(raw_body)
+        logger.info(f"📡 Incoming Feishu Webhook Payload: {json.dumps(payload)[:500]}...") # Log first 500 chars
         
         # 0. HANDLE ENCRYPTION (v5.5.5) - NOW OPTIONAL (v5.5.6)
         if "encrypt" in payload:
