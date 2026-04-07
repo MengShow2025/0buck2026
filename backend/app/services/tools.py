@@ -57,8 +57,7 @@ def product_search(query: str):
     db.close()
     return results
 
-@tool
-async def web_search(query: str) -> List[Dict[str, Any]]:
+async def _web_search_func(query: str) -> List[Dict[str, Any]]:
     """
     Search the web using Exa to find trending products, market prices, or supplier information.
     Best for broad research or finding items not yet in our database.
@@ -71,9 +70,7 @@ async def web_search(query: str) -> List[Dict[str, Any]]:
     }
     payload = {
         "query": query,
-        "useAutoprompt": True,
-        "numResults": 5,
-        "type": "neural"
+        "numResults": 5
     }
     
     async with httpx.AsyncClient() as client:
@@ -81,9 +78,12 @@ async def web_search(query: str) -> List[Dict[str, Any]]:
             response = await client.post(url, json=payload, headers=headers)
             response.raise_for_status()
             data = response.json()
+            print(f"DEBUG EXA RAW: {str(data)[:200]}...")
             return data.get("results", [])
         except Exception as e:
             return [{"error": str(e)}]
+
+web_search = tool(_web_search_func)
 
 @tool
 async def supply_library_search(query: str) -> List[Dict[str, Any]]:

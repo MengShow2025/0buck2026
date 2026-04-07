@@ -49,15 +49,24 @@
     - **Shadow Tracking**: 物流单号进入 AI 前经过脱敏映射。
     - **影子 Alt**: 图片上传至 Shopify CDN 后自动重命名，消除 `alicdn` 痕迹。
 
-### F. 系统架构与安全 (Technical Infrastructure)
-- **Zone 隔离架构 (Shield Layer)**:
-    - **Zone 1 (Vault)**: 存储 1688 原始链接、成本、用户隐私。
-    - **Zone 2 (Proxy)**: 脱敏网关，执行影子映射。
-    - **Zone 3 (Butler)**: 对话层，仅接触影子数据。
-- **BYOK (Bring Your Own Key)**: 用户提供 Key 换取“补签卡”碎片（每节省 $50 奖 1 碎片，3 片合 1 张）。
-- **数据精益化 (Data Diet)**: 原始日志仅存 7 天。AI 异步将对话“脱水”为极简 JSON 事实 (LTM)。
+### G. 智理中控架构 (Brain-Hub Mode v5.0 - 降维打击架构)
+- **核心逻辑 (Anchor Mode)**: 彻底放弃自研 1688 底层爬虫，采用 “第三方搬运工 (DSers/妙手) + 0Buck AI 智理” 架构。Shopify 成为 0Buck 的 “媒体资产锚点” 与 “Single Source of Truth”。
+- **选品情报主权 (Intelligence-First)**: 坚持 “热点 (Hotspot) -> 话题 (Topic) -> 商品 (Product) -> 痛点 (Pain Point)” 的原始选品逻辑。0Buck 负责“选什么”，搬运工负责“搬什么”。
+- **全自动闭环流水线**:
+    1. **探测 (Scout)**: 0Buck 探测热点话题并匹配 1688/Alibaba 货源，计算利润率、套利空间及返现可行性，进入 `CandidateProduct` 待选池。
+    2. **比价与价值感知引擎 (Global Comparison Engine)**: 
+        - **采购套利**: 1688 vs Alibaba (RTS) 自动比价，寻找最优成本。
+        - **价值锚点**: **Amazon/eBay 实时比价**。自动抓取全球主流平台零售价，作为 0Buck 标价的“心理降维”参照。
+        - **套利阈值**: 默认 15%，根据 Amazon/eBay 溢价空间动态调整。
+    3. **定价逻辑 (Pricing Logic)**: 保持 **20期签到全返 (20-Phase Full Rebate)** 模型。0Buck 根据成本价及 Amazon/eBay 锚点价格，自动算出既具竞争力又能覆盖返现成本的“最优定价”。
+    4. **审批 (Approve)**: 管理员在 0Buck 后台审核“热点+全球比价+商品+痛点”组合，点击同意。
+    4. **调度 (Trigger)**: 0Buck 触发 DSers (Alibaba) 或 妙手 (1688) 的 API，将原始商品铺货到 Shopify。
+    5. **感应 (Listen)**: Shopify 通过 `Product Created` Webhook 通知 0Buck 商品已到。
+    6. **润色 (Enrich)**: 0Buck 立即拉取 Shopify 数据（图片 URL、成本价、变体），AI Desire Engine 自动注入基于热点的 Hook 标题、欲望文案。
+    7. **覆盖 (Publish)**: 0Buck 根据成本价与 20 期返现公式自动重新计算售价，调用 Shopify API (PUT) 反向覆盖文案与价格，正式发布上架。
+- **技术优势**: 避开 1688 封禁与图片镜像难题，利用第三方工具维护 SKU 映射与 CDN 资产，0Buck 专注 AI 营销、套利决策与比价分析。
 
-## 4. 关键文件索引
+### 4. 关键文件索引
 - `docs/0Buck_Master_Blueprint_v2.0.md` (母体总纲)
 - `docs/0Buck_Master_Rewards_Spec.md` (财务与奖励)
 - `0Buck AI 管家操作系统 (v3.2).md` (管家协议)

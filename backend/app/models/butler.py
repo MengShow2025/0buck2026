@@ -28,6 +28,25 @@ class PersonaTemplate(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+class UserIMBinding(Base):
+    """
+    v5.5: Maps external IM identities (Feishu, WhatsApp, Telegram) to 0Buck Customer IDs.
+    Ensures secure, cross-platform persona & memory continuity.
+    """
+    __tablename__ = "user_im_bindings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(BigInteger, ForeignKey("users_ext.customer_id"), nullable=False)
+    platform = Column(String(50), nullable=False) # 'feishu', 'whatsapp', 'telegram'
+    platform_uid = Column(String(255), nullable=False, index=True) # OpenID, Phone, etc.
+    extra_data = Column(JSON, nullable=True) # Metadata like display name, avatar
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    
+    __table_args__ = (UniqueConstraint('platform', 'platform_uid', name='_platform_uid_uc'),)
+
 class UserButlerProfile(Base):
     """
     Stores the AI Butler's personality and the user's affinity score.

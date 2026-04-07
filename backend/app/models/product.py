@@ -209,6 +209,9 @@ class CandidateProduct(Base):
     
     # v4.5 "Artisan-Master" Asset Base
     category = Column(String)
+    category_type = Column(String, default="PROFIT") # 'TRAFFIC', 'PROFIT'
+    is_cashback_eligible = Column(Boolean, default=True)
+    
     # Business Tier: Logic & UI
     attributes = Column(JSONB, server_default='[]')
     variants_raw = Column(JSONB, server_default='[]')
@@ -220,8 +223,9 @@ class CandidateProduct(Base):
     # Black Box: Evidence, Social Proof, Tier Pricing
     structural_data = Column(JSONB, server_default='{}')
     
-    # Computed Index (Generated Columns)
-    # repurchase_rate = Column(Float, Computed("(structural_data->'social'->>'repurchase_rate')::float"))
+    # v3.1 Hybrid Growth Model
+    is_cashback_eligible = Column(Boolean, default=True) # Traffic vs Profit switch
+    category_type = Column(String, default="PROFIT") # 'TRAFFIC', 'PROFIT'
     
     audit_notes = Column(String, nullable=True)
     

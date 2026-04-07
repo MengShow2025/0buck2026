@@ -8,8 +8,11 @@ from typing import Dict, Any
 from app.models.product import Product
 from app.core.config import settings
 
+from app.services.cj_service import CJDropshippingService
+
 class SyncShopifyService:
     def __init__(self):
+        self.cj_service = CJDropshippingService()
         import os
         os.environ.pop("HTTP_PROXY", None)
         os.environ.pop("HTTPS_PROXY", None)
@@ -352,10 +355,11 @@ class SyncShopifyService:
                                 if not product.is_cashback_eligible:
                                     multiplier = 2.0
                                     
-                                p_res = calculate_final_price(lv["price"], settings.EXCHANGE_RATE, multiplier)
-                                v_price = p_res["final_price_usd"]
-                                # Calculate compare_at based on 60% retail奇袭 rule
-                                v_compare_at = float((Decimal(str(v_price)) / Decimal("0.6") * Decimal("0.95")).quantize(Decimal("0.01")))
+                                # v5.3: Dynamic Discount Logic (Amazon List vs 0Buck Sale)
+                                # 0Buck Sale = Amazon Current Sale * 0.6
+                                # 0Buck Compare-at = Amazon Original List Price
+                                v_price = float(Decimal(str(lv["price"])) * Decimal("0.6"))
+                                v_compare_at = float(lv.get("market_list_price", lv["price"]))
                             except Exception as e:
                                 logging.warning(f"Variant pricing calculation failed: {str(e)}")
 
@@ -550,3 +554,151 @@ class SyncShopifyService:
                     logging.error(f"Shopify Sync Error: {str(e)}")
                     if attempt == retries - 1:
                         raise e
+
+    async def enrich_from_shopify(self, payload: Dict[str, Any], db):
+        """
+        v5.3: The 'Brain' Takeover with Freight Intelligence.
+        Triggered by Webhook when a product is created in Shopify by a 3rd party tool (DSers/CJ).
+        Re-applies 0Buck's comparison, pricing, and desire logic (v5.3 Protocol).
+        """
+        shopify_id = payload.get("id")
+        title = payload.get("title")
+        vendor = payload.get("vendor")
+        
+        # 1. Match to Candidate
+        from app.models.product import CandidateProduct
+        from sqlalchemy import or_
+        
+        # Search for candidates that match the title or vendor/source hints
+        candidate = db.query(CandidateProduct).filter(
+            or_(
+                CandidateProduct.title_zh.contains(title[:10]), # Match first 10 chars
+                CandidateProduct.title_en_preview.contains(title[:10])
+            )
+        ).first()
+        
+        if not candidate:
+            logging.warning(f"⚠️ No matching Candidate found for Shopify Product: {title}. Skipping Brain Takeover.")
+            return False
+
+        logging.info(f"🧠 Found Candidate matching '{title}': ID {candidate.id}. Starting v5.3 Brain Enrichment...")
+
+        # 2. Freight Sniffing (v5.3 NEW)
+        shipping_cost_usd = 3.0 # Conservative Default: $3.00 for small parcel
+        try:
+            # Check if this candidate already has CJ VID or Sourcing ID
+            cj_vid = candidate.structural_data.get("cj_variant_id") if candidate.structural_data else None
+            
+            if not cj_vid:
+                # Try to find it on CJ via keyword (Title)
+                search_results = await self.cj_service.search_products(candidate.title_en_preview or candidate.title_zh)
+                if search_results:
+                    pid = search_results[0].get("pid")
+                    detail = await self.cj_service.get_product_detail(pid)
+                    if detail and detail.get("variants"):
+                        cj_vid = detail["variants"][0].get("vid")
+                        # Persist for next time
+                        if not candidate.structural_data: candidate.structural_data = {}
+                        candidate.structural_data["cj_variant_id"] = cj_vid
+                        db.commit()
+
+            if cj_vid:
+                freight = await self.cj_service.get_freight_estimate(cj_vid, country_code="US")
+                if freight:
+                    shipping_cost_usd = float(freight.get("logisticPrice", 3.0))
+                    logging.info(f"🚚 REAL CJ Freight Captured for ID {candidate.id}: ${shipping_cost_usd}")
+        except Exception as e:
+            logging.warning(f"⚠️ CJ Freight Capture failed for {candidate.id}: {e}. Falling back to default.")
+
+        # 3. v5.3 Pricing Logic: Sale_Price = Market_Price * 0.6 (Freight-Aware)
+        from app.services.finance_engine import calculate_final_price
+        from app.services.config_service import ConfigService
+        config = ConfigService(db)
+        
+        exchange_rate = float(config.get("exchange_rate_cny_usd", 0.14))
+        market_price = candidate.amazon_price or candidate.ebay_price
+        market_anchor = candidate.amazon_compare_at_price or market_price
+        
+        if not market_price:
+            logging.error(f"❌ BLOCKER: No REAL market price found for Candidate {candidate.id}. Aborting enrichment.")
+            return False
+        
+        pricing = calculate_final_price(
+            cost_cny=candidate.cost_cny,
+            exchange_rate=exchange_rate,
+            comp_price_usd=market_anchor,
+            sale_price_ratio=0.6,
+            compare_at_price_ratio=None,
+            shipping_cost_usd=shipping_cost_usd
+        )
+        
+        # Force 0Buck's compare_at to be the REAL market anchor (Amazon Price or List Price)
+        final_compare_at = float(Decimal(str(market_anchor)).quantize(Decimal("0.01")))
+        
+        # v5.1 Filter Check: Ratio < 1.5 -> Discard (Stop enrichment if not profitable/safe)
+        profit_ratio = pricing["final_price_usd"] / pricing["source_cost_usd"] if pricing["source_cost_usd"] > 0 else 0
+        if profit_ratio < 1.5:
+            logging.warning(f"⚠️ Profit Ratio {profit_ratio:.2f} < 1.5 for Candidate {candidate.id}. Aborting.")
+            return False
+
+        # 4. v5.1 Nine-Point Sniper Methodology Copywriting
+        hook = candidate.discovery_evidence.get("desire_hook") if candidate.discovery_evidence else f"Verified Artisan Choice: {candidate.title_en_preview}"
+        
+        # v5.4 Brute-force Tiering: Conditional Rebate UI
+        is_rebate = getattr(candidate, "is_cashback_eligible", True)
+        rebate_tag = "20-Phase-Rebate" if is_rebate else "Normal"
+        
+        rebate_html = ""
+        if is_rebate:
+            rebate_html = """
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 10px; margin-top: 20px;">
+                <p><strong>[20-Phase Full Rebate]</strong> 100% Cashback via 20 check-in phases. Your discipline, rewarded.</p>
+            </div>
+            """
+        
+        body_html = f"""
+        <div class="artisan-protocol-v5">
+            <h2 style="color: #111; font-weight: 900; font-size: 24px;">{hook}</h2>
+            <p style="margin-top: 20px;"><strong>[The Origin]</strong> Directly sourced from 0Buck Verified Artisan workshops.</p>
+            <p><strong>[The Logic]</strong> We strip away brand taxes and middleman fees. You pay for the craft, not the marketing.</p>
+            <p><strong>[Artisan Specs]</strong> {candidate.description_en_preview}</p>
+            <p style="color: #d00; font-weight: bold;"><strong>[Unbeatable Value]</strong> Priced at 60% of Amazon market value (${market_price}). Original List Price: ${market_anchor}.</p>
+            {rebate_html}
+            <p style="margin-top: 20px; font-size: 12px; color: #666;"><strong>[Artisan Guarantee]</strong> 0Buck Verified Quality. 10x Crowdfunding Integrity Threshold.</p>
+        </div>
+        """
+        
+        # 5. Push Back to Shopify (Physical Anchor)
+        try:
+            sp = shopify.Product.find(shopify_id)
+            if not sp:
+                logging.error(f"❌ Shopify Product {shopify_id} not found via API.")
+                return False
+                
+            sp.title = f"{candidate.title_en_preview} | 0Buck Verified Artisan"
+            sp.body_html = body_html
+            sp.vendor = "0Buck Verified Artisan"
+            sp.tags = f"0buck-verified, candidate-{candidate.id}, {rebate_tag}"
+            
+            for variant in sp.variants:
+                variant.price = str(pricing["final_price_usd"])
+                variant.compare_at_price = str(final_compare_at)
+                variant.sku = f"0B-{candidate.id}-{variant.id}"
+                
+                # Sync Weight from CJ if we got real shipping cost
+                if shipping_cost_usd > 3.0: # If we have a non-default freight, we might have weight
+                    pass # Weight is usually already in candidate/shopify
+            
+            if sp.save():
+                logging.info(f"✅ SUCCESS: Product '{sp.title}' enriched and pushed back to Shopify (v5.3 Brain Takeover).")
+                candidate.status = "active"
+                candidate.shopify_id = str(shopify_id)
+                db.commit()
+                return True
+            else:
+                logging.error(f"❌ Shopify Update Failed: {sp.errors.full_messages()}")
+                return False
+                
+        except Exception as e:
+            logging.error(f"❌ Error during Shopify Enrichment: {str(e)}")
+            return False

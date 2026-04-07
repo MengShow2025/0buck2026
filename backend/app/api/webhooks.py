@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Header, HTTPException, Depends
+from fastapi import APIRouter, Request, Header, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.services.rewards import RewardsService
@@ -27,6 +27,41 @@ def verify_shopify_webhook(data: bytes, hmac_header: str):
     import base64
     computed_hmac = base64.b64encode(digest).decode('utf-8')
     return hmac.compare_digest(computed_hmac, hmac_header)
+
+@router.post("/shopify/products/created")
+async def products_created_webhook(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    x_shopify_hmac_sha256: str = Header(None),
+    db: Session = Depends(get_db)
+):
+    """
+    v5.2: Listen for products created by DSers/Miaoshou and trigger 0Buck Brain.
+    1. Capture new Shopify Product metadata.
+    2. Pull associated Hotspot/Amazon/eBay comparison data from local Candidate Pool.
+    3. Run Desire Engine and Price Engine.
+    4. Push Back (PUT) the enriched data to Shopify.
+    """
+    data = await request.body()
+    if not verify_shopify_webhook(data, x_shopify_hmac_sha256):
+        if settings.ENVIRONMENT == "production":
+            raise HTTPException(status_code=401, detail="Unauthorized")
+
+    payload = json.loads(data)
+    shopify_id = payload.get("id")
+    title = payload.get("title")
+    vendor = payload.get("vendor") # Usually 1688/Alibaba supplier name from DSers/Miaoshou
+    
+    logger.info(f"🚩 Webhook: Shopify Product Created -> {title} (ID: {shopify_id}) from Vendor: {vendor}")
+
+    # Initialize Sync Service
+    from app.services.sync_shopify import SyncShopifyService
+    sync_service = SyncShopifyService()
+    
+    # Process enrichment in background to keep webhook response fast
+    background_tasks.add_task(sync_service.enrich_from_shopify, payload, db)
+    
+    return {"status": "ok", "message": "Product enrichment queued"}
 
 @router.post("/shopify/orders/paid")
 async def orders_paid_webhook(

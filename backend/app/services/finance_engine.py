@@ -167,22 +167,26 @@ def calculate_final_price(
     multiplier: float = 2.0,
     comp_price_usd: Optional[float] = None,
     sale_price_ratio: Optional[float] = None,
-    compare_at_price_ratio: Optional[float] = None
+    compare_at_price_ratio: Optional[float] = None,
+    shipping_cost_usd: float = 0.0
 ) -> dict:
     """
-    v4.6.8 Pricing Logic (Hybrid Strategy):
+    v5.3 Freight-Aware Pricing Logic (Hybrid Strategy):
     1. Base: Cost * Multiplier (Fallback)
     2. Dynamic: Comp Price * sale_price_ratio (Preferred)
     3. Strikethrough: Comp Price * compare_at_price_ratio
+    4. Safety: Price must cover (Product Cost + Shipping Cost) * 1.2
     
     STRICT: Uses Decimal for all currency calculations.
     """
     cost_cny_dec = Decimal(str(cost_cny))
     rate_dec = Decimal(str(exchange_rate))
+    shipping_dec = Decimal(str(shipping_cost_usd))
     
     # Phase 1: CNY -> USD with 0.5% Hedge Buffer
     hedge_buffer = Decimal("1.005")
     cost_usd = (cost_cny_dec * hedge_buffer) * rate_dec
+    total_landed_cost = cost_usd + shipping_dec
     
     # Phase 2: Final Sale Price Calculation
     if comp_price_usd and sale_price_ratio:
@@ -191,23 +195,26 @@ def calculate_final_price(
         ratio_dec = Decimal(str(sale_price_ratio))
         final_price_usd = comp_dec * ratio_dec
         
-        # Safety check: Price must be at least 1.2x cost (20% margin)
+        # Safety check: Price must be at least 1.2x landed cost (20% margin)
         min_margin = Decimal("1.2")
-        if final_price_usd < cost_usd * min_margin:
-            final_price_usd = cost_usd * min_margin
+        if final_price_usd < total_landed_cost * min_margin:
+            final_price_usd = total_landed_cost * min_margin
     else:
         # Fallback to Multiplier-based pricing
         mult_dec = Decimal(str(multiplier))
-        final_price_usd = cost_usd * mult_dec
+        final_price_usd = total_landed_cost * mult_dec
 
     # Phase 3: Compare At Price (Strikethrough)
     if comp_price_usd and compare_at_price_ratio:
         comp_dec = Decimal(str(comp_price_usd))
         strike_ratio = Decimal(str(compare_at_price_ratio))
         compare_at_price = comp_dec * strike_ratio
+    elif comp_price_usd:
+        # v5.2 Strict: No fabrication. Use the original competition price if no ratio given.
+        compare_at_price = Decimal(str(comp_price_usd))
     else:
-        # Fallback: 1.5x Sale Price
-        compare_at_price = final_price_usd * Decimal("1.5")
+        # Fallback: Just use the sale price (No strikethrough effect)
+        compare_at_price = final_price_usd
     
     return {
         "source_cost_usd": float(cost_usd.quantize(Decimal("0.01"))),

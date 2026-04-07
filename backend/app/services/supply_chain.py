@@ -11,10 +11,12 @@ from app.core.logistics import find_closest_warehouse
 from app.services.finance_engine import calculate_final_price
 from app.services.config_service import ConfigService
 from app.services.notion import NotionService
+from app.services.cj_service import CJDropshippingService
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 import logging
 import os
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +35,8 @@ class SupplyChainService:
             google_api_key=self.config_service.get_api_key("GOOGLE_API_KEY"),
             temperature=0.7
         )
+        # v5.3: CJ Dropshipping Integration
+        self.cj_service = CJDropshippingService()
 
     async def fetch_product_details(self, source_product_id: str) -> Dict[str, Any]:
         """
@@ -332,6 +336,69 @@ class SupplyChainService:
             return f"https://sc01.alicdn.com/kf/{url}"
         return url
 
+    async def _fetch_market_prices(self, product_name: str) -> Dict[str, Optional[float]]:
+        """v5.2: Fetch real Amazon/eBay prices and list prices using web_search (Exa AI)."""
+        from app.services.tools import web_search
+        
+        prices = {
+            "amazon_price": None, 
+            "ebay_price": None,
+            "amazon_compare_at_price": None,
+            "ebay_compare_at_price": None
+        }
+        
+        try:
+            # 1. Search Amazon
+            amazon_query = f"{product_name} current price list price on amazon.com"
+            amazon_results = await web_search(amazon_query)
+            for res in amazon_results:
+                if isinstance(res, dict):
+                    text = f"{res.get('title', '')} {res.get('text', '')}"
+                    
+                    # A. Current Price
+                    price_match = re.search(r"(?:Price|Now|Only):\s*\$\s?([\d,]+(\.\d{1,2})?)", text, re.I)
+                    if not price_match:
+                        price_match = re.search(r"\$\s?([\d,]+(\.\d{1,2})?)", text)
+                    
+                    if price_match and not prices["amazon_price"]:
+                        prices["amazon_price"] = float(price_match.group(1).replace(",", ""))
+                    
+                    # B. List Price (Was / MSRP)
+                    list_match = re.search(r"(?:List Price|Was|MSRP|Original Price):\s*\$\s?([\d,]+(\.\d{1,2})?)", text, re.I)
+                    if list_match and not prices["amazon_compare_at_price"]:
+                        prices["amazon_compare_at_price"] = float(list_match.group(1).replace(",", ""))
+                    
+                    if prices["amazon_price"] and prices["amazon_compare_at_price"]:
+                        break
+            
+            # 2. Search eBay
+            ebay_query = f"{product_name} current price list price on ebay.com"
+            ebay_results = await web_search(ebay_query)
+            for res in ebay_results:
+                if isinstance(res, dict):
+                    text = f"{res.get('title', '')} {res.get('text', '')}"
+                    
+                    # A. Current Price
+                    price_match = re.search(r"(?:Price|Now|Only|Buy It Now):\s*\$\s?([\d,]+(\.\d{1,2})?)", text, re.I)
+                    if not price_match:
+                        price_match = re.search(r"\$\s?([\d,]+(\.\d{1,2})?)", text)
+                    
+                    if price_match and not prices["ebay_price"]:
+                        prices["ebay_price"] = float(price_match.group(1).replace(",", ""))
+                    
+                    # B. List Price (Was / MSRP)
+                    list_match = re.search(r"(?:List Price|Was|Original Price):\s*\$\s?([\d,]+(\.\d{1,2})?)", text, re.I)
+                    if list_match and not prices["ebay_compare_at_price"]:
+                        prices["ebay_compare_at_price"] = float(list_match.group(1).replace(",", ""))
+                        
+                    if prices["ebay_price"] and prices["ebay_compare_at_price"]:
+                        break
+                    
+        except Exception as e:
+            logger.error(f"Error fetching market prices for {product_name}: {e}")
+            
+        return prices
+
     def _calculate_visual_fingerprint(self, image_url: str) -> str:
         """v4.6.7: Generate a unique MD5 hash for image-based deduplication."""
         import hashlib
@@ -343,7 +410,7 @@ class SupplyChainService:
     async def ids_sniffing_and_populate(self, keyword: str = "Artisan Watch"):
         """
         v4.6: Real 1688 API Search + Candidate Ingestion.
-        If API fails or key is missing, falls back to simulation mode.
+        v5.2: Real Amazon/eBay price sniffing via Exa.
         """
         signals = []
         
@@ -351,11 +418,30 @@ class SupplyChainService:
         search_results = await self._call_1688_api("alibaba.search.product", {"keyword": keyword})
         if search_results and "products" in search_results:
             for p in search_results["products"][:10]: # Process top 10
+                p_name = p.get("title") or keyword
+                market = await self._fetch_market_prices(p_name)
+                
+                # v5.2: Use real market prices if found. If not found, skip or set as None to prevent fabrication.
+                amazon_price = market["amazon_price"]
+                ebay_price = market["ebay_price"]
+                
+                if not amazon_price:
+                    logger.warning(f"⚠️ No real Amazon price found for {p_name}. Skipping to maintain 0Buck integrity.")
+                    continue
+
+                # v5.2.1: No fictional multipliers. Use price if list price missing.
+                amazon_compare = market["amazon_compare_at_price"] or amazon_price
+                ebay_compare = market["ebay_compare_at_price"] or ebay_price
+                
                 signals.append({
                     "id_1688": p.get("id"),
-                    "name": p.get("title"),
+                    "name": p_name,
                     "cost_cny": p.get("price"),
-                    "comp_price": float(p.get("price")) * 8.0, # Guessing competitor multiplier
+                    "comp_price": amazon_price,
+                    "amazon_price": amazon_price,
+                    "ebay_price": ebay_price,
+                    "amazon_compare_at_price": amazon_compare,
+                    "ebay_compare_at_price": ebay_compare,
                     "raw_json": p,
                     "strategy_tag": "IDS_SEARCH"
                 })
@@ -373,21 +459,33 @@ class SupplyChainService:
                         raw_json = json.load(f)
                     
                     mirror = MirrorExtractor.extract(raw_json)
-                    # v4.6.8: Simulate multi-platform prices
+                    product_name = mirror.get("title", f"Test Product {i+1}")
+                    
+                    # v5.2: Real market prices even in simulation mode. If missing, do not invent.
+                    market = await self._fetch_market_prices(product_name)
+                    
                     cost_cny = float(mirror["variants_raw"][0]["price"]) if mirror.get("variants_raw") else 100.0
-                    amazon_price = 800.0 + i*100
-                    ebay_price = 750.0 + i*100
+                    amazon_price = market["amazon_price"]
+                    ebay_price = market["ebay_price"]
+                    
+                    if not amazon_price:
+                        logger.warning(f"⚠️ No real market price for {product_name} in simulation. Skip.")
+                        continue
+                        
+                    # v5.2.1: No fictional multipliers
+                    amazon_compare = market["amazon_compare_at_price"] or amazon_price
+                    ebay_compare = market["ebay_compare_at_price"] or ebay_price
                     
                     signals.append({
                         "id_1688": f"sim_{i+1}_{mirror.get('product_id', 'unknown')}",
-                        "name": mirror.get("title", f"Test Product {i+1}"),
+                        "name": product_name,
                         "supplier_id_1688": f"sim_supplier_{i+1}",
                         "cost_cny": cost_cny,
                         "comp_price": amazon_price, # Main competitor price
                         "amazon_price": amazon_price,
                         "ebay_price": ebay_price,
-                        "amazon_compare_at_price": amazon_price * 1.2,
-                        "ebay_compare_at_price": ebay_price * 1.15,
+                        "amazon_compare_at_price": amazon_compare,
+                        "ebay_compare_at_price": ebay_compare,
                         "raw_json": raw_json,
                         "strategy_tag": "IDS_FOLLOWING"
                     })
@@ -396,6 +494,100 @@ class SupplyChainService:
             await self.ingest_to_candidate_pool(s)
         
         return len(signals)
+
+    async def brute_force_roi_scan(self, page_count: int = 1):
+        """
+        v5.4: Brute-force ROI Comparison Scan.
+        ...
+        """
+        logger.info(f"🚀 Starting Brute-force ROI Comparison Scan ({page_count} pages)...")
+        total_ingested = 0
+        
+        for page in range(1, page_count + 1):
+            try:
+                # Fetch CJ products (no keyword for brute force)
+                cj_products = await self.cj_service.search_products(page=page, size=20, only_cj_owned=True)
+                if not cj_products:
+                    logger.warning(f"⚠️ No products found on CJ page {page}.")
+                    break
+                
+                for p in cj_products:
+                    name = p.get("nameEn") or p.get("productName")
+                    pid = p.get("id") or p.get("pid")
+                    
+                    # 1. Calculate Landed Cost (CJ Sell Price + Simulation Freight)
+                    cost_usd_raw = p.get("sellPrice") or p.get("productSellPrice") or "0"
+                    if " -- " in str(cost_usd_raw):
+                        cost_usd = float(str(cost_usd_raw).split(" -- ")[1])
+                    else:
+                        cost_usd = float(str(cost_usd_raw))
+                        
+                    # Simulating freight: 25% of cost + $5 base
+                    freight_sim = cost_usd * 0.25 + 5.0
+                    landed_cost = cost_usd + freight_sim
+                    
+                    # 2. Fetch Amazon Market Prices
+                    market_data = await self._fetch_market_prices(name)
+                    amazon_price = market_data.get("amazon_price")
+                    amazon_msrp = market_data.get("amazon_compare_at_price") or amazon_price
+                    
+                    if not amazon_msrp:
+                        logger.debug(f"⏭️ No Amazon price for {name}. Skipping.")
+                        continue
+                        
+                    # 3. Apply ROI Logic
+                    # 0Buck Sell Price = Amazon MSRP * 0.6
+                    target_price = amazon_msrp * 0.6
+                    roi = target_price / landed_cost if landed_cost > 0 else 0
+                    
+                    category_type = None
+                    is_cashback = False
+                    discovery_source = "IDS_BRUTE_FORCE"
+                    
+                    if roi >= 4.0:
+                        category_type = "PROFIT"
+                        is_cashback = True
+                        discovery_source = "IDS_BRUTE_FORCE_REBATE"
+                    elif roi >= 1.5:
+                        category_type = "TRAFFIC"
+                        is_cashback = False
+                        discovery_source = "IDS_BRUTE_FORCE_NORMAL"
+                    else:
+                        logger.debug(f"⏭️ ROI too low ({roi:.2f}) for {name}. Skipping.")
+                        continue
+                        
+                    # 4. Ingest to Candidate Pool
+                    logger.info(f"✅ Hit! {name} | ROI: {roi:.2f} | Category: {category_type}")
+                    
+                    # Prepare data for ingestion
+                    await self.ingest_to_candidate_pool({
+                        "id_1688": f"cj_{pid}", # Using cj_ prefix for CJ source
+                        "name": name,
+                        "cost_cny": landed_cost * 7.2 / 1.005, # Reverse buffer back to CNY for storage consistency
+                        "comp_price": amazon_msrp,
+                        "amazon_price": amazon_price,
+                        "amazon_compare_at_price": amazon_msrp,
+                        "strategy_tag": discovery_source,
+                        "category": p.get("categoryName") or "General",
+                        "category_type": category_type,
+                        "is_cashback_eligible": is_cashback,
+                        "source_platform": "CJ",
+                        "source_url": f"https://app.cjdropshipping.com/product-detail.html?id={pid}",
+                        "images": [p.get("bigImage") or p.get("productImage")],
+                        "discovery_evidence": {
+                            "roi": round(roi, 2),
+                            "amazon_msrp": amazon_msrp,
+                            "landed_cost": landed_cost,
+                            "cj_id": pid
+                        }
+                    })
+                    total_ingested += 1
+                    
+            except Exception as e:
+                logger.error(f"Error scanning page {page}: {e}")
+                
+        logger.info(f"🏁 Brute-force Scan complete. Ingested {total_ingested} candidates.")
+        return total_ingested
 
     async def ingest_to_candidate_pool(self, data: Dict[str, Any]):
         product_id_1688 = data.get("id_1688")
@@ -412,8 +604,34 @@ class SupplyChainService:
         amazon_price = float(data.get("amazon_price", comp_price))
         ebay_price = float(data.get("ebay_price", comp_price))
         
-        pricing = self.calculate_price(cost_cny, comp_price, data.get("category_type", "PROFIT"))
+        # v5.4 Brute-force Tiering (ROI Thresholds)
+        # Landed cost simulation (1688 Cost + Shipping Buffer)
+        # 0.6x Pricing Rule: Sale Price = Amazon Price * 0.6
+        # ROI = Sale Price / Landed Cost
+        landed_cost_usd = pricing.get("cost_usd_buffered") or (cost_cny / 6.5 * 1.2)
         
+        # Calculate ROI based on the 0.6x price rule
+        # If no amazon_price, use comp_price
+        reference_price = amazon_price or comp_price
+        target_sale_price = reference_price * 0.6
+        
+        roi = target_sale_price / landed_cost_usd if landed_cost_usd > 0 else 0
+        
+        category_type = "PROFIT"
+        is_cashback_eligible = True
+        
+        if roi >= 4.0:
+            category_type = "PROFIT"
+            is_cashback_eligible = True
+            logger.info(f"💎 Tier A (Rebate): ROI {roi:.2f} >= 4.0 for {product_id_1688}")
+        elif roi >= 1.5:
+            category_type = "TRAFFIC"
+            is_cashback_eligible = False
+            logger.info(f"🛒 Tier B (Normal): ROI {roi:.2f} >= 1.5 for {product_id_1688}")
+        else:
+            logger.warning(f"⏭️ Skipping: ROI {roi:.2f} < 1.5 for {product_id_1688}")
+            return
+            
         # v4.5 Mirror Sync
         mirror_data = {}
         if data.get("raw_json"):
@@ -491,8 +709,13 @@ class SupplyChainService:
             # v4.6.8: Comparison Pricing
             amazon_price=amazon_price,
             ebay_price=ebay_price,
-            amazon_compare_at_price=data.get("amazon_compare_at_price", amazon_price * 1.5),
-            ebay_compare_at_price=data.get("ebay_compare_at_price", ebay_price * 1.5),
+            # v5.2.1: Use provided compare_at prices from data, fallback to sale price (no fiction)
+            amazon_compare_at_price=data.get("amazon_compare_at_price", amazon_price),
+            ebay_compare_at_price=data.get("ebay_compare_at_price", ebay_price),
+            
+            # v5.4 Brute-force Tiering
+            category_type=category_type,
+            is_cashback_eligible=is_cashback_eligible,
             
             # v4.7.1: Sourcing Provenance
             source_platform=data.get("source_platform", "1688"),
@@ -503,6 +726,24 @@ class SupplyChainService:
         self.db.commit()
         self.db.refresh(candidate)
         
+        # v5.3: Automated CJ Sourcing for Alibaba products
+        if candidate.source_platform == "ALIBABA" and candidate.source_url:
+            try:
+                sourcing_res = await self.cj_service.create_sourcing(
+                    source_url=candidate.source_url,
+                    product_name=candidate.title_en_preview or candidate.title_zh,
+                    product_image=candidate.images[0] if candidate.images else ""
+                )
+                if sourcing_res.get("success"):
+                    # Store sourcing ID for polling/tracking
+                    if not candidate.structural_data:
+                        candidate.structural_data = {}
+                    candidate.structural_data["cj_sourcing_id"] = sourcing_res["data"]
+                    self.db.commit()
+                    logger.info(f"✅ CJ Sourcing Created for Candidate {candidate.id}: ID {sourcing_res['data']}")
+            except Exception as e:
+                logger.error(f"❌ CJ Sourcing failed for candidate {candidate.id}: {e}")
+
         # v4.7.2: Auto-Sniff Alibaba Alternative immediately after ingestion
         try:
             await self.find_alibaba_alternative(candidate.id)
@@ -624,8 +865,8 @@ class SupplyChainService:
                 cost_cny=candidate.cost_cny,
                 title=candidate.title_zh,
                 strategy_tag=candidate.discovery_source,
-                category_type="PROFIT",
-                is_cashback_eligible=True,
+                category_type=candidate.category_type or "PROFIT",
+                is_cashback_eligible=candidate.is_cashback_eligible if candidate.is_cashback_eligible is not None else True,
                 
                 variants_override=candidate.variants_raw,
                 images_override=clean_images,

@@ -479,6 +479,27 @@ def list_sourcing_candidates(
         c.desire_hook = c.desire_hook or ""
         c.desire_logic = c.desire_logic or ""
         c.desire_closing = c.desire_closing or ""
+
+        # v5.2.4: Ensure 0Buck Pricing and Profit metrics are calculated for frontend
+        exchange_rate = 0.14 # Assume standard for now or fetch from config
+        anchor = c.amazon_compare_at_price or c.amazon_price
+        if anchor and not c.estimated_sale_price:
+            c.estimated_sale_price = round(float(anchor) * 0.6, 2)
+        
+        # v5.3: Enhanced Price Matrix for Arbitrage Decision
+        cost_usd = float(c.cost_cny) * exchange_rate
+        cj_quote = float(c.structural_data.get("cj_sourcing_price", 0.0)) if isinstance(c.structural_data, dict) else 0.0
+        shipping_usd = float(c.structural_data.get("cj_freight_estimate", 3.0)) if isinstance(c.structural_data, dict) else 3.0
+        
+        # Total Cost logic: Use CJ Quote if exists, else fallback to 1688 Cost + Buffer
+        landed_cost = (cj_quote or (cost_usd * 1.1)) + shipping_usd
+        
+        if c.estimated_sale_price and landed_cost > 0:
+            c.profit_ratio = round(c.estimated_sale_price / landed_cost, 2)
+            # Inject calculated fields into candidate object for frontend
+            setattr(c, "cj_landed_cost", round(landed_cost, 2))
+            setattr(c, "cj_sourcing_price", cj_quote)
+            setattr(c, "cj_shipping_cost", shipping_usd)
             
     return candidates
 
@@ -522,6 +543,22 @@ async def refresh_candidate_media(candidate_id: int, db: Session = Depends(get_d
     except Exception as e:
         logger.error(f"Media refresh failed for candidate {candidate_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/sourcing/candidates/batch-approve")
+async def batch_approve_candidates(ids: List[int], db: Session = Depends(get_db)):
+    """v5.2: Batch Approve candidates for Shopify sync"""
+    sc_service = SupplyChainService(db)
+    results = {"success": [], "failed": []}
+    for candidate_id in ids:
+        try:
+            success = await sc_service.approve_candidate(candidate_id)
+            if success:
+                results["success"].append(candidate_id)
+            else:
+                results["failed"].append({"id": candidate_id, "reason": "Already processed or not found"})
+        except Exception as e:
+            results["failed"].append({"id": candidate_id, "reason": str(e)})
+    return results
 
 @router.post("/sourcing/candidates/{candidate_id}/approve")
 async def approve_sourcing_candidate(candidate_id: int, db: Session = Depends(get_db)):

@@ -125,11 +125,14 @@ class SmartBusinessService:
         logger.info("🕵️ Triggering IDS Sniffing & Spy Monitor...")
         sc_service = SupplyChainService(self.db)
         try:
-            # 1. IDS Search (Followers/Market Trend)
-            new_count = await sc_service.ids_sniffing_and_populate()
-            logger.info(f"🆕 Ingested {new_count} new candidates from IDS.")
+            # 1. IDS Search (Followers/Market Trend) - v5.4: Reduced priority for trend
+            # await sc_service.ids_sniffing_and_populate()
             
-            # 2. v4.7.3 Alibaba Arbitrage Sniff for all pending candidates
+            # 2. v5.4: Brute-force ROI Comparison Scan (The "Violence" Strategy)
+            new_count = await sc_service.brute_force_roi_scan(page_count=1)
+            logger.info(f"🆕 Ingested {new_count} candidates from Brute-force ROI Scan.")
+            
+            # 3. v4.7.3 Alibaba Arbitrage Sniff for all pending candidates
             pending_candidates = self.db.query(CandidateProduct).filter(
                 CandidateProduct.status == "pending",
                 CandidateProduct.alibaba_comparison_price == None

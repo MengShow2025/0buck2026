@@ -88,6 +88,33 @@ class Settings(BaseSettings):
             return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/0"
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
 
+    # CJ Dropshipping
+    CJ_ACCOUNT_ID: str = os.getenv("CJ_ACCOUNT_ID", "CJ5226663")
+    CJ_API_KEY: str = os.getenv("CJ_API_KEY", "2c0889e00f7a4bd1881989564c3e148c")
+    CJ_EMAIL: str = os.getenv("CJ_EMAIL", "szyungtay@gmail.com")
+
+    # Mabang ERP
+    MABANG_APP_KEY: str = os.getenv("MABANG_APP_KEY", "MTAwOTg1LDMyMDAxMTE4LDEwMTM3Mw==")
+    MABANG_TOKEN: str = os.getenv("MABANG_TOKEN", "1cfa071710d45a6ce62cd1f0806ec3e0")
+    MABANG_API_URL: str = os.getenv("MABANG_API_URL", "https://open.mabangerp.com")
+
+    # BuckyDrop API
+    BUCKYDROP_APP_CODE: str = os.getenv("BUCKYDROP_APP_CODE", "b2eea7fbbf558a6f34af0b7b0063204b")
+    BUCKYDROP_APP_SECRET: str = os.getenv("BUCKYDROP_APP_SECRET", "690250bf5c22cf68dd64d6447a0dcb4e")
+    BUCKYDROP_DOMAIN: str = os.getenv("BUCKYDROP_DOMAIN", "https://bdopenapi.buckydrop.com")
+    
+    # BuckyDrop Test Credentials (Optional)
+    BUCKYDROP_TEST_CODE: str = "87e05078db55ffa709ca34bd04a0e9e5"
+    BUCKYDROP_TEST_SECRET: str = "1508feaf3034d3adb29bdca2c7e3d4c7"
+    BUCKYDROP_TEST_DOMAIN: str = "https://dev.buckydrop.com"
+
+    # YunExpress
+    YUNEXPRESS_API_KEY: str = os.getenv("YUNEXPRESS_API_KEY", "1f369c903ef54496a37087f54750b704")
+    YUNEXPRESS_APPID: str = os.getenv("YUNEXPRESS_APPID", "dfc1ca258327")
+    YUNEXPRESS_CUSTOMER_CODE: str = os.getenv("YUNEXPRESS_CUSTOMER_CODE", "CN0C426905")
+    YUNEXPRESS_SOURCE_KEY: str = os.getenv("YUNEXPRESS_SOURCE_KEY", "") # Might be needed for OAuth
+    YUNEXPRESS_API_URL: str = os.getenv("YUNEXPRESS_API_URL", "https://openapi.yunexpress.cn")
+
     # Environment
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development") # "development" or "production"
     COOKIE_DOMAIN: Optional[str] = os.getenv("COOKIE_DOMAIN")

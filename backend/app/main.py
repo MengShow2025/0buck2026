@@ -11,7 +11,7 @@ from app.db.session import get_db, engine
 # v4.6.8: MUST import all models BEFORE calling metadata.create_all
 from app.models.product import Base
 from app.models.ledger import UserExt, Wallet, WalletTransaction, CheckinPlan, CheckinLog, AdminAuditLog, ReferralRelationship, GroupBuyCampaign, SystemConfig, UserStreamIdentity, ProcessedWebhookEvent, AISession, Order, AvailableCoupon, CouponIssuanceAudit, SourcingOrder, PriceWish, SquareActivity, Comment
-from app.models.butler import UserMemoryFact, UserButlerProfile, PersonaTemplate, AIUsageStats, AIContribution, ShadowIDMapping, UserMemorySemantic
+from app.models.butler import UserMemoryFact, UserButlerProfile, PersonaTemplate, AIUsageStats, AIContribution, ShadowIDMapping, UserMemorySemantic, UserIMBinding
 from app.models.rewards import PointTransaction, RenewalCard, AIUsageQuota, Points
 
 
@@ -30,6 +30,7 @@ from app.api.social import router as social_router
 from app.api.system import router as system_router
 from app.api.stream import router as stream_router
 from app.api.auth import router as auth_router
+from app.api.im_gateway import router as im_router
 from app.services.rewards import RewardsService
 from app.services.stream_chat import stream_chat_service
 
@@ -377,6 +378,7 @@ app.include_router(social_router, prefix=f"{settings.API_V1_STR}/social", tags=[
 app.include_router(system_router, prefix=f"{settings.API_V1_STR}/system", tags=["system"])
 app.include_router(stream_router, prefix=f"{settings.API_V1_STR}/stream", tags=["stream"])
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
+app.include_router(im_router, prefix=f"{settings.API_V1_STR}/im", tags=["im"])
 app.include_router(proxy_router, prefix=f"{settings.API_V1_STR}/checkin", tags=["checkin"])
 
 # Serve static files from React build
