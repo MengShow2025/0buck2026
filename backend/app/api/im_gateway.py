@@ -21,11 +21,17 @@ from cryptography.hazmat.backends import default_backend
 logger = logging.getLogger(__name__)
 
 def detect_language(text: str) -> str:
-    """v5.5.25: Simple Language Heuristic (Chinese or English Fallback)."""
+    """v5.5.26: Refined Language Heuristic (Handles Japanese correctly)."""
+    # Check for Japanese specific characters (Hiragana and Katakana)
+    # Hiragana: \u3040-\u309f, Katakana: \u30a0-\u30ff
+    if any('\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff' for c in text):
+        return "ja" # Will fallback to English for system messages but allows AI to know it's Japanese
+        
     # Check for Chinese characters
     if any('\u4e00' <= c <= '\u9fff' for c in text):
         return "zh"
-    # Fallback to English for everything else (including Gujarati, etc.)
+        
+    # Default to English
     return "en"
 
 async def get_feishu_tenant_access_token():
@@ -282,7 +288,7 @@ async def feishu_webhook(request: Request):
                     if language == "zh":
                         thinking_msg = "🔍 0Buck 智脑正在深度思考中，请稍等片刻..."
                     else:
-                        # v5.5.25: Fallback to English for everything else
+                        # v5.5.25: Fallback to English for JA, EN, and others
                         thinking_msg = "🔍 0Buck AI Brain is thinking deeply, please wait a moment..."
                     
                     await send_feishu_message(uid, "open_id", thinking_msg)
