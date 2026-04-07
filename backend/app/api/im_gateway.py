@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request, Header, HTTPException, Depends
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.butler import UserIMBinding
@@ -12,78 +13,74 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-@router.get("/feishu")
-async def test_feishu_endpoint():
-    return {"status": "Feishu Webhook Endpoint is Reachable"}
+@router.get("/feishu/test")
+async def test_feishu_connectivity():
+    """v5.5.4: Manual connectivity test for Boss"""
+    return {"status": "ok", "message": "IM Gateway is active and reachable"}
 
 @router.post("/feishu")
+@router.post("/feishu/") # v5.5.4: Handle trailing slash variants
 async def feishu_webhook(request: Request):
     """
-    v5.5.2: Unified IM Gateway - Feishu (Lark) Adapter.
-    Handles message reception, identity mapping, and AI Brain routing.
+    v5.5.4: Ultra-Robust Feishu Webhook Handler.
     """
     try:
-        data = await request.body()
-        if not data:
-            return {"status": "empty_body"}
+        raw_body = await request.body()
+        if not raw_body:
+            return JSONResponse(content={"status": "empty"}, status_code=200)
             
-        payload = json.loads(data)
-        logger.info(f"📩 Received Feishu Payload: {payload.get('type') or 'event'}")
+        payload = json.loads(raw_body)
         
-        # 1. Handle Feishu URL Verification (Fast Path - No DB needed)
+        # 1. IMMEDIATE CHALLENGE RESPONSE (Highest Priority)
         if payload.get("type") == "url_verification":
             challenge = payload.get("challenge")
-            logger.info(f"✅ Responding to Feishu Challenge: {challenge}")
-            return {"challenge": challenge}
+            return JSONResponse(content={"challenge": challenge}, status_code=200)
         
-        # 2. Extract Message Info
+        # 2. EVENT PROCESSING
         event = payload.get("event", {})
-        sender = event.get("sender", {})
-        sender_id = sender.get("sender_id", {}).get("open_id")
+        sender_id = event.get("sender", {}).get("sender_id", {}).get("open_id")
         message = event.get("message", {})
         
-        # Feishu content is a stringified JSON
+        if not sender_id or not message:
+            return JSONResponse(content={"status": "ignored"}, status_code=200)
+
+        # Parse content
         try:
             content_obj = json.loads(message.get("content", "{}"))
             text_content = content_obj.get("text", "")
         except:
             text_content = ""
-        
-        if not sender_id or not text_content:
-            return {"status": "ignored"}
 
-        # 3. Identity Mapping (Lazy DB session for better performance)
+        if not text_content:
+            return JSONResponse(content={"status": "no_text"}, status_code=200)
+
+        # 3. BRAIN ROUTING
         from app.db.session import SessionLocal
         db = SessionLocal()
         try:
             binding = db.query(UserIMBinding).filter_by(platform="feishu", platform_uid=sender_id, is_active=True).first()
+            user_id = binding.user_id if binding else 1 # Default to User 1 for Demo
             
-            if not binding:
-                # v5.5: Default to User 1 for demo if unbound
-                user_id = 1 
-                logger.warning(f"⚠️ Unbound Feishu User {sender_id}. Defaulting to User 1.")
-            else:
-                user_id = binding.user_id
-
-            # 4. Route to AI Brain (LangGraph)
+            # Call AI Brain
             ai_response = await run_agent(
                 content=text_content, 
                 user_id=user_id,
                 session_id=f"feishu_{sender_id}"
             )
             
-            # 5. Return Response (Simplified for now)
-            return {
+            # TODO: Future - Send back via Feishu Message API (Async)
+            # For now, return as direct response (Feishu allows this for simple bots)
+            return JSONResponse(content={
                 "msg_type": "text",
-                "content": {
-                    "text": ai_response.get("content", "AI Brain is processing...")
-                }
-            }
+                "content": {"text": ai_response.get("content", "Brain is thinking...")}
+            }, status_code=200)
         finally:
             db.close()
+
     except Exception as e:
-        logger.error(f"❌ Feishu Webhook Error: {str(e)}")
-        return {"status": "error", "detail": str(e)}
+        logger.error(f"❌ Feishu Critical Error: {str(e)}")
+        # Still return 200 to Feishu to avoid retries, but log the error
+        return JSONResponse(content={"status": "error", "msg": str(e)}, status_code=200)
 
 @router.post("/whatsapp")
 async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
