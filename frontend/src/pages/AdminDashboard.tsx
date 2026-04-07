@@ -387,6 +387,20 @@ const AdminDashboard: React.FC = () => {
     } catch (e) { alert('操作失败'); }
   };
 
+  const handleRefreshMedia = async (id: number) => {
+    try {
+      setIsUpdating(true);
+      const res = await fetchWithAuth(`/api/v1/admin/sourcing/candidates/${id}/refresh-media`, { method: 'POST' });
+      if (res.ok) {
+        alert('媒体资源已刷新');
+        fetchAuditQueue();
+      } else {
+        alert('刷新失败，源链接可能已失效');
+      }
+    } catch (e) { alert('网络错误'); }
+    finally { setIsUpdating(false); }
+  };
+
   const handleUpdateCandidate = async () => {
     if (!editingCandidate) return;
     setIsUpdating(true);
@@ -601,6 +615,9 @@ const AdminDashboard: React.FC = () => {
                             src={img} 
                             alt="gallery" 
                             className={`w-full h-full object-cover rounded-2xl border-2 ${idx === 0 ? 'border-orange-500 shadow-lg shadow-orange-500/20' : 'border-white shadow-sm'}`} 
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Expired';
+                            }}
                           />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity flex items-center justify-center gap-2">
                             <button 
@@ -991,7 +1008,14 @@ const AdminDashboard: React.FC = () => {
                             <div className="flex items-center gap-4">
                               <div className="relative">
                                 {item.images && item.images.length > 0 ? (
-                                  <img src={item.images[0]} alt="prod" className="w-20 h-20 rounded-2xl object-cover bg-gray-100 shadow-md border-2 border-white group-hover:scale-110 transition-transform" />
+                                  <img 
+                                    src={item.images[0]} 
+                                    alt="prod" 
+                                    className="w-20 h-20 rounded-2xl object-cover bg-gray-100 shadow-md border-2 border-white group-hover:scale-110 transition-transform" 
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Image+Expired';
+                                    }}
+                                  />
                                 ) : (
                                   <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-300">
                                     <ShoppingBag size={24} />
@@ -1148,6 +1172,14 @@ const AdminDashboard: React.FC = () => {
                                   className="px-4 py-2 bg-gray-50 text-gray-400 rounded-xl text-[10px] font-bold hover:bg-red-50 hover:text-red-600 transition-colors"
                                 >
                                   不符合要求
+                                </button>
+                                <button 
+                                  onClick={() => handleRefreshMedia(item.id)}
+                                  disabled={isUpdating}
+                                  className="p-2 bg-gray-50 text-gray-300 rounded-xl hover:bg-blue-50 hover:text-blue-500 transition-colors disabled:opacity-50"
+                                  title="刷新媒体资源"
+                                >
+                                  <RefreshCw size={14} className={isUpdating ? 'animate-spin' : ''} />
                                 </button>
                                 <button className="p-2 bg-gray-50 text-gray-300 rounded-xl hover:bg-gray-100 hover:text-gray-500 transition-colors">
                                   <Settings size={14} />
