@@ -204,7 +204,57 @@ def sync_db_schema():
                     logger.warning(f"⚠️ Failed to add column {col.name} to users_ext: {e}")
                     conn.rollback()
 
-        # 4. Create GIN Indexes for JSONB fields (PostgreSQL only)
+        # 4. Order Table Updates
+        cols_order = [
+            Column("created_at", DateTime(), server_default=func.now()),
+            Column("updated_at", DateTime(), server_default=func.now())
+        ]
+        existing_order_cols = [c['name'] for c in inspector.get_columns('orders')]
+        for col in cols_order:
+            if col.name not in existing_order_cols:
+                try:
+                    type_str = get_type(col, engine.dialect)
+                    if engine.dialect.name == 'postgresql':
+                        stmt = f"ALTER TABLE orders ADD COLUMN IF NOT EXISTS {col.name} {type_str}"
+                    else:
+                        stmt = f"ALTER TABLE orders ADD COLUMN {col.name} {type_str}"
+                    
+                    if engine.dialect.name == 'postgresql':
+                        stmt += " DEFAULT CURRENT_TIMESTAMP"
+                    
+                    conn.execute(text(stmt))
+                    conn.commit()
+                    logger.info(f"✅ Added column {col.name} to orders table.")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to add {col.name} to orders: {e}")
+                    conn.rollback()
+
+        # 5. CheckinPlan Table Updates
+        cols_checkin = [
+            Column("created_at", DateTime(), server_default=func.now()),
+            Column("updated_at", DateTime(), server_default=func.now())
+        ]
+        existing_checkin_cols = [c['name'] for c in inspector.get_columns('checkin_plans')]
+        for col in cols_checkin:
+            if col.name not in existing_checkin_cols:
+                try:
+                    type_str = get_type(col, engine.dialect)
+                    if engine.dialect.name == 'postgresql':
+                        stmt = f"ALTER TABLE checkin_plans ADD COLUMN IF NOT EXISTS {col.name} {type_str}"
+                    else:
+                        stmt = f"ALTER TABLE checkin_plans ADD COLUMN {col.name} {type_str}"
+                    
+                    if engine.dialect.name == 'postgresql':
+                        stmt += " DEFAULT CURRENT_TIMESTAMP"
+                        
+                    conn.execute(text(stmt))
+                    conn.commit()
+                    logger.info(f"✅ Added column {col.name} to checkin_plans table.")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to add {col.name} to checkin_plans: {e}")
+                    conn.rollback()
+
+        # 6. Create GIN Indexes for JSONB fields (PostgreSQL only)
         if engine.dialect.name == 'postgresql':
             index_stmts = [
                 "CREATE INDEX IF NOT EXISTS idx_product_attributes ON products USING gin (attributes)",

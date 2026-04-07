@@ -76,6 +76,9 @@ class CheckinPlan(Base):
     payout_eligible_at = Column(DateTime, nullable=True) # Fulfillment + Return Period
     timezone = Column(String(50), default="UTC")
     plan_config = Column(JSON, nullable=True) # v3.0: Stores the randomized 20-phase roadmap
+    
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 class CheckinLog(Base):
     __tablename__ = "checkin_logs"
@@ -193,6 +196,9 @@ class Order(Base):
     discount_code = Column(String(50), nullable=True)
     discount_amount = Column(Numeric(12, 2), default=0.0)
     cogs_total = Column(Numeric(12, 2), default=0.0) # Total 1688 cost for this order
+
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 class AvailableCoupon(Base):
     """
