@@ -106,15 +106,29 @@ async def login_v46(
                 db.commit()
         
         # v4.6.8: Return token immediately for bootstrap admin
-        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"sub": str(user.customer_id), "type": "admin"},
-            expires_delta=access_token_expires
+        access_token = create_access_token(subject=user.customer_id)
+        
+        # Set Secure Cookie
+        is_prod = settings.ENVIRONMENT == "production"
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            max_age=60 * 24 * 7 * 60,
+            samesite="lax",
+            secure=is_prod,
+            path="/"
         )
+        
         return {
+            "status": "success",
             "access_token": access_token,
             "token_type": "bearer",
-            "user_type": user.user_type
+            "user": {
+                "email": user.email,
+                "user_type": user.user_type,
+                "customer_id": user.customer_id
+            }
         }
     
     # 2. General Authentication (placeholder for real hashed password check if needed)

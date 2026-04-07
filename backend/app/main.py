@@ -50,7 +50,7 @@ def sync_db_schema():
     v3.9.7: Hot Schema Migration.
     Automatically adds missing columns to existing tables without Alembic.
     """
-    from sqlalchemy import Column, Text, JSON, text, Float, DateTime
+    from sqlalchemy import Column, Text, JSON, text, Float, DateTime, Numeric, Boolean, Integer, BigInteger
     from sqlalchemy.dialects.postgresql import JSONB
     
     # v4.6.8: Cross-dialect column type mapping
@@ -58,6 +58,8 @@ def sync_db_schema():
         if dialect.name == 'sqlite':
             if isinstance(col.type, JSONB):
                 return "JSON"
+            if isinstance(col.type, Numeric):
+                return "FLOAT"
         return col.type.compile(dialect)
 
     with engine.connect() as conn:
@@ -139,7 +141,16 @@ def sync_db_schema():
          # 3. UserExt Table Updates
         cols_user = [
             Column("kol_apply_reason", Text()),
-            Column("kol_applied_at", DateTime())
+            Column("kol_applied_at", DateTime()),
+            Column("dist_rate", Numeric(5, 4)),
+            Column("fan_rate", Numeric(5, 4)),
+            Column("two_factor_secret", Text()),
+            Column("is_two_factor_enabled", Boolean()),
+            Column("hashed_payment_password", Text()),
+            Column("payment_pass_failed_attempts", Integer()),
+            Column("payment_pass_locked_until", DateTime()),
+            Column("last_login_ip", Text()),
+            Column("last_login_at", DateTime())
         ]
         for col in cols_user:
             try:
