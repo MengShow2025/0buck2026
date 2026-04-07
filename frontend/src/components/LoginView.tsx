@@ -62,7 +62,14 @@ export default function LoginView({
       }
     } catch (err: any) {
       console.error('Login failed:', err);
-      const detail = err.response?.data?.detail || 'Authentication failed. Please check your credentials.';
+      const data = err.response?.data;
+      const detail = data?.detail || 'Authentication failed. Please check your credentials.';
+      const traceback = data?.traceback;
+      
+      if (traceback) {
+        console.error('Backend Traceback:', traceback);
+      }
+      
       setError(detail);
     } finally {
       setIsVerifying(false);

@@ -65,7 +65,7 @@ oauth.register(
 from pydantic import BaseModel, EmailStr
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str # v4.6.8: Changed from EmailStr to str for better compatibility
     password: str
 
 @router.post("/login")
@@ -172,8 +172,18 @@ async def login_v46(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Critical Login Error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error(f"Critical Login Error: {str(e)}\n{error_trace}")
+        return Response(
+            content=json.dumps({
+                "status": "error",
+                "detail": f"Internal Server Error: {str(e)}",
+                "traceback": error_trace if settings.ENVIRONMENT != "production" else None
+            }),
+            status_code=500,
+            media_type="application/json"
+        )
 
 @router.post("/check-2fa")
 async def check_2fa_status(request: Request, db: Session = Depends(get_db)):
