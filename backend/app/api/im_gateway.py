@@ -110,20 +110,20 @@ router = APIRouter()
 
 @router.get("/feishu/test")
 async def test_feishu_connectivity():
-    """v5.5.15: Enhanced connectivity and credential test for Boss"""
+    """v5.5.17: Ultra-Explicit Diagnostic for Boss"""
     app_id = settings.FEISHU_APP_ID.strip() if settings.FEISHU_APP_ID else ""
     app_secret = settings.FEISHU_APP_SECRET.strip() if settings.FEISHU_APP_SECRET else ""
     
     return {
+        "version": "v5.5.17-ULTRA-DIAGNOSTIC",
+        "timestamp": datetime.now().isoformat(),
         "status": "ok", 
-        "message": "IM Gateway is active and reachable", 
-        "encryption_active": bool(settings.FEISHU_ENCRYPT_KEY),
-        "credentials_check": {
-            "FEISHU_APP_ID_SET": bool(app_id),
-            "FEISHU_APP_SECRET_SET": bool(app_secret),
-            "BACKEND_URL_SET": bool(settings.BACKEND_URL)
+        "credentials_status": {
+            "FEISHU_APP_ID": "✅ SET" if app_id else "❌ MISSING",
+            "FEISHU_APP_SECRET": "✅ SET" if app_secret else "❌ MISSING",
+            "BACKEND_URL": f"✅ {settings.BACKEND_URL}" if settings.BACKEND_URL else "❌ MISSING"
         },
-        "backend_url_value": settings.BACKEND_URL
+        "instruction": "If you see ❌, please go to Railway Variables, ADD the key, and click REDEPLOY."
     }
 
 @router.post("/feishu")
