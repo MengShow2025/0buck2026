@@ -90,7 +90,13 @@ async def login_v46(
                     
                 # v4.6.8: Use a more robust referral code generation
                 import hashlib
+                import random
                 ref_hash = hashlib.md5(login_data.email.encode()).hexdigest()[:6].upper()
+                ref_code = f"ADM{ref_hash}"
+                
+                # Double check referral code uniqueness
+                while db.query(UserExt).filter(UserExt.referral_code == ref_code).first():
+                    ref_code = f"ADM{ref_hash}{random.randint(0, 99)}"
                 
                 user = UserExt(
                     customer_id=admin_id,
@@ -99,7 +105,7 @@ async def login_v46(
                     last_name="Boss",
                     user_type="admin",
                     is_active=True,
-                    referral_code=f"ADM{ref_hash}"
+                    referral_code=ref_code
                 )
                 db.add(user)
                 db.commit()

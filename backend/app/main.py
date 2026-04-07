@@ -47,13 +47,13 @@ Base.metadata.create_all(bind=engine)
 
 def sync_db_schema():
     """
-    v3.9.7: Hot Schema Migration.
-    Automatically adds missing columns to existing tables without Alembic.
+    v4.6.9: Robust Hot Schema Migration.
+    Adds missing columns to existing tables by checking existence first.
     """
-    from sqlalchemy import Column, Text, JSON, text, Float, DateTime, Numeric, Boolean, Integer, BigInteger
+    from sqlalchemy import Column, Text, JSON, text, Float, DateTime, Numeric, Boolean, Integer, BigInteger, inspect
     from sqlalchemy.dialects.postgresql import JSONB
     
-    # v4.6.8: Cross-dialect column type mapping
+    # Cross-dialect column type mapping
     def get_type(col, dialect):
         if dialect.name == 'sqlite':
             if isinstance(col.type, JSONB):
@@ -62,45 +62,56 @@ def sync_db_schema():
                 return "FLOAT"
         return col.type.compile(dialect)
 
+    inspector = inspect(engine)
+    
+    # 1. Product Table Updates
+    cols_product = [
+        Column("desire_hook", Text()),
+        Column("desire_logic", Text()),
+        Column("desire_closing", Text()),
+        Column("detail_images", JSONB(), server_default=text("'[]'::jsonb")),
+        Column("origin_video_url", Text()),
+        Column("certificate_images", JSONB(), server_default=text("'[]'::jsonb")),
+        Column("metafields", JSONB(), server_default=text("'{}'::jsonb")),
+        Column("visual_fingerprint", Text()),
+        Column("titles", JSONB(), server_default=text("'{}'::jsonb")),
+        Column("descriptions", JSONB(), server_default=text("'{}'::jsonb")),
+        Column("images", JSONB(), server_default=text("'[]'::jsonb")),
+        Column("tags", JSONB(), server_default=text("'[]'::jsonb")),
+        Column("variants", JSONB(), server_default=text("'[]'::jsonb")),
+        Column("amazon_price", Float()),
+        Column("ebay_price", Float()),
+        Column("amazon_compare_at_price", Float()),
+        Column("ebay_compare_at_price", Float()),
+        Column("source_platform", Text(), server_default=text("'1688'")),
+        Column("source_url", Text()),
+        Column("backup_source_url", Text())
+    ]
+    
+    existing_product_cols = [c['name'] for c in inspector.get_columns('products')]
+    
     with engine.connect() as conn:
-        # 1. Product Table Updates
-        cols_product = [
-            Column("desire_hook", Text()),
-            Column("desire_logic", Text()),
-            Column("desire_closing", Text()),
-            Column("detail_images", JSONB(), server_default=text("'[]'::jsonb")),
-            Column("origin_video_url", Text()),
-            Column("certificate_images", JSONB(), server_default=text("'[]'::jsonb")),
-            Column("metafields", JSONB(), server_default=text("'{}'::jsonb")),
-            Column("visual_fingerprint", Text()),
-            Column("titles", JSONB(), server_default=text("'{}'::jsonb")),
-            Column("descriptions", JSONB(), server_default=text("'{}'::jsonb")),
-            Column("images", JSONB(), server_default=text("'[]'::jsonb")),
-            Column("tags", JSONB(), server_default=text("'[]'::jsonb")),
-            Column("variants", JSONB(), server_default=text("'[]'::jsonb")),
-            Column("amazon_price", Float()),
-            Column("ebay_price", Float()),
-            Column("amazon_compare_at_price", Float()),
-            Column("ebay_compare_at_price", Float()),
-            Column("source_platform", Text(), server_default=text("'1688'")),
-            Column("source_url", Text()),
-            Column("backup_source_url", Text())
-        ]
         for col in cols_product:
-            try:
-                type_str = get_type(col, engine.dialect)
-                stmt = f"ALTER TABLE products ADD COLUMN {col.name} {type_str}"
-                if col.server_default is not None and engine.dialect.name == 'postgresql':
-                    # Extract the raw text from the text() object
-                    default_text = col.server_default.arg
-                    stmt += f" DEFAULT {default_text}"
-                
-                conn.execute(text(stmt))
-                conn.commit()
-                print(f"✅ Added column {col.name} to products table.")
-            except Exception:
-                pass # Column already exists
-
+            if col.name not in existing_product_cols:
+                try:
+                    type_str = get_type(col, engine.dialect)
+                    # v4.6.9: Use IF NOT EXISTS for extra safety in PG
+                    if engine.dialect.name == 'postgresql':
+                        stmt = f"ALTER TABLE products ADD COLUMN IF NOT EXISTS {col.name} {type_str}"
+                    else:
+                        stmt = f"ALTER TABLE products ADD COLUMN {col.name} {type_str}"
+                        
+                    if col.server_default is not None and engine.dialect.name == 'postgresql':
+                        default_text = col.server_default.arg
+                        stmt += f" DEFAULT {default_text}"
+                    
+                    conn.execute(text(stmt))
+                    conn.commit()
+                    logger.info(f"✅ Added column {col.name} to products table.")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to add {col.name} to products: {e}")
+                    conn.rollback() # Ensure transaction is clean for next loop
+        
         # 2. CandidateProduct Table Updates
         cols_candidate = [
             Column("desire_hook", Text()),
@@ -125,42 +136,73 @@ def sync_db_schema():
             Column("backup_source_url", Text()),
             Column("alibaba_comparison_price", Float())
         ]
+        
+        existing_candidate_cols = [c['name'] for c in inspector.get_columns('candidate_products')]
         for col in cols_candidate:
-            try:
-                type_str = get_type(col, engine.dialect)
-                stmt = f"ALTER TABLE candidate_products ADD COLUMN {col.name} {type_str}"
-                if col.server_default is not None and engine.dialect.name == 'postgresql':
-                    default_text = col.server_default.arg
-                    stmt += f" DEFAULT {default_text}"
-                conn.execute(text(stmt))
-                conn.commit()
-                print(f"✅ Added column {col.name} to candidate_products table.")
-            except Exception:
-                pass # Column already exists
+            if col.name not in existing_candidate_cols:
+                try:
+                    type_str = get_type(col, engine.dialect)
+                    if engine.dialect.name == 'postgresql':
+                        stmt = f"ALTER TABLE candidate_products ADD COLUMN IF NOT EXISTS {col.name} {type_str}"
+                    else:
+                        stmt = f"ALTER TABLE candidate_products ADD COLUMN {col.name} {type_str}"
+                        
+                    if col.server_default is not None and engine.dialect.name == 'postgresql':
+                        default_text = col.server_default.arg
+                        stmt += f" DEFAULT {default_text}"
+                    conn.execute(text(stmt))
+                    conn.commit()
+                    logger.info(f"✅ Added column {col.name} to candidate_products table.")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to add {col.name} to candidate_products: {e}")
+                    conn.rollback()
          
          # 3. UserExt Table Updates
         cols_user = [
+            Column("inviter_id", BigInteger()),
+            Column("email", Text()),
+            Column("first_name", Text()),
+            Column("last_name", Text()),
+            Column("referral_code", Text()),
+            Column("user_type", Text(), server_default=text("'customer'")),
+            Column("user_tier", Text(), server_default=text("'silver'")),
+            Column("kol_status", Text(), server_default=text("'none'")),
             Column("kol_apply_reason", Text()),
             Column("kol_applied_at", DateTime()),
             Column("dist_rate", Numeric(5, 4)),
             Column("fan_rate", Numeric(5, 4)),
             Column("two_factor_secret", Text()),
-            Column("is_two_factor_enabled", Boolean()),
+            Column("is_two_factor_enabled", Boolean(), server_default=text("false")),
             Column("hashed_payment_password", Text()),
-            Column("payment_pass_failed_attempts", Integer()),
+            Column("payment_pass_failed_attempts", Integer(), server_default=text("0")),
             Column("payment_pass_locked_until", DateTime()),
             Column("last_login_ip", Text()),
-            Column("last_login_at", DateTime())
+            Column("last_login_at", DateTime()),
+            Column("is_active", Boolean(), server_default=text("true"))
         ]
+        
+        existing_user_cols = [c['name'] for c in inspector.get_columns('users_ext')]
         for col in cols_user:
-            try:
-                type_str = get_type(col, engine.dialect)
-                stmt = f"ALTER TABLE users_ext ADD COLUMN {col.name} {type_str}"
-                conn.execute(text(stmt))
-                conn.commit()
-                print(f"✅ Added column {col.name} to users_ext table.")
-            except Exception:
-                pass # Column already exists
+            if col.name not in existing_user_cols:
+                try:
+                    type_str = get_type(col, engine.dialect)
+                    if engine.dialect.name == 'postgresql':
+                        stmt = f"ALTER TABLE users_ext ADD COLUMN IF NOT EXISTS {col.name} {type_str}"
+                    else:
+                        stmt = f"ALTER TABLE users_ext ADD COLUMN {col.name} {type_str}"
+                        
+                    # Handle server_default for ALTER TABLE
+                    if col.server_default is not None:
+                        default_val = col.server_default.arg
+                        if isinstance(default_val, str):
+                             stmt += f" DEFAULT {default_val}"
+                    
+                    conn.execute(text(stmt))
+                    conn.commit()
+                    logger.info(f"✅ Added column {col.name} to users_ext table.")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to add column {col.name} to users_ext: {e}")
+                    conn.rollback()
 
         # 4. Create GIN Indexes for JSONB fields (PostgreSQL only)
         if engine.dialect.name == 'postgresql':
