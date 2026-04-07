@@ -209,7 +209,7 @@ class SupplyChainService:
                 "desire_closing": "Closing contract..."
             }
 
-    async def sync_product(self, source_product_id: str, comp_price_usd: float = None, cost_cny: float = None, title: str = None, strategy_tag: str = "IDS_FOLLOWING", category_type: str = "PROFIT", is_cashback_eligible: bool = None, variants_override: List[Dict] = None, images_override: List[str] = None, attributes: List[Dict] = None, logistics_data: Dict = None, mirror_assets: Dict = None, structural_data: Dict = None, desire_hook: str = None, desire_logic: str = None, desire_closing: str = None, visual_fingerprint: str = None, source_platform: str = "1688", source_url: str = None, backup_source_url: str = None):
+    async def sync_product(self, source_product_id: str, comp_price_usd: float = None, cost_cny: float = None, title: str = None, strategy_tag: str = "IDS_FOLLOWING", category_type: str = "PROFIT", is_cashback_eligible: bool = None, variants_override: List[Dict] = None, images_override: List[str] = None, attributes: List[Dict] = None, logistics_data: Dict = None, mirror_assets: Dict = None, structural_data: Dict = None, desire_hook: str = None, desire_logic: str = None, desire_closing: str = None, visual_fingerprint: str = None, source_platform: str = "1688", source_url: str = None, backup_source_url: str = None, amazon_price: float = None, ebay_price: float = None, amazon_compare_at_price: float = None, ebay_compare_at_price: float = None):
         raw_data = await self.fetch_product_details(source_product_id)
         if cost_cny:
             raw_data["price"] = cost_cny
@@ -275,16 +275,16 @@ class SupplyChainService:
         product.desire_logic = desire_logic or enriched_data.get("desire_logic")
         product.desire_closing = desire_closing or enriched_data.get("desire_closing")
         
-        product.original_price = candidate.cost_cny
+        product.original_price = cost_cny
         product.source_cost_usd = pricing_result.get("source_cost_usd")
         product.sale_price = pricing_result.get("final_price_usd")
         product.compare_at_price = pricing_result.get("compare_at_price")
         
         # v4.6.8: Platform Comparison
-        product.amazon_price = candidate.amazon_price
-        product.ebay_price = candidate.ebay_price
-        product.amazon_compare_at_price = candidate.amazon_compare_at_price
-        product.ebay_compare_at_price = candidate.ebay_compare_at_price
+        product.amazon_price = amazon_price
+        product.ebay_price = ebay_price
+        product.amazon_compare_at_price = amazon_compare_at_price
+        product.ebay_compare_at_price = ebay_compare_at_price
         
         product.is_reward_eligible = pricing_result.get("is_reward_eligible", True)
         product.images = raw_data.get("images", [])
@@ -639,7 +639,12 @@ class SupplyChainService:
                 visual_fingerprint=candidate.visual_fingerprint,
                 # v4.7.1 Sourcing mapping
                 source_platform=candidate.source_platform,
-                source_url=candidate.source_url
+                source_url=candidate.source_url,
+                # v4.6.8 Platform Comparison
+                amazon_price=candidate.amazon_price,
+                ebay_price=candidate.ebay_price,
+                amazon_compare_at_price=candidate.amazon_compare_at_price,
+                ebay_compare_at_price=candidate.ebay_compare_at_price
             )
 
             from app.services.sync_shopify import SyncShopifyService
