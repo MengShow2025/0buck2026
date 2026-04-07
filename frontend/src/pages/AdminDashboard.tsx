@@ -22,9 +22,10 @@ import {
   Star,
   PlayCircle,
   Truck,
-  Layers
+  Layers,
+  ExternalLink
 } from 'lucide-react';
-import { motion, Reorder } from 'framer-motion';
+import { motion, Reorder, AnimatePresence } from 'motion/react';
 
 // v4.6.3: Helper for authenticated fetch (legacy fallback)
 const fetchWithAuth = async (url: string, options: any = {}) => {
@@ -106,6 +107,35 @@ interface DemandInsight {
   action_taken: string | null;
 }
 
+interface PricingStrategy {
+  sale_price_ratio: number;
+  compare_at_price_ratio: number;
+  amazon_weight: number;
+  ebay_weight: number;
+}
+
+interface TalentApplication {
+  customer_id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  kol_apply_reason: string | null;
+  kol_applied_at: string | null;
+  dist_rate: number | null;
+  fan_rate: number | null;
+}
+
+interface RewardRates {
+  silver_rate: number;
+  gold_rate: number;
+  platinum_rate: number;
+  kol_dist_default: number;
+  kol_fan_default: number;
+  fan_silver_rate: number;
+  fan_gold_rate: number;
+  fan_platinum_rate: number;
+}
+
 interface AuditCandidate {
   id: number;
   name: string;
@@ -149,6 +179,9 @@ const AdminDashboard: React.FC = () => {
   const [auditQueue, setAuditQueue] = useState<AuditCandidate[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [meltedProducts, setMeltedProducts] = useState<any[]>([]);
+  const [pricingStrategy, setPricingStrategy] = useState<PricingStrategy | null>(null);
+  const [rewardRates, setRewardRates] = useState<RewardRates | null>(null);
+  const [pendingTalents, setPendingTalents] = useState<TalentApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [editingCandidate, setEditingCandidate] = useState<AuditCandidate | null>(null);
@@ -162,7 +195,72 @@ const AdminDashboard: React.FC = () => {
     if (activeTab === 'c2m_mgmt') { fetchWishes(); fetchInsights(); fetchC2MConfig(); }
     if (activeTab === 'sourcing') fetchAuditQueue();
     if (activeTab === 'melting') fetchMeltedQueue();
+    if (activeTab === 'settings') { fetchPricingStrategy(); fetchRewardRates(); }
+    if (activeTab === 'talents_audit') fetchPendingTalents();
   }, [activeTab]);
+
+  const fetchPricingStrategy = async () => {
+    try {
+      const res = await fetchWithAuth('/api/v1/admin/config/pricing-strategy');
+      setPricingStrategy(await res.json());
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchRewardRates = async () => {
+    try {
+      const res = await fetchWithAuth('/api/v1/admin/config/reward-rates');
+      setRewardRates(await res.json());
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchPendingTalents = async () => {
+    try {
+      const res = await fetchWithAuth('/api/v1/admin/talents/pending');
+      setPendingTalents(await res.json());
+    } catch (e) { console.error(e); }
+  };
+
+  const handleAuditTalent = async (userId: number, status: 'approved' | 'rejected', distRate?: number, fanRate?: number) => {
+    try {
+      const res = await fetchWithAuth('/api/v1/admin/talents/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, status, dist_rate: distRate, fan_rate: fanRate })
+      });
+      if (res.ok) {
+        alert(status === 'approved' ? '已批准为达人' : '已拒绝申请');
+        fetchPendingTalents();
+      }
+    } catch (e) { alert('操作失败'); }
+  };
+
+  const handleUpdatePricingStrategy = async (strategy: PricingStrategy) => {
+    try {
+      const res = await fetchWithAuth('/api/v1/admin/config/pricing-strategy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(strategy)
+      });
+      if (res.ok) {
+        alert('定价策略已更新');
+        fetchPricingStrategy();
+      }
+    } catch (e) { alert('更新失败'); }
+  };
+
+  const handleUpdateRewardRates = async (rates: RewardRates) => {
+    try {
+      const res = await fetchWithAuth('/api/v1/admin/config/reward-rates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rates)
+      });
+      if (res.ok) {
+        alert('奖励比例已更新');
+        fetchRewardRates();
+      }
+    } catch (e) { alert('更新失败'); }
+  };
 
   const fetchC2MConfig = async () => {
     try {
@@ -198,10 +296,14 @@ const AdminDashboard: React.FC = () => {
 
   const fetchAuditQueue = async () => {
     try {
-      const res = await fetchWithAuth('/api/v1/admin/sourcing/candidates?status=new');
+      // v4.6.8: Fetch both 'new' and 'reviewing' to prevent items from "disappearing" during sync
+      const res = await fetchWithAuth('/api/v1/admin/sourcing/candidates'); 
       const data = await res.json();
-      // v3.9.1: Fix title vs name mapping for consistency
-      const formatted = data.map((item: any) => ({
+      
+      // Filter for new/reviewing on the frontend for better UX
+      const activeItems = data.filter((item: any) => ['new', 'reviewing'].includes(item.status));
+      
+      const formatted = activeItems.map((item: any) => ({
         ...item,
         name: item.title_zh || item.name || '未命名商品'
       }));
@@ -266,7 +368,9 @@ const AdminDashboard: React.FC = () => {
           logistics_data: editingCandidate.logistics_data,
           mirror_assets: editingCandidate.mirror_assets,
           structural_data: editingCandidate.structural_data,
-          category: editingCandidate.category
+          category: editingCandidate.category,
+          source_platform: editingCandidate.source_platform,
+          source_url: editingCandidate.source_url
         })
       });
       if (res.ok) {
@@ -451,7 +555,7 @@ const AdminDashboard: React.FC = () => {
                     >
                       {editingCandidate.images.map((img, idx) => (
                         <Reorder.Item 
-                          key={img} 
+                          key={`${img}-${idx}`} // v4.6.7: Use combination key to handle duplicate URLs if any
                           value={img}
                           className="relative aspect-square group cursor-grab active:cursor-grabbing"
                         >
@@ -491,15 +595,15 @@ const AdminDashboard: React.FC = () => {
                       {editingCandidate.variants_raw.map((v, idx) => (
                         <div key={idx} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
                           <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-50">
-                            {editingCandidate.images[v.image_index] ? (
-                              <img src={editingCandidate.images[v.image_index]} className="w-full h-full object-cover" />
+                            {v.image || editingCandidate.images[v.image_index] ? (
+                              <img src={v.image || editingCandidate.images[v.image_index]} className="w-full h-full object-cover" />
                             ) : <Database size={16} className="text-gray-200" />}
                           </div>
                           <div className="flex-1">
-                            <p className="text-[9px] font-black text-gray-300 uppercase mb-1">原始: {v.title}</p>
+                            <p className="text-[9px] font-black text-gray-300 uppercase mb-1">原始: {v.spec_attrs || v.title || 'Standard'}</p>
                             <input 
                               type="text"
-                              value={v.title}
+                              value={v.title || v.spec_attrs || ''}
                               onChange={(e) => {
                                 const newVariants = [...editingCandidate.variants_raw];
                                 newVariants[idx].title = e.target.value;
@@ -694,6 +798,7 @@ const AdminDashboard: React.FC = () => {
             {[
               { id: 'overview', label: '运营看板', icon: Activity },
               { id: 'sourcing', label: '选品审核', icon: ShoppingBag },
+              { id: 'talents_audit', label: '达人审核', icon: Star },
               { id: 'c2m_mgmt', label: 'C2M 需求洞察', icon: Zap },
               { id: 'melting', label: '熔断预警', icon: AlertCircle },
               { id: 'persona_os', label: 'AI 人格与进化', icon: Zap },
@@ -813,7 +918,7 @@ const AdminDashboard: React.FC = () => {
                         <th className="px-6 py-4">商品预览 / 趋势证据 (Selection & Evidence)</th>
                         <th className="px-6 py-4">供应商 (Supplier)</th>
                         <th className="px-6 py-4">分类 / 策略</th>
-                        <th className="px-6 py-4">财务模型 (Financials)</th>
+                        <th className="px-6 py-4">对比价 / 财务模型 (Financials)</th>
                         <th className="px-6 py-4">欲望文案预览 (Psychological Sniper)</th>
                         <th className="px-6 py-4 text-right">决策控制 (Control)</th>
                       </tr>
@@ -829,9 +934,19 @@ const AdminDashboard: React.FC = () => {
                         <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
                           <td className="px-6 py-4">
                             <span className="text-[10px] font-black text-gray-300">#{item.id}</span>
-                            <div className="mt-1 flex items-center gap-1.5">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                              <span className="text-[9px] font-black uppercase text-blue-600">Pending</span>
+                            <div className="mt-1 flex flex-col gap-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <span className="text-[9px] font-black uppercase text-blue-600">Pending</span>
+                              </div>
+                              {/* v4.7.1 Sourcing Badge */}
+                              <div className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase w-fit ${
+                                item.source_platform === 'ALIBABA' 
+                                  ? 'bg-amber-100 text-amber-700 border border-amber-200' 
+                                  : 'bg-orange-100 text-orange-700 border border-orange-200'
+                              }`}>
+                                {item.source_platform || '1688'}
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
@@ -875,12 +990,45 @@ const AdminDashboard: React.FC = () => {
                           <td className="px-6 py-4">
                             <div className="max-w-[200px]">
                               <p className="text-xs font-black text-gray-800 truncate">{item.supplier_info?.name || '未知源工厂'}</p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="text-[10px] font-bold text-gray-400">1688 ID: {item.product_id_1688}</span>
-                                {item.supplier_info?.is_strength && (
-                                  <span className="bg-amber-100 text-amber-700 text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase">实力商家</span>
+                              <div className="flex flex-col gap-1 mt-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-bold text-gray-400">
+                                    {item.source_platform === 'ALIBABA' ? 'Alibaba ID:' : '1688 ID:'} {item.product_id_1688}
+                                  </span>
+                                  {item.supplier_info?.is_strength && (
+                                    <span className="bg-amber-100 text-amber-700 text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase">实力商家</span>
+                                  )}
+                                </div>
+                                {item.source_url && (
+                                  <a 
+                                    href={item.source_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-[9px] text-blue-500 hover:underline flex items-center gap-1 font-bold truncate"
+                                  >
+                                    <ExternalLink size={10} />
+                                    访问源链接
+                                  </a>
                                 )}
                               </div>
+                              {item.backup_source_url && (
+                                <div className="mt-3 p-3 bg-amber-50 rounded-2xl border border-amber-100 shadow-sm">
+                                  <p className="text-[10px] font-black text-amber-800 uppercase flex items-center gap-1.5 mb-1.5">
+                                    <Zap size={12} fill="#d97706" /> Alibaba.com 备选源已锁定
+                                  </p>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-black text-amber-600">RTS Price: ${item.alibaba_comparison_price || '0.00'}</span>
+                                    <a 
+                                      href={item.backup_source_url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="px-2 py-1 bg-white text-[9px] text-amber-700 hover:bg-amber-100 rounded-lg border border-amber-200 font-black shadow-xs transition-colors"
+                                    >
+                                      对比链接
+                                    </a>
+                                  </div>
+                                </div>
+                              )}
                               {item.supplier_info?.rating && (
                                 <div className="mt-1 flex gap-0.5 text-amber-400">
                                   {[...Array(5)].map((_, i) => (
@@ -909,20 +1057,22 @@ const AdminDashboard: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="w-[180px] p-3 bg-gray-50 rounded-2xl space-y-2 border border-gray-100">
+                            <div className="w-[220px] p-3 bg-gray-50 rounded-2xl space-y-2 border border-gray-100">
                               <div className="flex justify-between items-center">
-                                <span className="text-[9px] font-black text-gray-400 uppercase">Cost (CNY)</span>
+                                <span className="text-[9px] font-black text-gray-400 uppercase">1688 Cost</span>
                                 <span className="text-xs font-bold text-gray-700">¥{item.cost_cny}</span>
                               </div>
                               <div className="flex justify-between items-center">
-                                <span className="text-[9px] font-black text-gray-400 uppercase">Sale (USD)</span>
-                                <span className="text-sm font-black text-black">${item.estimated_sale_price?.toFixed(2)}</span>
+                                <span className="text-[9px] font-black text-gray-400 uppercase">Amazon Price</span>
+                                <span className="text-xs font-bold text-gray-700">${(item as any).amazon_price || 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-[9px] font-black text-gray-400 uppercase">eBay Price</span>
+                                <span className="text-xs font-bold text-gray-700">${(item as any).ebay_price || 'N/A'}</span>
                               </div>
                               <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
-                                <span className="text-[9px] font-black text-gray-400 uppercase">Margin Factor</span>
-                                <span className={`text-xs font-black ${item.profit_ratio >= 10.0 ? 'text-green-600' : 'text-orange-600'}`}>
-                                  {item.profit_ratio?.toFixed(1)}x
-                                </span>
+                                <span className="text-[9px] font-black text-blue-500 uppercase">0Buck Sale</span>
+                                <span className="text-sm font-black text-black">${item.estimated_sale_price?.toFixed(2)}</span>
                               </div>
                             </div>
                           </td>
@@ -965,6 +1115,95 @@ const AdminDashboard: React.FC = () => {
                                   <Settings size={14} />
                                 </button>
                               </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'talents_audit' && (
+            <div className="space-y-8">
+              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                <div className="p-6 border-b border-gray-50 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-black text-lg">达人申请审核 (Talent Audit)</h3>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">管理用户晋升达人及分销比例设置</p>
+                  </div>
+                  <button 
+                    onClick={fetchPendingTalents}
+                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-400"
+                  >
+                    <RefreshCw size={18} />
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-50 text-[10px] uppercase text-gray-400 font-black tracking-widest">
+                      <tr>
+                        <th className="px-6 py-4">用户信息</th>
+                        <th className="px-6 py-4">申请理由</th>
+                        <th className="px-6 py-4">申请时间</th>
+                        <th className="px-6 py-4">奖励比例 (默认)</th>
+                        <th className="px-6 py-4 text-right">操作控制</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {pendingTalents.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-12 text-center text-gray-400 font-black italic">
+                            暂无待审核的达人申请
+                          </td>
+                        </tr>
+                      ) : pendingTalents.map((t) => (
+                        <tr key={t.customer_id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <p className="font-black text-sm">{t.first_name} {t.last_name}</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">{t.email}</p>
+                            <p className="text-[9px] text-gray-300">ID: {t.customer_id}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-xs text-gray-600 italic max-w-xs">{t.kol_apply_reason || '未填写理由'}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-xs font-bold text-gray-400">
+                              {t.kol_applied_at ? new Date(t.kol_applied_at).toLocaleString() : 'N/A'}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] font-black text-gray-400 uppercase w-10">分销:</span>
+                                <span className="text-xs font-black text-green-600">{((t.dist_rate || 0.1) * 100).toFixed(0)}%</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] font-black text-gray-400 uppercase w-10">粉丝:</span>
+                                <span className="text-xs font-black text-blue-600">{((t.fan_rate || 0.05) * 100).toFixed(0)}%</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              <button 
+                                onClick={() => {
+                                  const dist = prompt('设置分销奖励比例 (0.01-0.99):', '0.15');
+                                  const fan = prompt('设置粉丝奖励比例 (0.01-0.99):', '0.05');
+                                  if (dist && fan) handleAuditTalent(t.customer_id, 'approved', parseFloat(dist), parseFloat(fan));
+                                }}
+                                className="px-4 py-2 bg-black text-white rounded-xl text-[10px] font-black hover:bg-green-600 transition-colors"
+                              >
+                                批准并设置比例
+                              </button>
+                              <button 
+                                onClick={() => handleAuditTalent(t.customer_id, 'rejected')}
+                                className="px-4 py-2 bg-gray-100 text-gray-400 rounded-xl text-[10px] font-bold hover:bg-red-50 hover:text-red-600 transition-colors"
+                              >
+                                拒绝
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -1241,22 +1480,22 @@ const AdminDashboard: React.FC = () => {
                 </div>
 
                 <div className="bg-black rounded-3xl p-6 shadow-xl flex flex-col text-white gap-6">
-                  <h3 className="font-black text-xl mb-1 tracking-tight">全局策略配置</h3>
+                  <h3 className="font-black text-xl mb-1 tracking-tight">快速操作</h3>
                   <div className="space-y-3">
-                    <div className="p-4 bg-white/10 rounded-2xl border border-white/5">
-                      <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-2">引流品利润率 (Traffic)</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-black">2.0x</span>
-                        <button onClick={() => updateGlobalConfig('GLOBAL_TRAFFIC_MARKUP', 2.0)} className="text-xs font-black text-orange-500 uppercase">编辑</button>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-white/10 rounded-2xl border border-white/5">
-                      <p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-2">利润品红线 (Profit)</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-black">4.0x</span>
-                        <button onClick={() => updateGlobalConfig('GLOBAL_PROFIT_MARKUP', 4.0)} className="text-xs font-black text-orange-500 uppercase">编辑</button>
-                      </div>
-                    </div>
+                    <button 
+                      onClick={() => setActiveTab('sourcing')}
+                      className="w-full p-4 bg-white/10 rounded-2xl border border-white/5 flex items-center justify-between hover:bg-white/20 transition-all"
+                    >
+                      <span className="text-sm font-black">前往选品审核</span>
+                      <ChevronRight size={16} />
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('settings')}
+                      className="w-full p-4 bg-white/10 rounded-2xl border border-white/5 flex items-center justify-between hover:bg-white/20 transition-all"
+                    >
+                      <span className="text-sm font-black">配置定价策略</span>
+                      <ChevronRight size={16} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1415,7 +1654,7 @@ const AdminDashboard: React.FC = () => {
                         <th className="px-6 py-4">面值 / 门槛</th>
                         <th className="px-6 py-4">AI 类别</th>
                         <th className="px-6 py-4">发放权限</th>
-                        <th className="px-6 py-4 text-right">操作</th>
+                        <th className="px-6 py-4 text-right">操作控制</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -1463,6 +1702,124 @@ const AdminDashboard: React.FC = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Pricing Strategy */}
+                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
+                  <h3 className="font-black text-xl mb-6 flex items-center gap-2">
+                    <TrendingUp size={24} className="text-orange-600" />
+                    全球定价策略配置
+                  </h3>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">定制销售价比例 (对比价的 %)</label>
+                      <div className="flex items-center gap-4">
+                        <input 
+                          type="range" min="0.1" max="1.5" step="0.05"
+                          value={pricingStrategy?.sale_price_ratio || 0.6}
+                          onChange={(e) => setPricingStrategy({...pricingStrategy!, sale_price_ratio: parseFloat(e.target.value)})}
+                          className="flex-1 accent-orange-500"
+                        />
+                        <span className="text-lg font-black w-16">{(pricingStrategy?.sale_price_ratio || 0.6) * 100}%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">划线价比例 (对比价的 %)</label>
+                      <div className="flex items-center gap-4">
+                        <input 
+                          type="range" min="0.5" max="2.0" step="0.05"
+                          value={pricingStrategy?.compare_at_price_ratio || 0.95}
+                          onChange={(e) => setPricingStrategy({...pricingStrategy!, compare_at_price_ratio: parseFloat(e.target.value)})}
+                          className="flex-1 accent-blue-500"
+                        />
+                        <span className="text-lg font-black w-16">{(pricingStrategy?.compare_at_price_ratio || 0.95) * 100}%</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">亚马逊权重</label>
+                        <input 
+                          type="number" step="0.1"
+                          value={pricingStrategy?.amazon_weight || 0.5}
+                          onChange={(e) => setPricingStrategy({...pricingStrategy!, amazon_weight: parseFloat(e.target.value)})}
+                          className="w-full bg-gray-50 border-none rounded-xl p-3 font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">eBay 权重</label>
+                        <input 
+                          type="number" step="0.1"
+                          value={pricingStrategy?.ebay_weight || 0.5}
+                          onChange={(e) => setPricingStrategy({...pricingStrategy!, ebay_weight: parseFloat(e.target.value)})}
+                          className="w-full bg-gray-50 border-none rounded-xl p-3 font-bold"
+                        />
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => pricingStrategy && handleUpdatePricingStrategy(pricingStrategy)}
+                      className="w-full py-4 bg-black text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl shadow-orange-600/10"
+                    >
+                      保存定价策略
+                    </button>
+                  </div>
+                </div>
+
+                {/* Reward Rates */}
+                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
+                  <h3 className="font-black text-xl mb-6 flex items-center gap-2">
+                    <Gift size={24} className="text-purple-600" />
+                    达人与用户奖励比例
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">KOL 默认分销 (Dist)</label>
+                        <input 
+                          type="number" step="0.01"
+                          value={rewardRates?.kol_dist_default || 0.15}
+                          onChange={(e) => setRewardRates({...rewardRates!, kol_dist_default: parseFloat(e.target.value)})}
+                          className="w-full bg-gray-50 border-none rounded-xl p-3 font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">KOL 默认粉丝 (Fan)</label>
+                        <input 
+                          type="number" step="0.01"
+                          value={rewardRates?.kol_fan_default || 0.05}
+                          onChange={(e) => setRewardRates({...rewardRates!, kol_fan_default: parseFloat(e.target.value)})}
+                          className="w-full bg-gray-50 border-none rounded-xl p-3 font-bold"
+                        />
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-gray-50">
+                      <p className="text-[10px] font-black text-gray-300 uppercase mb-4 tracking-widest">普通用户等级奖励 (Referral)</p>
+                      <div className="grid grid-cols-3 gap-3">
+                        {['silver', 'gold', 'platinum'].map((tier) => (
+                          <div key={tier}>
+                            <label className="text-[9px] font-black text-gray-400 uppercase block mb-1">{tier}</label>
+                            <input 
+                              type="number" step="0.001"
+                              value={(rewardRates as any)?.[`${tier}_rate`] || 0.01}
+                              onChange={(e) => setRewardRates({...rewardRates!, [`${tier}_rate`]: parseFloat(e.target.value)} as any)}
+                              className="w-full bg-gray-50 border-none rounded-xl p-2 text-xs font-bold"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => rewardRates && handleUpdateRewardRates(rewardRates)}
+                      className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-purple-700 transition-all shadow-xl shadow-purple-600/10"
+                    >
+                      保存奖励比例
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

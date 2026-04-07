@@ -33,7 +33,7 @@ import ReferralView from './components/ReferralView';
 import ProductDetailView from './components/ProductDetailView';
 import MerchantDetailView from './components/MerchantDetailView';
 import MeView from './components/MeView';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useDeviceType } from './hooks/useDeviceType';
 import { useTranslation } from 'react-i18next';
 import { Attachment } from 'stream-chat-react';

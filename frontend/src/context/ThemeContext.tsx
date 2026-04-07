@@ -11,17 +11,9 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Lock the theme to 'dark' permanently to preserve the cyberpunk/geek design aesthetic
+  // Lock the theme to 'dark' permanently
   const theme: Theme = 'dark';
   const resolvedTheme: 'dark' = 'dark';
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    localStorage.setItem('theme', 'dark');
-    root.classList.add('dark');
-    // Ensure light mode classes are never applied
-    root.classList.remove('light');
-  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme: () => {}, resolvedTheme }}>

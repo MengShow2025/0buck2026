@@ -1,0 +1,64 @@
+{
+  "id": 16,
+  "status": "new",
+  "product_id_1688": "656410500170",
+  "title_zh": "华强北S12智能手表S11运动蓝牙通话NFC支付灵动岛男士跨...",
+  "title_en_preview": "S12 Pro Max Smartwatch: 2.19\" AMOLED Display with Bluetooth Calling, NFC, and Advanced Health Monitoring",
+  "category": "Electronics",
+  "tags": ["Smartwatch", "Artisan Tech", "Wearables"],
+  "images": [
+    "https://sc01.alicdn.com/kf/H7193ab466964bd0ac7484612649c9010.jpg",
+    "https://sc01.alicdn.com/kf/H8d3434cf76964bd0ac7484612649c9011.jpg"
+  ],
+  "detail_images": [
+    "https://sc01.alicdn.com/kf/H9e3434cf76964bd0ac7484612649c9012.jpg",
+    "https://sc01.alicdn.com/kf/Ha3434cf76964bd0ac7484612649c9013.jpg"
+  ],
+  "origin_video_url": "https://video.1688.com/video/get/656410500170/720p.mp4",
+  "original_price_cny": 145.0,
+  "estimated_sale_price_usd": 49.99,
+  "compare_at_price_usd": 129.0,
+  "profit_ratio": 5.2,
+  "desire_hook": "Stop paying a 1000% markup for a logo—it’s time to wear the tech, not the marketing budget.",
+  "desire_logic": "Deeply analyzing the Shenzhen electronics ecosystem reveals that the core components of this S12 Pro Max are identical to tier-1 global brands. By cutting out middleman distributors and brand licensing fees, we deliver the same 2.19\" AMOLED and dual-core processor at a fraction of the cost.",
+  "desire_closing": "Join the 0Buck Artisan community and reclaim your tech autonomy. 20-phase rebate eligibility starts now.",
+  "variants": [
+    {
+      "sku_id": "5187739243168",
+      "option1": "Midnight Black",
+      "option2": "Silicone Strap",
+      "price_usd": 49.99,
+      "stock": 1200,
+      "image_url": "https://sc01.alicdn.com/kf/Hb123ab466964bd0ac7484612649c9014.jpg",
+      "weight_kg": 0.15
+    },
+    {
+      "sku_id": "5187739243169",
+      "option1": "Starlight Silver",
+      "option2": "Milanese Loop",
+      "price_usd": 54.99,
+      "stock": 850,
+      "image_url": "https://sc01.alicdn.com/kf/Hc123ab466964bd0ac7484612649c9015.jpg",
+      "weight_kg": 0.18
+    }
+  ],
+  "attributes": [
+    { "name": "Screen Size", "value": "2.19 inch" },
+    { "name": "Display Type", "value": "AMOLED" },
+    { "name": "Resolution", "value": "485*520" },
+    { "name": "Waterproof Level", "value": "IP68" },
+    { "name": "NFC", "value": "Support" }
+  ],
+  "supplier_info": {
+    "name": "Shenzhen Artisan Electronics Co., Ltd.",
+    "is_strength": true,
+    "rating": 4.9,
+    "location": "Shenzhen, Guangdong"
+  },
+  "logistics_data": {
+    "weight_kg": 0.25,
+    "volume_cm3": 150,
+    "ships_within_48h": true
+  },
+  "visual_fingerprint": "17d84b6466964bd0ac7484612649c901"
+}

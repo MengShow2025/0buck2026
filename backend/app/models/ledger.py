@@ -16,6 +16,8 @@ class UserExt(Base):
     user_type = Column(String, default="customer") # 'customer', 'kol'
     user_tier = Column(String, default="silver") # 'silver', 'gold', 'platinum'
     kol_status = Column(String, default="none") # 'none', 'pending', 'approved', 'rejected'
+    kol_apply_reason = Column(String, nullable=True) # v4.6.8: Application context
+    kol_applied_at = Column(DateTime, nullable=True)
     is_active = Column(Boolean, default=True)
     
     # v3.4.6: Google 2FA

@@ -1,0 +1,48 @@
+{
+  "company_identity": {
+    "name": "深圳市日盛华科技有限公司 (Shenzhen Rishenghua Technology Co., Ltd.)",
+    "is_0buck_verified": true,
+    "logo_url": "https://rshtech.1688.com/logo.jpg",
+    "address": "2nd Floor, Building E1, Qiangrongdong Industrial Zone, No. 723 Zhoushi Road, Bao'an District, Shenzhen, Guangdong, China",
+    "established_year": 2005,
+    "factory_area_m2": 3000,
+    "employee_count": 116,
+    "certification_tags": ["ISO9001", "BSCI", "CE", "High-Tech Enterprise", "Specialized and Innovative SME"]
+  },
+  "performance_metrics": {
+    "on_time_delivery_rate": 1.0,
+    "response_rate": 0.71,
+    "return_rate": 0.53,
+    "fulfillment_score": 100,
+    "monthly_output": "5,000,000+ Units",
+    "production_lead_time_hours": 7.0
+  },
+  "visual_assets": {
+    "vr_showroom_url": "https://air.1688.com/pages/vr_viewer/vr_hall/dq193oei7/index.html",
+    "workshop_images": [
+      "https://sc01.alicdn.com/kf/Hw123ab466964bd0ac7484612649c9016.jpg",
+      "https://sc01.alicdn.com/kf/Hx123ab466964bd0ac7484612649c9017.jpg"
+    ],
+    "certificates": [
+      "https://sc01.alicdn.com/kf/Hy123ab466964bd0ac7484612649c9018.jpg"
+    ]
+  },
+  "customization_capabilities": {
+    "oem_odm_support": true,
+    "custom_moq": 1000,
+    "labeling_moq": 1000,
+    "processing_methods": ["Design-based processing", "Sample-based processing", "Material processing"],
+    "foreign_trade_experience": "15+ Years"
+  },
+  "product_series": [
+    "Smart Home Gateways",
+    "Bluetooth Curtain Motors",
+    "Find My compatible Trackers",
+    "Zigbee Sensors",
+    "Matter compatible Plugs"
+  ],
+  "merchant_dynamics": {
+    "recent_buyer_count_30d": 802,
+    "order_status_update": "2 orders in raw material preparation, 5 products production completed."
+  }
+}

@@ -161,29 +161,58 @@ def earn_points(db: Session, user_id: int, source: PointSource, amount: int) -> 
     db.commit()
     return True
 
-def calculate_final_price(cost_cny: float, exchange_rate: float, multiplier: float) -> dict:
+def calculate_final_price(
+    cost_cny: float, 
+    exchange_rate: float, 
+    multiplier: float = 2.0,
+    comp_price_usd: Optional[float] = None,
+    sale_price_ratio: Optional[float] = None,
+    compare_at_price_ratio: Optional[float] = None
+) -> dict:
     """
-    v3.4.7 Pricing Logic (3-Phase Firewall):
-    1. CNY -> USD (Buffer 0.5% applied at ingestion)
-    2. USD -> Local (Real-time conversion for display)
-    3. Local -> USD (Re-calculate for final payment settlement)
+    v4.6.8 Pricing Logic (Hybrid Strategy):
+    1. Base: Cost * Multiplier (Fallback)
+    2. Dynamic: Comp Price * sale_price_ratio (Preferred)
+    3. Strikethrough: Comp Price * compare_at_price_ratio
     
     STRICT: Uses Decimal for all currency calculations.
     """
     cost_cny_dec = Decimal(str(cost_cny))
     rate_dec = Decimal(str(exchange_rate))
-    mult_dec = Decimal(str(multiplier))
     
     # Phase 1: CNY -> USD with 0.5% Hedge Buffer
     hedge_buffer = Decimal("1.005")
-    cost_usd = (cost_cny_dec * hedge_buffer) / rate_dec
+    cost_usd = (cost_cny_dec * hedge_buffer) * rate_dec
     
-    # Phase 2: Apply multiplier (e.g. 1.6x - 4x) for final sale price
-    final_price_usd = cost_usd * mult_dec
+    # Phase 2: Final Sale Price Calculation
+    if comp_price_usd and sale_price_ratio:
+        # Use Competitor-based pricing (60% rule)
+        comp_dec = Decimal(str(comp_price_usd))
+        ratio_dec = Decimal(str(sale_price_ratio))
+        final_price_usd = comp_dec * ratio_dec
+        
+        # Safety check: Price must be at least 1.2x cost (20% margin)
+        min_margin = Decimal("1.2")
+        if final_price_usd < cost_usd * min_margin:
+            final_price_usd = cost_usd * min_margin
+    else:
+        # Fallback to Multiplier-based pricing
+        mult_dec = Decimal(str(multiplier))
+        final_price_usd = cost_usd * mult_dec
+
+    # Phase 3: Compare At Price (Strikethrough)
+    if comp_price_usd and compare_at_price_ratio:
+        comp_dec = Decimal(str(comp_price_usd))
+        strike_ratio = Decimal(str(compare_at_price_ratio))
+        compare_at_price = comp_dec * strike_ratio
+    else:
+        # Fallback: 1.5x Sale Price
+        compare_at_price = final_price_usd * Decimal("1.5")
     
     return {
         "source_cost_usd": float(cost_usd.quantize(Decimal("0.01"))),
-        "final_price_usd": float(final_price_usd.quantize(Decimal("0.01")))
+        "final_price_usd": float(final_price_usd.quantize(Decimal("0.01"))),
+        "compare_at_price": float(compare_at_price.quantize(Decimal("0.01")))
     }
 
 class FinanceEngine:

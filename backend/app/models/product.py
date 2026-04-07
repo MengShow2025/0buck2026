@@ -22,11 +22,11 @@ class Supplier(Base):
     ships_within_48h = Column(Boolean, default=True)      # 48小时内发货
     has_bad_reviews_30d = Column(Boolean, default=False)  # 近30天无大量差评
     
-    qualifications = Column(JSON)  # CE, ISO, etc.
+    qualifications = Column(JSONB, server_default='[]')  # CE, ISO, etc.
     
     # v3.3.1 C2M: Customization Capabilities
     # Format: {"laser_engraving": true, "packaging": true, "min_order_custom": 10}
-    custom_capability = Column(JSON, default=dict)
+    custom_capability = Column(JSONB, server_default='{}')
     
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
@@ -41,8 +41,8 @@ class Product(Base):
     
     # Internationalization Support (Dynamic JSON for extensible locales)
     # Format: {"en": "Title", "zh": "标题", "es": "Título", ...}
-    titles = Column(JSON, default={})
-    descriptions = Column(JSON, default={})
+    titles = Column(JSONB, server_default='{}')
+    descriptions = Column(JSONB, server_default='{}')
     
     # Legacy fields (keep for fallback)
     title_zh = Column(String)
@@ -52,22 +52,28 @@ class Product(Base):
     
     original_price = Column(Float)  # 1688 cost in CNY
     source_cost_usd = Column(Float) # Buffered cost in USD (0.5% buffer applied)
-    sale_price = Column(Float)      # Final price in USD (60% of competitor)
-    compare_at_price = Column(Float) # Display price in USD (95% of competitor)
+    sale_price = Column(Float)      # Final price in USD
+    compare_at_price = Column(Float) # Display price in USD
     
-    images = Column(JSON)           # List of image URLs (Main Gallery)
-    detail_images = Column(JSON, default=list) # v4.1: Long-page detail images
-    variants = Column(JSON)         # SKU options
+    # v4.6.8: Multi-Platform Comparison Pricing
+    amazon_price = Column(Float, nullable=True)
+    ebay_price = Column(Float, nullable=True)
+    amazon_compare_at_price = Column(Float, nullable=True)
+    ebay_compare_at_price = Column(Float, nullable=True)
+    
+    images = Column(JSONB, server_default='[]')           # List of image URLs (Main Gallery)
+    detail_images = Column(JSONB, server_default='[]') # v4.1: Long-page detail images
+    variants = Column(JSONB, server_default='[]')         # SKU options
     
     category = Column(String)
-    tags = Column(JSON)
+    tags = Column(JSONB, server_default='[]')
     weight = Column(Float, default=0.5) # Default 0.5kg (grams: 500)
     is_taxable = Column(Boolean, default=True)
     
     # v4.1: Media & Compliance Assets
     origin_video_url = Column(String, nullable=True)
-    certificate_images = Column(JSON, default=list)
-    metafields = Column(JSON, default=dict)
+    certificate_images = Column(JSONB, server_default='[]')
+    metafields = Column(JSONB, server_default='{}')
     
     # v4.5 "Artisan-Master" Asset Base
     # Business Tier: Logic & UI
@@ -77,6 +83,9 @@ class Product(Base):
     
     # Asset Tier: Visual & Evidence
     mirror_assets = Column(JSONB, server_default='{}')
+    
+    # v4.6.7: Visual Fingerprinting for deduplication
+    visual_fingerprint = Column(String, index=True, nullable=True) # MD5 of main image
     
     # Black Box: Evidence, Social Proof, Tier Pricing
     structural_data = Column(JSONB, server_default='{}')
@@ -142,24 +151,45 @@ class CandidateProduct(Base):
     product_id_1688 = Column(String, unique=True, index=True)
     status = Column(String, default="new", index=True) # 'new', 'reviewing', 'approved', 'rejected', 'synced'
     
+    # v4.7.1: Sourcing Provenance & Fixed Mapping
+    # '1688' or 'ALIBABA'
+    source_platform = Column(String, default='1688', index=True)
+    source_url = Column(String) # The hard-mapped direct purchase URL
+    backup_source_url = Column(String, nullable=True) # Redundancy link
+    
     # AI Discovery Proof (The Evidence Chain)
     discovery_source = Column(String) # 'IDS_FOLLOWING', 'IDS_SPY', 'C2M_WISH'
-    discovery_evidence = Column(JSON) # { "tiktok_url": "...", "trend_score": 95, "comp_images": ["..."] }
+    discovery_evidence = Column(JSONB, server_default='{}') # { "tiktok_url": "...", "trend_score": 95, "comp_images": ["..."] }
     
     # Raw Sourcing Data
     title_zh = Column(String)
     description_zh = Column(String)
-    images = Column(JSON)
+    images = Column(JSONB, server_default='[]')
+    
+    # v4.7.1: Sourcing Provenance
+    source_platform = Column(String, default='1688', index=True)
+    source_url = Column(String) # For Candidate, this is the original sniffed link
+    
+    # v4.7.2: Alibaba Alternative Sniffing
+    backup_source_url = Column(String, nullable=True) # Redundancy link (e.g. Alibaba.com RTS)
+    alibaba_comparison_price = Column(Float, nullable=True) # Price on Alibaba.com for comparison
     
     # Financial Analysis (Pre-audit)
     cost_cny = Column(Float)
-    comp_price_usd = Column(Float)
+    comp_price_usd = Column(Float) # Legacy: Combined competitor price
+    
+    # v4.6.8: Detailed Comparison Metrics
+    amazon_price = Column(Float, nullable=True)
+    ebay_price = Column(Float, nullable=True)
+    amazon_compare_at_price = Column(Float, nullable=True)
+    ebay_compare_at_price = Column(Float, nullable=True)
+    
     estimated_sale_price = Column(Float)
     profit_ratio = Column(Float)
     
     # Supplier Context
     supplier_id_1688 = Column(String)
-    supplier_info = Column(JSON) # { "name": "...", "rating": 4.8, "is_strength": true }
+    supplier_info = Column(JSONB, server_default='{}') # { "name": "...", "rating": 4.8, "is_strength": true }
     
     # AI Polish Preview (Generated during candidate phase)
     title_en_preview = Column(String, nullable=True)
@@ -167,7 +197,10 @@ class CandidateProduct(Base):
     
     # v4.1: Media & Compliance Assets
     origin_video_url = Column(String, nullable=True)
-    certificate_images = Column(JSON, default=list)
+    certificate_images = Column(JSONB, server_default='[]')
+    
+    # v4.6.7: Visual Fingerprinting for deduplication
+    visual_fingerprint = Column(String, index=True, nullable=True)
     
     # v4.0: Desire Engine Snippets
     desire_hook = Column(String, nullable=True) # The Hook: Zapping the pain point

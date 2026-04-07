@@ -56,11 +56,25 @@ class RewardRatesUpdate(BaseModel):
     fan_gold_rate: float
     fan_platinum_rate: float
 
+class PricingStrategyUpdate(BaseModel):
+    sale_price_ratio: float
+    compare_at_price_ratio: float
+    amazon_weight: float = 0.5
+    ebay_weight: float = 0.5
+
+class SourcingStrategyUpdate(BaseModel):
+    arbitrage_threshold: float = 0.15 # 15%
+    min_trend_score: int = 85
+    min_supplier_years: int = 2
+    require_gold_supplier: bool = True
+    require_trade_assurance: bool = True
+
 class KOLApproveRequest(BaseModel):
     user_id: int
     dist_rate: Optional[float] = None
     fan_rate: Optional[float] = None
     status: str = "approved" # approved, rejected
+    admin_note: Optional[str] = None
 
 class CouponAssignRequest(BaseModel):
     ai_category: str
@@ -146,6 +160,91 @@ def update_reward_rates(data: RewardRatesUpdate, db: Session = Depends(get_db)):
     for key, value in data.dict().items():
         config.set(key, value, description=f"Reward rate for {key}")
     return {"status": "success"}
+
+# --- Pricing Strategy (v4.6.8) ---
+
+@router.get("/config/pricing-strategy")
+def get_pricing_strategy(db: Session = Depends(get_db)):
+    """v4.6.8 Get current pricing strategy from SystemConfig"""
+    from app.services.config_service import ConfigService
+    config = ConfigService(db)
+    return {
+        "sale_price_ratio": config.get("sale_price_ratio", 0.6),
+        "compare_at_price_ratio": config.get("compare_at_price_ratio", 0.95),
+        "amazon_weight": config.get("amazon_weight", 0.5),
+        "ebay_weight": config.get("ebay_weight", 0.5),
+    }
+
+@router.post("/config/pricing-strategy")
+def update_pricing_strategy(data: PricingStrategyUpdate, db: Session = Depends(get_db)):
+    """v4.6.8 Update pricing strategy in SystemConfig"""
+    from app.services.config_service import ConfigService
+    config = ConfigService(db)
+    for key, value in data.dict().items():
+        config.set(key, value, description=f"Pricing strategy: {key}")
+    return {"status": "success"}
+
+# --- Sourcing Strategy (v4.7.3) ---
+
+@router.get("/config/sourcing-strategy")
+def get_sourcing_strategy(db: Session = Depends(get_db)):
+    """v4.7.3 Get sourcing strategy (arbitrage, trends, etc.) from SystemConfig"""
+    from app.services.config_service import ConfigService
+    config = ConfigService(db)
+    return {
+        "arbitrage_threshold": config.get("arbitrage_threshold", 0.15),
+        "min_trend_score": config.get("min_trend_score", 85),
+        "min_supplier_years": config.get("min_supplier_years", 2),
+        "require_gold_supplier": config.get("require_gold_supplier", True),
+        "require_trade_assurance": config.get("require_trade_assurance", True),
+    }
+
+@router.post("/config/sourcing-strategy")
+def update_sourcing_strategy(data: SourcingStrategyUpdate, db: Session = Depends(get_db)):
+    """v4.7.3 Update sourcing strategy in SystemConfig"""
+    from app.services.config_service import ConfigService
+    config = ConfigService(db)
+    for key, value in data.dict().items():
+        config.set(key, value, description=f"Sourcing strategy: {key}")
+    return {"status": "success"}
+
+# --- Talent (KOL) Audit (v4.6.8) ---
+
+@router.get("/talents/pending")
+def list_pending_talents(db: Session = Depends(get_db)):
+    """v4.6.8 List users waiting for KOL approval"""
+    pending = db.query(UserExt).filter(UserExt.kol_status == "pending").all()
+    return [{
+        "customer_id": u.customer_id,
+        "email": u.email,
+        "first_name": u.first_name,
+        "last_name": u.last_name,
+        "kol_apply_reason": u.kol_apply_reason,
+        "kol_applied_at": u.kol_applied_at,
+        "dist_rate": float(u.dist_rate) if u.dist_rate else None,
+        "fan_rate": float(u.fan_rate) if u.fan_rate else None
+    } for u in pending]
+
+@router.post("/talents/audit")
+def audit_talent(data: KOLApproveRequest, db: Session = Depends(get_db)):
+    """v4.6.8 Approve or Reject a KOL application"""
+    user = db.query(UserExt).filter(UserExt.customer_id == data.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.kol_status = data.status
+    if data.status == "approved":
+        user.user_type = "kol"
+        if data.dist_rate is not None:
+            user.dist_rate = Decimal(str(data.dist_rate))
+        if data.fan_rate is not None:
+            user.fan_rate = Decimal(str(data.fan_rate))
+    else:
+        # If rejected, we might want to keep user_type as customer
+        user.user_type = "customer"
+    
+    db.commit()
+    return {"status": "success", "new_status": user.kol_status}
 
 # --- Finance & KPIs ---
 
@@ -312,8 +411,12 @@ class CandidateUpdate(BaseModel):
     variants_raw: Optional[List[Dict]] = None
     attributes: Optional[List[Dict]] = None
     logistics_data: Optional[Dict] = None
+    mirror_assets: Optional[Dict] = None
     structural_data: Optional[Dict] = None
     category: Optional[str] = None
+    # v4.7.1: Sourcing mapping
+    source_platform: Optional[str] = None
+    source_url: Optional[str] = None
 
 # --- Autonomous Sourcing Decision Engine (v3.9.0) ---
 
@@ -335,9 +438,29 @@ def list_sourcing_candidates(
         if isinstance(c.images, str):
             try: c.images = json.loads(c.images)
             except: c.images = []
+        
+        # v4.6.7: De-duplicate images and filter empty strings
+        if isinstance(c.images, list):
+            seen = set()
+            c.images = [x for x in c.images if x and not (x in seen or seen.add(x))]
+
         if isinstance(c.variants_raw, str):
             try: c.variants_raw = json.loads(c.variants_raw)
             except: c.variants_raw = []
+        
+        # v4.6.7: Normalize variant data for frontend
+        if isinstance(c.variants_raw, list):
+            for v in c.variants_raw:
+                # Map spec_attrs to title if title is missing
+                if not v.get("title") and v.get("spec_attrs"):
+                    v["title"] = v["spec_attrs"]
+                # Ensure image_index exists
+                if v.get("image") and v.get("image_index") is None:
+                    try:
+                        v["image_index"] = c.images.index(v["image"])
+                    except (ValueError, AttributeError):
+                        v["image_index"] = 0
+
         if isinstance(c.attributes, str):
             try: c.attributes = json.loads(c.attributes)
             except: c.attributes = []
@@ -347,9 +470,11 @@ def list_sourcing_candidates(
         if isinstance(c.structural_data, str):
             try: c.structural_data = json.loads(c.structural_data)
             except: c.structural_data = {}
-        if hasattr(c, 'mirror_assets') and isinstance(c.mirror_assets, str):
-            try: c.mirror_assets = json.loads(c.mirror_assets)
-            except: c.mirror_assets = {}
+        
+        # v4.6.7: Ensure Desire Engine fields are strings, not None
+        c.desire_hook = c.desire_hook or ""
+        c.desire_logic = c.desire_logic or ""
+        c.desire_closing = c.desire_closing or ""
             
     return candidates
 

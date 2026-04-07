@@ -43,13 +43,18 @@ def sync_db_schema():
     v3.9.7: Hot Schema Migration.
     Automatically adds missing columns to existing tables without Alembic.
     """
-    from sqlalchemy import Column, Text, JSON, text
+    from sqlalchemy import Column, Text, JSON, text, Float, DateTime
     from sqlalchemy.dialects.postgresql import JSONB
+    
+    # v4.6.8: Cross-dialect column type mapping
+    def get_type(col, dialect):
+        if dialect.name == 'sqlite':
+            if isinstance(col.type, JSONB):
+                return "JSON"
+        return col.type.compile(dialect)
+
     with engine.connect() as conn:
         # 1. Product Table Updates
-        # v4.0.1: Use dialect-safe type compilation. 
-        # Note: AddColumn is not standard in all SQLAlchemy versions, 
-        # so we use a safe text-based approach for hardcoded constants.
         cols_product = [
             Column("desire_hook", Text()),
             Column("desire_logic", Text()),
@@ -57,13 +62,26 @@ def sync_db_schema():
             Column("detail_images", JSONB(), server_default=text("'[]'::jsonb")),
             Column("origin_video_url", Text()),
             Column("certificate_images", JSONB(), server_default=text("'[]'::jsonb")),
-            Column("metafields", JSONB(), server_default=text("'{}'::jsonb"))
+            Column("metafields", JSONB(), server_default=text("'{}'::jsonb")),
+            Column("visual_fingerprint", Text()),
+            Column("titles", JSONB(), server_default=text("'{}'::jsonb")),
+            Column("descriptions", JSONB(), server_default=text("'{}'::jsonb")),
+            Column("images", JSONB(), server_default=text("'[]'::jsonb")),
+            Column("tags", JSONB(), server_default=text("'[]'::jsonb")),
+            Column("variants", JSONB(), server_default=text("'[]'::jsonb")),
+            Column("amazon_price", Float()),
+            Column("ebay_price", Float()),
+            Column("amazon_compare_at_price", Float()),
+            Column("ebay_compare_at_price", Float()),
+            Column("source_platform", Text(), server_default=text("'1688'")),
+            Column("source_url", Text()),
+            Column("backup_source_url", Text())
         ]
         for col in cols_product:
             try:
-                type_str = col.type.compile(engine.dialect)
+                type_str = get_type(col, engine.dialect)
                 stmt = f"ALTER TABLE products ADD COLUMN {col.name} {type_str}"
-                if col.server_default is not None:
+                if col.server_default is not None and engine.dialect.name == 'postgresql':
                     # Extract the raw text from the text() object
                     default_text = col.server_default.arg
                     stmt += f" DEFAULT {default_text}"
@@ -84,18 +102,49 @@ def sync_db_schema():
             Column("attributes", JSONB(), server_default=text("'[]'::jsonb")),
             Column("logistics_data", JSONB(), server_default=text("'{}'::jsonb")),
             Column("structural_data", JSONB(), server_default=text("'{}'::jsonb")),
-            Column("mirror_assets", JSONB(), server_default=text("'{}'::jsonb"))
+            Column("mirror_assets", JSONB(), server_default=text("'{}'::jsonb")),
+            Column("visual_fingerprint", Text()),
+            Column("images", JSONB(), server_default=text("'[]'::jsonb")),
+            Column("discovery_evidence", JSONB(), server_default=text("'{}'::jsonb")),
+            Column("supplier_info", JSONB(), server_default=text("'{}'::jsonb")),
+            Column("amazon_price", Float()),
+            Column("ebay_price", Float()),
+            Column("amazon_compare_at_price", Float()),
+            Column("ebay_compare_at_price", Float()),
+            Column("source_platform", Text(), server_default=text("'1688'")),
+            Column("source_url", Text()),
+            Column("backup_source_url", Text()),
+            Column("alibaba_comparison_price", Float())
         ]
         for col in cols_candidate:
             try:
-                type_str = col.type.compile(engine.dialect)
-                conn.execute(text(f"ALTER TABLE candidate_products ADD COLUMN {col.name} {type_str}"))
+                type_str = get_type(col, engine.dialect)
+                stmt = f"ALTER TABLE candidate_products ADD COLUMN {col.name} {type_str}"
+                if col.server_default is not None and engine.dialect.name == 'postgresql':
+                    default_text = col.server_default.arg
+                    stmt += f" DEFAULT {default_text}"
+                conn.execute(text(stmt))
                 conn.commit()
                 print(f"✅ Added column {col.name} to candidate_products table.")
             except Exception:
                 pass # Column already exists
+         
+         # 3. UserExt Table Updates
+        cols_user = [
+            Column("kol_apply_reason", Text()),
+            Column("kol_applied_at", DateTime())
+        ]
+        for col in cols_user:
+            try:
+                type_str = get_type(col, engine.dialect)
+                stmt = f"ALTER TABLE users_ext ADD COLUMN {col.name} {type_str}"
+                conn.execute(text(stmt))
+                conn.commit()
+                print(f"✅ Added column {col.name} to users_ext table.")
+            except Exception:
+                pass # Column already exists
 
-        # 3. Create GIN Indexes for JSONB fields (PostgreSQL only)
+        # 4. Create GIN Indexes for JSONB fields (PostgreSQL only)
         if engine.dialect.name == 'postgresql':
             index_stmts = [
                 "CREATE INDEX IF NOT EXISTS idx_product_attributes ON products USING gin (attributes)",
@@ -116,11 +165,17 @@ sync_db_schema()
 app = FastAPI(title="0Buck Backend", version="3.9.7")
 
 # Set up CORS
-# In production, we allow ALL origins to solve the CORS block permanently.
+# v4.6.7: Explicit origins and credentials allowed for HttpOnly Cookies
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=[
+        "https://www.0buck.com",
+        "https://0buck.com",
+        "https://shop.0buck.com",
+        "http://localhost:5173",
+        "http://localhost:3000"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"]
