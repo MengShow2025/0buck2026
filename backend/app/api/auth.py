@@ -664,3 +664,34 @@ async def auth_callback(provider: str, request: Request, db: Session = Depends(g
         domain=settings.COOKIE_DOMAIN if hasattr(settings, "COOKIE_DOMAIN") else None
     )
     return response
+
+@router.get("/me")
+async def get_my_info(
+    current_user: UserExt = Depends(get_current_user)
+):
+    """
+    v5.7.0 Superpowers Security: 
+    Endpoint to verify identity via HttpOnly Cookies.
+    Eliminates frontend localStorage dependency.
+    """
+    return {
+        "status": "success",
+        "user": {
+            "email": current_user.email,
+            "user_type": current_user.user_type,
+            "customer_id": current_user.customer_id,
+            "first_name": current_user.first_name,
+            "last_name": current_user.last_name,
+            "referral_code": current_user.referral_code
+        }
+    }
+
+@router.post("/logout")
+async def logout(response: Response):
+    """v5.7.0: Clear secure cookies."""
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        domain=settings.COOKIE_DOMAIN if hasattr(settings, "COOKIE_DOMAIN") else None
+    )
+    return {"status": "success", "message": "Logged out"}
