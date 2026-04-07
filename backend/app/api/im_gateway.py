@@ -79,7 +79,16 @@ async def generic_brain_process(platform: str, platform_uid: str, text: str, cha
         
         sig = generate_binding_sig(platform, platform_uid)
         base_url = settings.BACKEND_URL.rstrip("/")
-        bind_url = f"{base_url}/auth/bind?platform={platform}&uid={platform_uid}&sig={sig}"
+        # v5.6.6: Add Feishu-specific immersive browser flags
+        raw_bind_url = f"{base_url}/auth/bind?platform={platform}&uid={platform_uid}&sig={sig}"
+        
+        if platform == "feishu":
+            # Force open in Feishu's internal browser
+            bind_url = f"https://open.feishu.cn/open-apis/authen/v1/index?redirect_uri={raw_bind_url}&app_id={settings.FEISHU_APP_ID}"
+            # Alternative: direct link with feishu internal flag
+            bind_url = f"{raw_bind_url}&lk_with_external=false"
+        else:
+            bind_url = raw_bind_url
         
         # Composite Session for Persona Projection
         session_id = f"{platform}_{chat_id}_{platform_uid}" if chat_type == "group" else f"{platform}_{platform_uid}"

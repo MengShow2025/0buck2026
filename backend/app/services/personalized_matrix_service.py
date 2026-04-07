@@ -23,7 +23,7 @@ class PersonalizedMatrixService:
         if settings.GOOGLE_API_KEY:
             try:
                 genai.configure(api_key=settings.GOOGLE_API_KEY)
-                self.model = genai.GenerativeModel('gemini-1.5-flash')
+                self.model = genai.GenerativeModel('gemini-flash-latest')
             except Exception as e:
                 logger.error(f"Gemini configuration failed: {e}")
                 self.model = None
