@@ -37,12 +37,21 @@ class CJDropshippingService:
 
     async def get_categories(self) -> List[Dict[str, Any]]:
         """Fetch all CJ categories."""
-        url = f"{self.BASE_URL}/product/category"
+        url = f"{self.BASE_URL}/product/getCategory"
         headers = await self._get_headers()
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=headers)
             data = response.json()
             return data.get("data", []) if data.get("success") else []
+
+    async def get_product_detail(self, pid: str) -> Optional[Dict[str, Any]]:
+        """Fetch full product detail from CJ."""
+        url = f"{self.BASE_URL}/product/details"
+        headers = await self._get_headers()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers, params={"pid": pid})
+            data = response.json()
+            return data.get("data") if data.get("success") else None
 
     async def search_products(self, keyword: str = None, page: int = 1, size: int = 20, only_cj_owned: bool = False, category_id: str = None) -> List[Dict[str, Any]]:
         url = f"{self.BASE_URL}/product/listV2"
