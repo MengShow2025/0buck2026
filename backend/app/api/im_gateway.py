@@ -38,9 +38,35 @@ def generate_binding_sig(platform: str, uid: str) -> str:
 
 # --- 2. MULTI-PLATFORM BRAIN PROXY ---
 
+async def send_rich_message(platform: str, uid: str, text: str, title: str, link_url: Optional[str] = None):
+    """v5.6.4: Unified Rich Message Dispatcher for all IM platforms."""
+    if platform == "feishu":
+        await send_feishu_rich_link(uid, text, title, link_url)
+    elif platform == "telegram":
+        # Telegram Markdown Link
+        msg = text
+        if link_url:
+            msg += f"\n\n[🔗 点击登录获得完整服务]({link_url})"
+        await send_telegram_message(uid, msg)
+    elif platform == "whatsapp":
+        # WhatsApp supports preview_url for links
+        msg = text
+        if link_url:
+            msg += f"\n\n🔗 点击登录获得完整服务: {link_url}"
+        await send_whatsapp_message(uid, msg)
+    elif platform == "discord":
+        # Discord Markdown Link
+        msg = text
+        if link_url:
+            msg += f"\n\n[🔗 点击登录获得完整服务]({link_url})"
+        await send_discord_message(uid, msg)
+    else:
+        # Fallback to plain text
+        await send_whatsapp_message(uid, text)
+
 async def generic_brain_process(platform: str, platform_uid: str, text: str, chat_id: str, chat_type: str, send_func):
     """
-    v5.6.0: Unified Brain Proxy for all IM platforms.
+    v5.6.4: Unified Brain Proxy for all IM platforms.
     Handles Guest Mode, Identity Bridge, and AI Processing.
     """
     db = SessionLocal()
@@ -60,11 +86,7 @@ async def generic_brain_process(platform: str, platform_uid: str, text: str, cha
         
         # 1. Send Immediate Thinking Status
         thinking_msg = "🔍 0Buck 智脑正在深度思考中，请稍等片刻..." if lang == "zh" else "🔍 0Buck AI Brain is thinking deeply, please wait a moment..."
-        # v5.6.3: Support Feishu Rich Text to keep browser immersion
-        if platform == "feishu":
-            await send_feishu_rich_link(platform_uid, thinking_msg, "0Buck AI Brain", bind_url if is_guest else None)
-        else:
-            await send_func(platform_uid, thinking_msg)
+        await send_rich_message(platform, platform_uid, thinking_msg, "0Buck AI Brain")
         
         # 2. Call AI Brain
         logger.info(f"🧠 [{platform.upper()}] Process for {platform_uid} (Guest={is_guest})")
@@ -77,18 +99,8 @@ async def generic_brain_process(platform: str, platform_uid: str, text: str, cha
             logger.error(f"AI Agent Error: {ai_err}")
             main_reply = f"⚠️ 0Buck 智脑暂时无法响应: {str(ai_err)}" if lang == "zh" else f"⚠️ 0Buck AI Brain error: {str(ai_err)}"
         
-        # 3. Append Binding Link for Guests
-        if is_guest:
-            if lang == "zh":
-                footer = f"\n\n---\n💡 提示：检测到您尚未登录。点击 [登录获得完整服务]({bind_url})，即可解锁订单跟踪和专属生意记忆功能。"
-            else:
-                footer = f"\n\n---\n💡 Tip: Guest mode active. [Login for full service]({bind_url}) to unlock order tracking and personalized business memory."
-            main_reply += footer
-            
-        if platform == "feishu":
-            await send_feishu_rich_link(platform_uid, main_reply, "0Buck AI Brain", bind_url if is_guest else None)
-        else:
-            await send_func(platform_uid, main_reply)
+        # 3. Send final response (Footer handled by send_rich_message)
+        await send_rich_message(platform, platform_uid, main_reply, "0Buck AI Brain", bind_url if is_guest else None)
         logger.info(f"✅ [{platform.upper()}] Response complete for {platform_uid}")
         
     except Exception as e:
@@ -162,24 +174,42 @@ async def send_telegram_message(chat_id: str, content: str):
 
 # --- WHATSAPP ---
 async def send_whatsapp_message(to_number: str, content: str):
-    """v5.6.0: WhatsApp (Meta Cloud API) Send Adapter"""
+    """v5.6.4: WhatsApp (Meta Cloud API) Send Adapter with link preview."""
     token = settings.WHATSAPP_API_TOKEN
     phone_id = settings.WHATSAPP_PHONE_NUMBER_ID
     if not token or not phone_id: return
     url = f"https://graph.facebook.com/v17.0/{phone_id}/messages"
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    payload = {"messaging_product": "whatsapp", "to": to_number, "type": "text", "text": {"body": content}}
+    # v5.6.4: Added preview_url to help immersive browser opening
+    payload = {
+        "messaging_product": "whatsapp", 
+        "to": to_number, 
+        "type": "text", 
+        "text": {"body": content, "preview_url": True}
+    }
     async with httpx.AsyncClient() as client:
         await client.post(url, json=payload, headers=headers)
 
 # --- DISCORD ---
 async def send_discord_message(channel_id: str, content: str):
-    """v5.6.0: Discord Send Adapter"""
+    """v5.6.4: Discord Send Adapter with Embed support for immersive links."""
     token = settings.DISCORD_BOT_TOKEN
     if not token: return
     url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
     headers = {"Authorization": f"Bot {token}", "Content-Type": "application/json"}
-    payload = {"content": content}
+    
+    # Check if content has a link (for rich embed)
+    if "http" in content and "[" in content:
+        # Use simple embed for rich links
+        payload = {
+            "embeds": [{
+                "description": content,
+                "color": 0x00ff00 # Green
+            }]
+        }
+    else:
+        payload = {"content": content}
+        
     async with httpx.AsyncClient() as client:
         await client.post(url, json=payload, headers=headers)
 
