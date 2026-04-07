@@ -84,7 +84,17 @@ async def login_v46(
     if login_data.email == settings.DEFAULT_ADMIN_EMAIL and login_data.password == settings.DEFAULT_ADMIN_PASSWORD:
         if not user:
             # Create the admin user if it doesn't exist
+            # v4.6.8: Ensure customer_id is set for the bootstrap admin to avoid 500 on primary key
+            # Check if ID 1 is taken by someone else (e.g. legacy test data)
+            conflict = db.query(UserExt).filter(UserExt.customer_id == 1).first()
+            if conflict:
+                # If ID 1 is taken, use a different high-range ID
+                admin_id = 999999999 
+            else:
+                admin_id = 1
+                
             user = UserExt(
+                customer_id=admin_id,
                 email=settings.DEFAULT_ADMIN_EMAIL,
                 first_name="Admin",
                 last_name="Boss",

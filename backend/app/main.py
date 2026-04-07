@@ -9,6 +9,9 @@ import asyncio
 from app.core.config import settings
 from app.db.session import get_db, engine
 from app.models.product import Base
+# v4.6.8: Ensure all models are registered for metadata.create_all
+from app.models.ledger import UserExt, Wallet, WalletTransaction, CheckinPlan, CheckinLog, AdminAuditLog, ReferralRelationship, GroupBuyCampaign, SystemConfig, UserStreamIdentity, ProcessedWebhookEvent, AISession, Order, AvailableCoupon, CouponIssuanceAudit, SourcingOrder, PriceWish, SquareActivity, Comment
+from app.models.butler import UserMemoryFact, UserButlerProfile, PersonaTemplate, ButlerInteractionLog
 from app.services.supply_chain import SupplyChainService
 from app.services.sync_shopify import SyncShopifyService
 from app.api.webhooks import router as webhooks_router

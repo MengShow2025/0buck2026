@@ -97,8 +97,11 @@ class PersonalizedMatrixService:
         }
 
     def _get_user_persona_id(self, user_id: int) -> str:
-        profile = self.db.query(UserButlerProfile).filter_by(user_id=user_id).first()
-        return profile.active_persona_id if profile else "default"
+        try:
+            profile = self.db.query(UserButlerProfile).filter_by(user_id=user_id).first()
+            return profile.active_persona_id if profile else "default"
+        except Exception:
+            return "default"
 
     async def _generate_greeting(self, user_id: int, product: Dict[str, Any], facts: List[UserMemoryFact]) -> str:
         """
