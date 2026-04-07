@@ -496,6 +496,33 @@ def update_sourcing_candidate(candidate_id: int, data: CandidateUpdate, db: Sess
     db.commit()
     return {"status": "success"}
 
+@router.post("/sourcing/candidates/{candidate_id}/refresh-media")
+async def refresh_candidate_media(candidate_id: int, db: Session = Depends(get_db)):
+    """v4.6.9.2: Refresh candidate images and media from 1688 API if original links expired (404)"""
+    candidate = db.query(CandidateProduct).filter_by(id=candidate_id).first()
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    
+    sc_service = SupplyChainService(db)
+    try:
+        # Re-fetch from 1688 API using the stored product_id_1688
+        raw_data = await sc_service.fetch_product_details(candidate.product_id_1688)
+        if raw_data and raw_data.get("images"):
+            candidate.images = raw_data["images"]
+            # Also update variants if possible
+            if raw_data.get("variants"):
+                candidate.variants_raw = raw_data["variants"]
+            if raw_data.get("mirror_assets"):
+                candidate.mirror_assets = raw_data["mirror_assets"]
+            
+            db.commit()
+            return {"status": "success", "images_count": len(candidate.images)}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to fetch fresh data from source")
+    except Exception as e:
+        logger.error(f"Media refresh failed for candidate {candidate_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/sourcing/candidates/{candidate_id}/approve")
 async def approve_sourcing_candidate(candidate_id: int, db: Session = Depends(get_db)):
     """v3.9.0: Admin Decision - Approve candidate for polishing and Shopify sync"""
