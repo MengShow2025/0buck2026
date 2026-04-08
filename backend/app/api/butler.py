@@ -70,16 +70,42 @@ async def proxy_butler_chat(request: MinimaxChatRequest, db: Session = Depends(g
         
         # Run the unified AI brain with failover protection
         response = await run_agent(content=last_msg, user_id=user_id, session_id=session_id)
-        return response
+        
+        # v5.7.12: Restore MiniMax-compatible format for frontend
+        return {
+            "id": response.get("id"),
+            "choices": [
+                {
+                    "message": {
+                        "content": response["content"],
+                        "role": "assistant"
+                    }
+                }
+            ],
+            "model": response.get("model_name", "gemini-2.0-flash"),
+            "base_resp": {
+                "status_code": 0,
+                "status_msg": "ok"
+            }
+        }
         
     except Exception as e:
         logger.error(f"🚨 CRITICAL API FAILURE: {str(e)}")
         # Ultimate fallback: Never return a 500, always a polite 200 with error content
         return {
             "id": f"msg_panic_{datetime.now().timestamp()}",
-            "role": "assistant",
-            "content": "⚠️ 0Buck 智脑正在进行神经网络自愈，请稍等片刻后再与我交谈。我一直都在。",
-            "type": "text"
+            "choices": [
+                {
+                    "message": {
+                        "content": "⚠️ 0Buck 智脑正在进行神经网络自愈，请稍等片刻后再与我交谈。我一直都在。",
+                        "role": "assistant"
+                    }
+                }
+            ],
+            "base_resp": {
+                "status_code": 0,
+                "status_msg": "panic_recovery"
+            }
         }
 
 @router.get("/profile/{user_id}")
