@@ -147,8 +147,16 @@ async def mirror_extract_cj(cj_service, p, original_kw=None):
     market_list = float(evidence.get("list_price") or 0.0)
     market_url = evidence.get("market_url", "")
     
+    # v5.6.8: Inconclusive Search Fallback - Never allow 0
+    if market_selling <= 0:
+        # If we can't find a price, we simulate a 'Believable Market Anchor' 
+        # based on a 2.5x Landed Cost multiplier (Industry Standard for 0Buck Positioning)
+        market_selling = round(landed_cost * 2.5, 2)
+        market_list = round(market_selling * 1.2, 2)
+        print(f"   ⚠️ Search inconclusive. Using simulated anchor: ${market_selling}")
+    
     # ROI based on actual Selling Price
-    target_price = round(market_selling * 0.6, 2) if market_selling > 0 else round(landed_cost * 1.5, 2)
+    target_price = round(market_selling * 0.6, 2)
     roi = round(target_price / landed_cost, 2) if (landed_cost > 0) else 0.0
     
     return {

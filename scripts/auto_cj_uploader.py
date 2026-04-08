@@ -156,11 +156,22 @@ def process_batch():
         # c: id, title_zh, url, platform, roi, sale_price, images, t_en, d_en, hook, logic, closing, m_sell, m_list, is_cb, struct, logis
         c_id, title, url, platform, roi, sale_price, images_json, t_en, d_en, hook, logic, closing, m_sell, m_list, is_cb, struct_json, logis_json = c
         
-        # DOUBLE PRICE LOCK:
-        # compare_at = MSRP (List Price)
-        # price = Target Price (60% of Selling Price)
-        compare_at = float(m_list) if m_list and float(m_list) > 0 else float(m_sell)
-        price = float(sale_price)
+        # v5.6.8: Double Price Lock with Robust Defaults
+        try:
+            raw_sell = float(m_sell or 0)
+            raw_list = float(m_list or 0)
+            price = float(sale_price or 0)
+            
+            # Use MSRP (List Price) if available, else Selling Price
+            compare_at = raw_list if raw_list > 0 else raw_sell
+            
+            # Safety Baseline: NEVER allow zero, empty, or non-discounted pricing
+            if compare_at <= price or compare_at <= 0:
+                compare_at = float(round(Decimal(str(price)) / Decimal("0.6"), 2))
+                print(f"   ⚠️ Price Audit Warning for {title[:20]}: Using calculated fallback (${compare_at})")
+        except Exception as e:
+            print(f"   ❌ Price calculation error: {e}")
+            continue
         
         is_cashback = bool(is_cb)
         tags = "0buck-verified, cj-safe-path"
@@ -197,6 +208,8 @@ def process_batch():
             "title_en": t_en, "description_en": d_en,
             "desire_hook": hook, "desire_logic": logic, "desire_closing": closing
         }
+        
+        print(f"   💸 Final Audit: Price: ${price:.2f}, Compare At: ${compare_at:.2f}")
         
         shopify_id = create_shopify_product(title, price, compare_at, tags, image_urls, sku, roi, is_cashback, enriched_data, raw_description_html, logis_json)
         if shopify_id:

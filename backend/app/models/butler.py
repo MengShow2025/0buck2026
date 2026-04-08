@@ -87,7 +87,7 @@ class AIUsageStats(Base):
     date = Column(DateTime, default=func.now(), index=True)
     
     task_type = Column(String(20)) # 'chat', 'reflection', 'sourcing'
-    model_name = Column(String(50)) # 'gemini-1.5-pro', 'gemini-1.5-flash'
+    model_name = Column(String(50)) # 'gemini-3-flash-preview'
     
     tokens_in = Column(Integer, default=0)
     tokens_out = Column(Integer, default=0)

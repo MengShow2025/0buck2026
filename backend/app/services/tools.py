@@ -60,18 +60,29 @@ def product_search(query: str):
 async def _web_search_func(query: str) -> List[Dict[str, Any]]:
     """
     Search the web using Exa to find trending products, market prices, or supplier information.
-    Best for broad research or finding items not yet in our database.
+    Supports key rotation if multiple keys are provided in settings.EXA_API_KEY (comma-separated).
     """
-    print(f"DEBUG: Using EXA_API_KEY: {settings.EXA_API_KEY[:5]}...{settings.EXA_API_KEY[-5:] if settings.EXA_API_KEY else ''}")
     if not settings.EXA_API_KEY or settings.EXA_API_KEY == "your-exa-api-key":
         print("⚠️ EXA_API_KEY is missing or invalid. Falling back to mock results.")
         return [{"title": "Market Price Placeholder", "text": "Price on Amazon: $100.00. List Price: $120.00", "url": "https://amazon.com"}]
+
+    # v5.6.6: Multi-Key Rotation & Service Key Support
+    # Note: Service Key (Admin API) allows programmatic key generation: https://admin-api.exa.ai
+    keys = [k.strip() for k in settings.EXA_API_KEY.split(",") if k.strip()]
+    if not keys:
+        return [{"error": "No valid EXA API keys found."}]
+    
+    # Simple rotation using time or random (here we use random for simplicity across parallel requests)
+    import random
+    active_key = random.choice(keys)
+    
+    print(f"DEBUG: Using EXA_API_KEY: {active_key[:5]}...{active_key[-5:]}")
 
     url = "https://api.exa.ai/search"
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "x-api-key": settings.EXA_API_KEY
+        "x-api-key": active_key
     }
     payload = {
         "query": query,
@@ -81,9 +92,9 @@ async def _web_search_func(query: str) -> List[Dict[str, Any]]:
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(url, json=payload, headers=headers)
+            # If 401/429 on one key, we could retry with another, but for now simple choice
             response.raise_for_status()
             data = response.json()
-            print(f"DEBUG EXA RAW: {str(data)[:200]}...")
             return data.get("results", [])
         except Exception as e:
             print(f"DEBUG EXA ERROR: {e}")

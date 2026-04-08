@@ -22,7 +22,7 @@ class ReflectionService:
     
     def __init__(self):
         genai.configure(api_key=settings.GOOGLE_API_KEY)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-3-flash-preview')
 
     async def extract_facts(self, history: List[Dict[str, str]], user_id: int, db: Session):
         """
@@ -153,7 +153,7 @@ class ReflectionService:
             usage_stat = AIUsageStats(
                 user_id=user_id,
                 task_type="reflection",
-                model_name="gemini-1.5-flash",
+                model_name="gemini-3-flash-preview",
                 tokens_in=usage.prompt_token_count,
                 tokens_out=usage.candidates_token_count,
                 cost_usd=(usage.prompt_token_count * 0.000000075) + (usage.candidates_token_count * 0.0000003),
