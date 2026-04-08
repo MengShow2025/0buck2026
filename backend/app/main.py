@@ -347,6 +347,21 @@ api_router = APIRouter(prefix=settings.API_V1_STR)
 async def root():
     return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
 
+@api_router.get("/diag/paths")
+async def diagnostic_paths():
+    """v5.7.28: Internal diagnostic to troubleshoot SPA loading."""
+    import os
+    return {
+        "cwd": os.getcwd(),
+        "base_dir": base_dir,
+        "project_root": project_root,
+        "frontend_path": frontend_path,
+        "index_exists": os.path.exists(os.path.join(frontend_path, "index.html")),
+        "assets_exists": os.path.exists(os.path.join(frontend_path, "assets")),
+        "files_in_frontend": os.listdir(frontend_path) if os.path.exists(frontend_path) else [],
+        "env_allowed_origins": settings.ALLOWED_ORIGINS
+    }
+
 @api_router.get("/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
@@ -427,44 +442,49 @@ if not os.path.exists(frontend_path):
 
 logger.info(f"📂 Frontend assets path: {frontend_path}")
 
-# --- 1. FRONTEND ROUTING MIDDLEWARE (v5.7.27) ---
+# --- 1. FRONTEND ROUTING MIDDLEWARE (v5.7.28) ---
 @app.middleware("http")
 async def frontend_interceptor(request: Request, call_next):
     path = request.url.path
     method = request.method
     
-    # 1. Skip interception for API routes, known static assets, and non-GET requests
+    # v5.7.28: Robust exclusion for all system paths
     if (path.startswith(settings.API_V1_STR) or 
         path.startswith("/api/") or 
         path.startswith("/v1/") or
         path.startswith("/assets/") or 
         path.startswith("/static/") or
-        path.endswith((".ico", ".png", ".jpg", ".json", ".js", ".css", ".svg", ".webp")) or
+        path.endswith((".ico", ".png", ".jpg", ".json", ".js", ".css", ".svg", ".webp", ".txt", ".map")) or
         method != "GET"):
         return await call_next(request)
 
-    # 2. Intercept common frontend routes that should always return index.html
-    # This prevents 422 Unprocessable Entity errors caused by query parameters
-    is_spa_route = (
-        path == "/" or 
-        path.startswith("/auth/bind") or 
-        path.startswith("/chat") or 
-        path.startswith("/me") or
-        path.startswith("/profile") or
-        path.startswith("/login") or
-        path.startswith("/register") or
-        path.startswith("/command") or
-        path.startswith("/control") or
-        "." not in path.split("/")[-1]
-    )
+    # v5.7.28: Intercept SPA routes with high confidence
+    spa_routes = [
+        "/auth/bind", "/chat", "/me", "/profile", "/login", "/register",
+        "/command", "/control", "/admin", "/dashboard", "/products"
+    ]
+    
+    is_spa_route = path == "/" or any(path.startswith(r) for r in spa_routes) or "." not in path.split("/")[-1]
 
     if is_spa_route:
         index_file = os.path.join(frontend_path, "index.html")
         if os.path.exists(index_file):
-            logger.info(f"🎯 Intercepted SPA route {path} -> Serving index.html")
+            logger.info(f"🎯 SPA Route {path} -> {index_file}")
             return FileResponse(index_file)
         else:
-            logger.warning(f"⚠️ SPA route {path} intercepted but index.html missing at {index_file}")
+            # v5.7.28: Fallback to manual path detection if global frontend_path fails
+            alt_paths = [
+                os.path.join(os.getcwd(), "static", "index.html"),
+                os.path.join(os.getcwd(), "frontend", "dist", "index.html"),
+                "/app/backend/static/index.html",
+                "/app/frontend/dist/index.html"
+            ]
+            for alt in alt_paths:
+                if os.path.exists(alt):
+                    logger.info(f"🚀 Found index.html at alternative path: {alt}")
+                    return FileResponse(alt)
+                    
+            logger.error(f"❌ CRITICAL: SPA route {path} intercepted but index.html NOT FOUND ANYWHERE.")
             
     return await call_next(request)
 
