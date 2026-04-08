@@ -46,7 +46,7 @@ class CJDropshippingService:
 
     async def get_product_detail(self, pid: str) -> Optional[Dict[str, Any]]:
         """Fetch full product detail from CJ."""
-        url = f"{self.BASE_URL}/product/details"
+        url = f"{self.BASE_URL}/product/query"
         headers = await self._get_headers()
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=headers, params={"pid": pid})

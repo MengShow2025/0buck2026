@@ -17,6 +17,7 @@ import threading
 import redis
 from datetime import datetime, timedelta
 from app.models.ledger import UserExt
+from app.models.butler import UserButlerProfile
 from app.api.deps import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -674,6 +675,8 @@ async def get_my_info(
     Endpoint to verify identity via HttpOnly Cookies.
     Eliminates frontend localStorage dependency.
     """
+    profile = db.query(UserButlerProfile).filter(UserButlerProfile.user_id == current_user.customer_id).first()
+    
     return {
         "status": "success",
         "user": {
@@ -682,7 +685,9 @@ async def get_my_info(
             "customer_id": current_user.customer_id,
             "first_name": current_user.first_name,
             "last_name": current_user.last_name,
-            "referral_code": current_user.referral_code
+            "referral_code": current_user.referral_code,
+            "butler_name": profile.butler_name if profile else None,
+            "user_nickname": profile.user_nickname if profile else None
         }
     }
 

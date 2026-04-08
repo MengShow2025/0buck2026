@@ -157,15 +157,20 @@ class SupplyChainService:
     async def translate_and_enrich(self, raw_data: Dict[str, Any], strategy: str) -> Dict[str, str]:
         """AI Translation & Marketing Polish (v4.0 Desire Engine)"""
         system_prompt = (
-            "You are a master of consumer psychology and cross-border e-commerce marketing. "
-            "Your task is to transform raw 1688 product data into high-conversion English marketing copy. "
-            "Focus on decoding 'Brand Tax' and highlighting factory-direct value.\n\n"
+            "You are a master of consumer psychology and luxury brand storytelling. "
+            "Your task is to transform raw product technical data into high-end, benefit-oriented English marketing copy. "
+            "Focus on decoding 'Brand Tax' and highlighting the artisan craftsmanship and industrial integrity.\n\n"
+            "RULES:\n"
+            "1. NEVER mention 'CJ', 'Dropshipping', 'China', or 'Factory' names.\n"
+            "2. NEVER mention 'Amazon' or 'eBay' by name in the description (use 'Traditional Retail' or 'Market Standards').\n"
+            "3. The tone must be Professional, Authoritative, and Delicate.\n"
+            "4. Highlight materials, responsiveness, and durability based on technical specs.\n\n"
             "Output format must be a valid JSON with the following keys:\n"
-            "- title_en: A compelling, SEO-friendly English title.\n"
-            "- description_en: A benefit-oriented description emphasizing quality and logic.\n"
-            "- desire_hook: (The Hook) A short, punchy sentence that zaps a user's pain point or loss aversion.\n"
-            "- desire_logic: (The Logic) A paragraph that demystifies cost, explains why this is Artisan quality, and justifies the 1/4 retail price.\n"
-            "- desire_closing: (The Closing) A call-to-action that creates a sense of ritual, contract, or disciplined reward.\n"
+            "- title_en: A premium, professional English title (e.g., 'Industrial Grade Sensor' vs 'Smart Alarm').\n"
+            "- description_en: A detailed, delicate description including usage scenarios and technical benefits.\n"
+            "- desire_hook: (The Hook) A short sentence zapping a pain point.\n"
+            "- desire_logic: (The Logic) A paragraph demystifying the brand tax and justifying the artisan direct value.\n"
+            "- desire_closing: (The Closing) A CTA emphasizing the 0Buck contract and value logic.\n"
             "Strategy: {strategy}\n"
             "Language: English."
         ).format(strategy=strategy)
@@ -336,24 +341,27 @@ class SupplyChainService:
             return f"https://sc01.alicdn.com/kf/{url}"
         return url
 
-    async def _fetch_market_prices(self, product_name: str) -> Dict[str, Optional[float]]:
+    async def _fetch_market_prices(self, product_name: str) -> Dict[str, Any]:
         """v5.2: Fetch real Amazon/eBay prices and list prices using web_search (Exa AI)."""
-        from app.services.tools import web_search
+        from app.services.tools import _web_search_func
         
         prices = {
             "amazon_price": None, 
             "ebay_price": None,
             "amazon_compare_at_price": None,
-            "ebay_compare_at_price": None
+            "ebay_compare_at_price": None,
+            "market_comparison_url": None
         }
         
         try:
             # 1. Search Amazon
             amazon_query = f"{product_name} current price list price on amazon.com"
-            amazon_results = await web_search.ainvoke(amazon_query)
+            # v5.4: Call underlying async func directly to avoid StructuredTool sync issues in some envs
+            amazon_results = await _web_search_func(amazon_query)
             for res in amazon_results:
                 if isinstance(res, dict):
                     text = f"{res.get('title', '')} {res.get('text', '')}"
+                    url = res.get('url', '')
                     
                     # A. Current Price
                     price_match = re.search(r"(?:Price|Now|Only):\s*\$\s?([\d,]+(\.\d{1,2})?)", text, re.I)
@@ -362,6 +370,8 @@ class SupplyChainService:
                     
                     if price_match and not prices["amazon_price"]:
                         prices["amazon_price"] = float(price_match.group(1).replace(",", ""))
+                        if not prices["market_comparison_url"] and "amazon.com" in url:
+                            prices["market_comparison_url"] = url
                     
                     # B. List Price (Was / MSRP)
                     list_match = re.search(r"(?:List Price|Was|MSRP|Original Price):\s*\$\s?([\d,]+(\.\d{1,2})?)", text, re.I)
@@ -371,28 +381,32 @@ class SupplyChainService:
                     if prices["amazon_price"] and prices["amazon_compare_at_price"]:
                         break
             
-            # 2. Search eBay
-            ebay_query = f"{product_name} current price list price on ebay.com"
-            ebay_results = await web_search.ainvoke(ebay_query)
-            for res in ebay_results:
-                if isinstance(res, dict):
-                    text = f"{res.get('title', '')} {res.get('text', '')}"
-                    
-                    # A. Current Price
-                    price_match = re.search(r"(?:Price|Now|Only|Buy It Now):\s*\$\s?([\d,]+(\.\d{1,2})?)", text, re.I)
-                    if not price_match:
-                        price_match = re.search(r"\$\s?([\d,]+(\.\d{1,2})?)", text)
-                    
-                    if price_match and not prices["ebay_price"]:
-                        prices["ebay_price"] = float(price_match.group(1).replace(",", ""))
-                    
-                    # B. List Price (Was / MSRP)
-                    list_match = re.search(r"(?:List Price|Was|Original Price):\s*\$\s?([\d,]+(\.\d{1,2})?)", text, re.I)
-                    if list_match and not prices["ebay_compare_at_price"]:
-                        prices["ebay_compare_at_price"] = float(list_match.group(1).replace(",", ""))
+            # 2. Search eBay (if Amazon failed or for redundancy)
+            if not prices["amazon_price"]:
+                ebay_query = f"{product_name} current price list price on ebay.com"
+                ebay_results = await _web_search_func(ebay_query)
+                for res in ebay_results:
+                    if isinstance(res, dict):
+                        text = f"{res.get('title', '')} {res.get('text', '')}"
+                        url = res.get('url', '')
                         
-                    if prices["ebay_price"] and prices["ebay_compare_at_price"]:
-                        break
+                        # A. Current Price
+                        price_match = re.search(r"(?:Price|Now|Only|Buy It Now):\s*\$\s?([\d,]+(\.\d{1,2})?)", text, re.I)
+                        if not price_match:
+                            price_match = re.search(r"\$\s?([\d,]+(\.\d{1,2})?)", text)
+                        
+                        if price_match and not prices["ebay_price"]:
+                            prices["ebay_price"] = float(price_match.group(1).replace(",", ""))
+                            if not prices["market_comparison_url"] and "ebay.com" in url:
+                                prices["market_comparison_url"] = url
+                        
+                        # B. List Price (Was / MSRP)
+                        list_match = re.search(r"(?:List Price|Was|Original Price):\s*\$\s?([\d,]+(\.\d{1,2})?)", text, re.I)
+                        if list_match and not prices["ebay_compare_at_price"]:
+                            prices["ebay_compare_at_price"] = float(list_match.group(1).replace(",", ""))
+                            
+                        if prices["ebay_price"] and prices["ebay_compare_at_price"]:
+                            break
                     
         except Exception as e:
             logger.error(f"Error fetching market prices for {product_name}: {e}")
@@ -442,6 +456,7 @@ class SupplyChainService:
                     "ebay_price": ebay_price,
                     "amazon_compare_at_price": amazon_compare,
                     "ebay_compare_at_price": ebay_compare,
+                    "market_comparison_url": market.get("market_comparison_url"),
                     "raw_json": p,
                     "strategy_tag": "IDS_SEARCH"
                 })
@@ -486,6 +501,7 @@ class SupplyChainService:
                         "ebay_price": ebay_price,
                         "amazon_compare_at_price": amazon_compare,
                         "ebay_compare_at_price": ebay_compare,
+                        "market_comparison_url": market.get("market_comparison_url"),
                         "raw_json": raw_json,
                         "strategy_tag": "IDS_FOLLOWING"
                     })
@@ -530,9 +546,10 @@ class SupplyChainService:
                     market_data = await self._fetch_market_prices(name)
                     amazon_price = market_data.get("amazon_price")
                     amazon_msrp = market_data.get("amazon_compare_at_price") or amazon_price
+                    market_url = market_data.get("market_comparison_url")
                     
-                    if not amazon_msrp:
-                        logger.debug(f"⏭️ No Amazon price for {name}. Skipping.")
+                    if not amazon_msrp or not market_url:
+                        logger.debug(f"⏭️ Missing real market data for {name}. Skipping to maintain truth protocol.")
                         continue
                         
                     # 3. Apply ROI Logic
@@ -556,8 +573,18 @@ class SupplyChainService:
                         logger.debug(f"⏭️ ROI too low ({roi:.2f}) for {name}. Skipping.")
                         continue
                         
-                    # 4. Ingest to Candidate Pool
-                    logger.info(f"✅ Hit! {name} | ROI: {roi:.2f} | Category: {category_type}")
+                    # 4. Fetch Full Product Detail for Mirroring (Images, Description, Specs)
+                    full_detail = await self.cj_service.get_product_detail(pid)
+                    if not full_detail:
+                        logger.warning(f"⚠️ Could not fetch full detail for {name} ({pid}). Skipping.")
+                        continue
+                        
+                    # Extract rich assets
+                    detail_images = full_detail.get("productImage", "").split(",")
+                    description_html = full_detail.get("description", "")
+                    
+                    # 5. Ingest to Candidate Pool
+                    logger.info(f"✅ Hit! {name} | ROI: {roi:.2f} | Category: {category_type} | URL: {market_url}")
                     
                     # Prepare data for ingestion
                     await self.ingest_to_candidate_pool({
@@ -567,18 +594,30 @@ class SupplyChainService:
                         "comp_price": amazon_msrp,
                         "amazon_price": amazon_price,
                         "amazon_compare_at_price": amazon_msrp,
+                        "market_comparison_url": market_url,
                         "strategy_tag": discovery_source,
                         "category": p.get("categoryName") or "General",
                         "category_type": category_type,
                         "is_cashback_eligible": is_cashback,
                         "source_platform": "CJ",
                         "source_url": f"https://app.cjdropshipping.com/product-detail.html?id={pid}",
-                        "images": [p.get("bigImage") or p.get("productImage")],
+                        "images": detail_images,
+                        "description_zh": description_html,
+                        "structural_data": {
+                            "description_html": description_html,
+                            "roi": round(roi, 2),
+                            "amazon_msrp": amazon_msrp,
+                            "landed_cost": landed_cost,
+                            "cj_id": pid,
+                            "market_url": market_url,
+                            "cj_raw": full_detail
+                        },
                         "discovery_evidence": {
                             "roi": round(roi, 2),
                             "amazon_msrp": amazon_msrp,
                             "landed_cost": landed_cost,
-                            "cj_id": pid
+                            "cj_id": pid,
+                            "market_url": market_url
                         }
                     })
                     total_ingested += 1
@@ -602,35 +641,35 @@ class SupplyChainService:
         cost_cny = float(data.get("cost_cny", 0.0))
         comp_price = float(data.get("comp_price", 0.0))
         amazon_price = float(data.get("amazon_price", comp_price))
-        ebay_price = float(data.get("ebay_price", comp_price))
+        amazon_compare_at = float(data.get("amazon_compare_at_price", amazon_price))
+        market_url = data.get("market_comparison_url")
         
-        # v5.4 Brute-force Tiering (ROI Thresholds)
+        # v5.4 Truth Protocol: Ensure market comparison URL exists for new candidates
+        if not market_url and data.get("source_platform") == "CJ":
+            logger.warning(f"⚠️ Skipping ingestion for {data.get('name')}: No market comparison URL provided.")
+            return
+
         # Landed cost simulation (1688 Cost + Shipping Buffer)
-        # 0.6x Pricing Rule: Sale Price = Amazon Price * 0.6
+        # 0.6x Pricing Rule: Sale Price = Amazon MSRP * 0.6
         # ROI = Sale Price / Landed Cost
-        landed_cost_usd = pricing.get("cost_usd_buffered") or (cost_cny / 6.5 * 1.2)
-        
-        # Calculate ROI based on the 0.6x price rule
-        # If no amazon_price, use comp_price
-        reference_price = amazon_price or comp_price
-        target_sale_price = reference_price * 0.6
+        landed_cost_usd = data.get("discovery_evidence", {}).get("landed_cost") or (cost_cny / 6.5 * 1.2)
+        target_sale_price = amazon_compare_at * 0.6
         
         roi = target_sale_price / landed_cost_usd if landed_cost_usd > 0 else 0
         
-        category_type = "PROFIT"
-        is_cashback_eligible = True
+        category_type = data.get("category_type")
+        is_cashback_eligible = data.get("is_cashback_eligible")
         
-        if roi >= 4.0:
-            category_type = "PROFIT"
-            is_cashback_eligible = True
-            logger.info(f"💎 Tier A (Rebate): ROI {roi:.2f} >= 4.0 for {product_id_1688}")
-        elif roi >= 1.5:
-            category_type = "TRAFFIC"
-            is_cashback_eligible = False
-            logger.info(f"🛒 Tier B (Normal): ROI {roi:.2f} >= 1.5 for {product_id_1688}")
-        else:
-            logger.warning(f"⏭️ Skipping: ROI {roi:.2f} < 1.5 for {product_id_1688}")
-            return
+        if category_type is None:
+            if roi >= 4.0:
+                category_type = "PROFIT"
+                is_cashback_eligible = True
+            elif roi >= 1.5:
+                category_type = "TRAFFIC"
+                is_cashback_eligible = False
+            else:
+                logger.warning(f"⏭️ Skipping: ROI {roi:.2f} < 1.5 for {product_id_1688}")
+                return
             
         # v4.5 Mirror Sync
         mirror_data = {}
@@ -643,11 +682,7 @@ class SupplyChainService:
         strategy_tag = data.get("strategy_tag", "IDS_FOLLOWING")
         
         # v4.6 Multi-Sourcing simulation
-        # In production, this would call 1688 Image Search API
-        backup_suppliers = data.get("backup_suppliers", [
-            {"name": "Factory Backup A", "price_cny": cost_cny * 0.98, "rating": 4.8},
-            {"name": "Factory Backup B", "price_cny": cost_cny * 1.02, "rating": 4.7}
-        ])
+        backup_suppliers = data.get("backup_suppliers", [])
 
         raw_images = mirror_data.get("mirror_assets", {}).get("hero", {}).get("gallery") or data.get("images", [])
         clean_images = [self._ensure_absolute_url(img) for img in raw_images if img]
@@ -687,8 +722,8 @@ class SupplyChainService:
             
             cost_cny=cost_cny,
             comp_price_usd=comp_price,
-            estimated_sale_price=pricing.get("sale_price"),
-            profit_ratio=pricing.get("sale_price") / pricing.get("cost_usd_buffered") if pricing.get("cost_usd_buffered") else 0,
+            estimated_sale_price=target_sale_price,
+            profit_ratio=roi,
             
             supplier_id_1688=data.get("supplier_id_1688"),
             supplier_info={
@@ -703,15 +738,14 @@ class SupplyChainService:
             desire_closing=enriched_preview.get("desire_closing"),
             category=data.get("category", "General"),
             audit_notes=data.get("audit_notes"),
-            # v4.6.7: Visual Fingerprint mapping
             visual_fingerprint=fingerprint,
             
             # v4.6.8: Comparison Pricing
             amazon_price=amazon_price,
-            ebay_price=ebay_price,
-            # v5.2.1: Use provided compare_at prices from data, fallback to sale price (no fiction)
-            amazon_compare_at_price=data.get("amazon_compare_at_price", amazon_price),
-            ebay_compare_at_price=data.get("ebay_compare_at_price", ebay_price),
+            ebay_price=data.get("ebay_price"),
+            amazon_compare_at_price=amazon_compare_at,
+            ebay_compare_at_price=data.get("ebay_compare_at_price"),
+            market_comparison_url=market_url,
             
             # v5.4 Brute-force Tiering
             category_type=category_type,
@@ -725,6 +759,8 @@ class SupplyChainService:
         self.db.add(candidate)
         self.db.commit()
         self.db.refresh(candidate)
+        
+        return candidate
         
         # v5.3: Automated CJ Sourcing for Alibaba products
         if candidate.source_platform == "ALIBABA" and candidate.source_url:

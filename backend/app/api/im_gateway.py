@@ -24,11 +24,18 @@ logger = logging.getLogger(__name__)
 # --- 1. CORE UTILITIES ---
 
 def detect_language(text: str) -> str:
-    """v5.6.0: Universal Language Heuristic."""
+    """v5.6.8: Enhanced Language Heuristic with English Fallback."""
+    if not text: return "en"
+    # Check for Japanese (Hiragana/Katakana)
     if any('\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff' for c in text):
         return "ja"
+    # Check for Chinese (CJK Unified Ideographs)
     if any('\u4e00' <= c <= '\u9fff' for c in text):
         return "zh"
+    # Check for Spanish/European (Special characters)
+    if any(c in 'áéíóúüñ¿¡' for c in text.lower()):
+        return "es"
+    # Default to English
     return "en"
 
 def generate_binding_sig(platform: str, uid: str) -> str:
@@ -46,19 +53,19 @@ async def send_rich_message(platform: str, uid: str, text: str, title: str, link
         # Telegram Markdown Link
         msg = text
         if link_url:
-            msg += f"\n\n[🔗 点击登录获得完整服务]({link_url})"
+            msg += f"\n\n[🔗 点击登录获得完整服务]({link_url})" if "点击" in text or any('\u4e00' <= c <= '\u9fff' for c in text) else f"\n\n[🔗 Login for Full Service]({link_url})"
         await send_telegram_message(uid, msg)
     elif platform == "whatsapp":
         # WhatsApp supports preview_url for links
         msg = text
         if link_url:
-            msg += f"\n\n🔗 点击登录获得完整服务: {link_url}"
+            msg += f"\n\n🔗 点击登录获得完整服务: {link_url}" if "点击" in text or any('\u4e00' <= c <= '\u9fff' for c in text) else f"\n\n🔗 Login for Full Service: {link_url}"
         await send_whatsapp_message(uid, msg)
     elif platform == "discord":
         # Discord Markdown Link
         msg = text
         if link_url:
-            msg += f"\n\n[🔗 点击登录获得完整服务]({link_url})"
+            msg += f"\n\n[🔗 点击登录获得完整服务]({link_url})" if "点击" in text or any('\u4e00' <= c <= '\u9fff' for c in text) else f"\n\n[🔗 Login for Full Service]({link_url})"
         await send_discord_message(uid, msg)
     else:
         # Fallback to plain text
@@ -94,7 +101,16 @@ async def generic_brain_process(platform: str, platform_uid: str, text: str, cha
         session_id = f"{platform}_{chat_id}_{platform_uid}" if chat_type == "group" else f"{platform}_{platform_uid}"
         
         # 1. Send Immediate Thinking Status
-        thinking_msg = "🔍 0Buck 智脑正在深度思考中，请稍等片刻..." if lang == "zh" else "🔍 0Buck AI Brain is thinking deeply, please wait a moment..."
+        thinking_msgs = {
+            "zh": "🔍 0Buck 智脑正在深度思考中，请稍等片刻...",
+            "ja": "🔍 0Buck AIブレインが深く考えています、少々お待ちください...",
+            "es": "🔍 El cerebro de IA de 0Buck está pensando profundamente, por favor espere un momento...",
+            "fr": "🔍 Le cerveau IA de 0Buck réfléchit profondément, veuillez patienter un instant...",
+            "de": "🔍 Das 0Buck KI-Gehirn denkt tief nach, bitte warten Sie einen Moment...",
+            "en": "🔍 0Buck AI Brain is thinking deeply, please wait a moment..."
+        }
+        thinking_msg = thinking_msgs.get(lang, thinking_msgs["en"])
+        
         # v5.6.5: Thinking status shouldn't have a login link yet (too early)
         await send_rich_message(platform, platform_uid, thinking_msg, "0Buck AI Brain", None)
         

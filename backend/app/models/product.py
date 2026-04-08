@@ -183,6 +183,7 @@ class CandidateProduct(Base):
     ebay_price = Column(Float, nullable=True)
     amazon_compare_at_price = Column(Float, nullable=True)
     ebay_compare_at_price = Column(Float, nullable=True)
+    market_comparison_url = Column(String, nullable=True)
     
     estimated_sale_price = Column(Float)
     profit_ratio = Column(Float)
@@ -222,12 +223,14 @@ class CandidateProduct(Base):
     
     # Black Box: Evidence, Social Proof, Tier Pricing
     structural_data = Column(JSONB, server_default='{}')
+    raw_vendor_info = Column(JSONB, server_default='{}')
     
     # v3.1 Hybrid Growth Model
     is_cashback_eligible = Column(Boolean, default=True) # Traffic vs Profit switch
     category_type = Column(String, default="PROFIT") # 'TRAFFIC', 'PROFIT'
     
     audit_notes = Column(String, nullable=True)
+    evidence = Column(JSONB, server_default='{}')
     
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

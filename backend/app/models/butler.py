@@ -56,6 +56,7 @@ class UserButlerProfile(Base):
     
     user_id = Column(BigInteger, ForeignKey("users_ext.customer_id"), primary_key=True)
     butler_name = Column(String(100), nullable=True) # The name the user gave the Butler
+    user_nickname = Column(String(100), nullable=True) # How the user wants to be addressed
     active_persona_id = Column(String(50), ForeignKey("persona_templates.id"), default="default")
     
     affinity_score = Column(Integer, default=0) # 0-100 好感度

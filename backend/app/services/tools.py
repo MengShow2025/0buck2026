@@ -62,6 +62,7 @@ async def _web_search_func(query: str) -> List[Dict[str, Any]]:
     Search the web using Exa to find trending products, market prices, or supplier information.
     Best for broad research or finding items not yet in our database.
     """
+    print(f"DEBUG: Using EXA_API_KEY: {settings.EXA_API_KEY[:5]}...{settings.EXA_API_KEY[-5:] if settings.EXA_API_KEY else ''}")
     if not settings.EXA_API_KEY or settings.EXA_API_KEY == "your-exa-api-key":
         print("⚠️ EXA_API_KEY is missing or invalid. Falling back to mock results.")
         return [{"title": "Market Price Placeholder", "text": "Price on Amazon: $100.00. List Price: $120.00", "url": "https://amazon.com"}]
@@ -85,6 +86,7 @@ async def _web_search_func(query: str) -> List[Dict[str, Any]]:
             print(f"DEBUG EXA RAW: {str(data)[:200]}...")
             return data.get("results", [])
         except Exception as e:
+            print(f"DEBUG EXA ERROR: {e}")
             return [{"error": str(e)}]
 
 web_search = tool(_web_search_func)

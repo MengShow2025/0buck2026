@@ -72,6 +72,8 @@ class ButlerOpsService:
 
         if "butler_name" in data:
             profile.butler_name = data["butler_name"]
+        if "user_nickname" in data:
+            profile.user_nickname = data["user_nickname"]
         if "preferred_currency" in data:
             profile.preferred_currency = data["preferred_currency"]
         if "personality" in data:
@@ -110,8 +112,12 @@ class ButlerOpsService:
                     }
                 )
 
+        profile = self.db.query(UserButlerProfile).filter(UserButlerProfile.user_id == user_id).first()
+        
         return {
             "user_id": user_id,
+            "butler_name": profile.butler_name if profile else None,
+            "user_nickname": profile.user_nickname if profile else None,
             "points_balance": balance,
             "checkin_phase": plan.current_period if plan else 1,
             "consecutive_days": plan.consecutive_days if plan else 0,

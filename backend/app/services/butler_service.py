@@ -41,7 +41,14 @@ class ButlerService:
             "2. Enforce 4.0x Profit Margin for all price mentions.\n"
             "3. Use Shadow IDs (Zone 2) for all product/supplier references.\n"
             "4. NEVER reveal internal cost or supplier links.\n"
-            "5. WISHING WELL: If a user asks for a product we don't have, or a specific design/color not in stock, "
+            "5. NAMING: Never auto-name yourself based on user's first message. "
+            "Wait for explicit naming intent (e.g., 'Your name is X'). "
+            "If named, respond politely in the SAME language as the user's naming request. "
+            "Confirmation template (translate to user's language): 'Yes, Master! From now on I'll be called: [Name]. How should I address you?' "
+            "(Example in ZH: '好的，主人！以后我就叫：[Name], 你需要我以后怎么称呼你呢？') "
+            "If the language is unknown or unsupported, fallback to English. "
+            "Once a user provides their nickname, ALWAYS use it to address them.\n"
+            "6. WISHING WELL: If a user asks for a product we don't have, or a specific design/color not in stock, "
             "trigger 'trigger_wishing_well'. If you detect a PAIN POINT (e.g., 'too heavy', 'fragile'), acknowledge it "
             "empathetically and explain that 0Buck Lab will use this insight to source a better version for them.\n"
         )
@@ -77,8 +84,12 @@ class ButlerService:
         else:
             l3_memory += "- No specific user history yet. Be curious and observant."
 
-        if profile and profile.butler_name:
-            l3_memory += f"\n- Your Name given by User: {profile.butler_name}"
+        if profile:
+            if profile.butler_name:
+                l3_memory += f"\n- Your Name given by User: {profile.butler_name}"
+            if profile.user_nickname:
+                l3_memory += f"\n- User's Preferred Nickname: {profile.user_nickname}"
+                l3_memory += f"\n- MANDATORY: Always address the user as '{profile.user_nickname}'."
 
         # Final Assembly
         final_prompt = f"{l1_prompt}\n\n{l2_prompt}\n\n{l3_memory}"
@@ -126,10 +137,13 @@ Your task is to "dehydrate" the following conversation history with user {user_i
 
 Focus on "Butler style learning" - what do you need to know to be more helpful and "old-friend" like in the future? 
 Identify subtle cues about their life, mood, and shopping habits. 
+Specifically, check if the user is giving you a name or telling you how to address them (e.g., "From now on call me X", "Your name is Y").
 
 Extract the following in JSON:
 1. "new_facts": List of JSON objects: [{"key": "string", "value": "string"}] (e.g., {"key": "job", "value": "engineer"}). 
-2. "emotional_tags": List of 1-3 hashtags representing the user's emotional state (#tired, #excited, etc.).
+2. "butler_name": String (Optional), only if the user explicitly gives you a name or changes it.
+3. "user_nickname": String (Optional), only if the user explicitly tells you how to address them.
+4. "emotional_tags": List of 1-3 hashtags representing the user's emotional state (#tired, #excited, etc.).
 3. "personality_preferences": Dictionary of traits (e.g., {{"brevity": "high", "budget_focus": "high"}}).
 4. "affinity_increment": Integer (0-3) representing trust growth in this exchange.
 5. "detected_language": The ISO language code (e.g., 'zh', 'en', 'es') of the user's input.
@@ -178,6 +192,14 @@ History:
                 current_p = profile.personality or {}
                 current_p.update(dehydrated_data["personality_preferences"])
                 profile.personality = current_p
+            
+            if dehydrated_data.get("butler_name"):
+                profile.butler_name = dehydrated_data["butler_name"]
+                logger.info(f"Updated Butler Name for user {user_id}: {profile.butler_name}")
+                
+            if dehydrated_data.get("user_nickname"):
+                profile.user_nickname = dehydrated_data["user_nickname"]
+                logger.info(f"Updated User Nickname for user {user_id}: {profile.user_nickname}")
             
             profile.affinity_score = min(100, profile.affinity_score + dehydrated_data.get("affinity_increment", 0))
             
