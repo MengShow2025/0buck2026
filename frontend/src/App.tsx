@@ -102,22 +102,24 @@ function App() {
   };
 
   return (
-    <VortexContainer>
-      <div className="flex flex-col gap-2 pb-24">
-        {messages.map((msg) => (
-          <CustomMessageUI 
-            key={msg.id} 
-            message={msg} 
-            isMyMessage={() => msg.user.id === 'user'} 
-          />
-        ))}
-      </div>
-      
-      {/* Absolute positioned input at the bottom */}
-      <div className="absolute bottom-0 left-0 right-0 w-full bg-gradient-to-t from-[var(--wa-bg)] to-transparent pt-6">
+    <div className="flex flex-col h-screen w-full max-w-md mx-auto bg-[var(--wa-bg)] relative overflow-hidden shadow-2xl font-sans">
+      <VortexContainer>
+        <div className="flex flex-col gap-2 pb-4">
+          {messages.map((msg) => (
+            <CustomMessageUI 
+              key={msg.id} 
+              message={msg} 
+              isMyMessage={() => msg.user.id === 'user'} 
+            />
+          ))}
+        </div>
+      </VortexContainer>
+
+      {/* Fixed positioned input at the bottom */}
+      <div className="w-full bg-gradient-to-t from-[var(--wa-bg)] via-[var(--wa-bg)] to-transparent pt-6 z-20">
         <VCCInput onSendMessage={handleSendMessage} />
       </div>
-    </VortexContainer>
+    </div>
   );
 }
 
