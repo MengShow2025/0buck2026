@@ -35,23 +35,48 @@ export default function App() {
     securePayBackView
   } = useAppContext();
 
-  const [showWelcome, setShowWelcome] = useState(() => {
-    const path = window.location.pathname.toLowerCase();
-    return !path.startsWith('/command') && !path.startsWith('/control');
-  });
+  // v5.7.26: Reactive welcome screen state that updates on location changes
+  const [showWelcome, setShowWelcome] = useState(false);
+  
+  useEffect(() => {
+    const path = location.pathname.toLowerCase();
+    const shouldShow = !path.startsWith('/command') && 
+                      !path.startsWith('/control') && 
+                      !path.startsWith('/auth/bind') &&
+                      !path.startsWith('/login') &&
+                      !path.startsWith('/register') &&
+                      path !== '/me' &&
+                      path !== '/profile';
+    
+    // Only set to true if we're on the root and it was previously false
+    // This prevents the welcome screen from popping up again after navigation
+    if (path === '/' && !localStorage.getItem('welcomeShown')) {
+      setShowWelcome(true);
+    } else if (shouldShow === false) {
+      setShowWelcome(false);
+    }
+  }, [location.pathname]);
 
-  const { data: authData, isLoading: isInitializing } = useQuery<any>({
+  const handleWelcomeEnter = () => {
+    localStorage.setItem('welcomeShown', 'true');
+    setShowWelcome(false);
+  };
+
+  const { data: authData, isLoading: isInitializing, error: authError } = useQuery<any>({
     queryKey: ['auth-me'],
     queryFn: async () => {
       try {
         const url = getApiUrl('/v1/auth/me');
-        const response = await axios.get(url);
+        // v5.7.26: Add timeout to prevent infinite loading state
+        const response = await axios.get(url, { timeout: 10000 });
         return response.data;
       } catch (e) {
+        console.error('Auth check failed:', e);
         return null;
       }
     },
     staleTime: 1000 * 60 * 10,
+    retry: 1,
   });
 
   const currentUser = authData?.user || null;
@@ -104,7 +129,34 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authInitialStep, setAuthInitialStep] = useState<'login' | '2fa'>('login');
+  const [authInitialEmail, setAuthInitialEmail] = useState('');
   const [onAuthSuccess, setOnAuthSuccess] = useState<{ callback: () => void } | null>(null);
+
+  // v5.7.25: Handle OAuth callback parameters (2FA, Success, Redirect)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    
+    // 1. Handle 2FA Required
+    if (params.get('2fa_required') === 'true') {
+      const email = params.get('email') || '';
+      setAuthInitialEmail(email);
+      setAuthInitialStep('2fa');
+      setAuthMode('login');
+      setShowAuthModal(true);
+    }
+    
+    // 2. Handle Auth Success (Clear params to keep URL clean)
+    if (params.get('auth_success') === 'true') {
+      queryClient.invalidateQueries({ queryKey: ['auth-me'] });
+      // Remove params from URL without refreshing
+      const newParams = new URLSearchParams(location.search);
+      newParams.delete('auth_success');
+      newParams.delete('email');
+      const newSearch = newParams.toString();
+      navigate({ search: newSearch }, { replace: true });
+    }
+  }, [location.search, queryClient, navigate]);
 
   const { connect, disconnect } = useStreamVCC(isAuthenticated, currentUser);
 
@@ -145,7 +197,7 @@ export default function App() {
       <AnimatePresence mode="wait">
         {showWelcome ? (
           <motion.div key="welcome" className="fixed inset-0 z-[100]">
-            <WelcomeView onEnter={() => setShowWelcome(false)} />
+            <WelcomeView onEnter={handleWelcomeEnter} />
           </motion.div>
         ) : (
           <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full w-full relative">
@@ -180,7 +232,16 @@ export default function App() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </button>
                   {authMode === 'login' ? (
-                    <LoginView isModal onLogin={() => { queryClient.invalidateQueries({ queryKey: ['auth-me'] }); setShowAuthModal(false); }} onGoRegister={() => setAuthMode('register')} />
+                    <LoginView 
+                      isModal 
+                      initialStep={authInitialStep}
+                      initialEmail={authInitialEmail}
+                      onLogin={() => { 
+                        queryClient.invalidateQueries({ queryKey: ['auth-me'] }); 
+                        setShowAuthModal(false); 
+                      }} 
+                      onGoRegister={() => setAuthMode('register')} 
+                    />
                   ) : (
                     <RegisterView isModal onRegister={() => { queryClient.invalidateQueries({ queryKey: ['auth-me'] }); setShowAuthModal(false); }} onGoLogin={() => setAuthMode('login')} />
                   )}

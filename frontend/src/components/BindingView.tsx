@@ -31,7 +31,15 @@ const BindingView: React.FC = () => {
   const isAuthenticated = !!authData?.user;
 
   useEffect(() => {
-    // v5.7.16: Wait for fetch to complete before determining auth status
+    // v5.7.26: Enhanced diagnostic logging for binding flow
+    console.log('BindingView Context:', { 
+      isAuthLoading, 
+      isAuthFetched, 
+      isAuthenticated, 
+      pathname: location.pathname, 
+      search: location.search 
+    });
+
     if (isAuthLoading || !isAuthFetched) return;
 
     const params = new URLSearchParams(location.search);

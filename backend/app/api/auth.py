@@ -587,9 +587,18 @@ async def reset_payment_password_2fa(
     return {"status": "success", "message": "Payment password reset automatically. Security alerts sent."}
 
 @router.get("/login/{provider}")
-async def login(provider: str, request: Request):
+async def login(provider: str, request: Request, redirect: Optional[str] = None):
+    """
+    v5.7.25: OAuth login with redirect persistence.
+    Saves the desired post-login URL in the session.
+    """
     if provider not in ['google', 'apple', 'facebook', 'alibaba']:
         raise HTTPException(status_code=400, detail="Invalid provider")
+    
+    # Save redirect URL in session if provided
+    if redirect:
+        request.session['auth_redirect'] = redirect
+        logger.info(f"🔗 Saved OAuth redirect target: {redirect}")
     
     # v4.7.3: Handle Alibaba-specific redirect logic
     redirect_uri = request.url_for('auth_callback', provider=provider)
@@ -597,8 +606,16 @@ async def login(provider: str, request: Request):
 
 @router.get("/callback/{provider}", name='auth_callback')
 async def auth_callback(provider: str, request: Request, db: Session = Depends(get_db)):
+    """
+    v5.7.25: OAuth callback with dynamic redirection.
+    Restores the 'auth_redirect' from session to complete the bridge.
+    """
     client = oauth.create_client(provider)
     token = await client.authorize_access_token(request)
+    
+    # Restored redirect URL from session (v5.7.25)
+    saved_redirect = request.session.pop('auth_redirect', None)
+    frontend_url = settings.ALLOWED_ORIGINS.split(",")[0].rstrip("/")
     
     # v4.7.3: Special handling for Alibaba Token (Save to SystemConfig)
     if provider == 'alibaba':
@@ -609,7 +626,6 @@ async def auth_callback(provider: str, request: Request, db: Session = Depends(g
         config.set("alibaba_token_expires_at", token.get('expires_at'), description="Alibaba Token Expiry Timestamp")
         
         db.commit()
-        frontend_url = settings.ALLOWED_ORIGINS.split(",")[0]
         return RedirectResponse(url=f"{frontend_url}/admin/dashboard?alibaba_auth=success")
 
     user_info = None
@@ -646,16 +662,34 @@ async def auth_callback(provider: str, request: Request, db: Session = Depends(g
         user.referral_code = f"REF{user.customer_id}"
         db.commit()
 
-    frontend_url = settings.ALLOWED_ORIGINS.split(",")[0]
-    
     if user.is_two_factor_enabled:
         # Redirect to 2FA verification page on frontend
-        return RedirectResponse(url=f"{frontend_url}/?2fa_required=true&email={email}&provider={provider}")
+        # Append saved_redirect if exists
+        target = f"{frontend_url}/?2fa_required=true&email={email}&provider={provider}"
+        if saved_redirect:
+            target += f"&redirect={saved_redirect}"
+        return RedirectResponse(url=target)
 
     # Generate JWT Token for v3.5.0 Security
     access_token = create_access_token(subject=user.customer_id)
     
-    response = RedirectResponse(url=f"{frontend_url}/?auth_success=true&email={email}")
+    # Construct final redirect URL (v5.7.25)
+    if saved_redirect:
+        # If it's a relative path, prepend frontend_url
+        if saved_redirect.startswith('/'):
+            final_redirect_url = f"{frontend_url}{saved_redirect}"
+            # Ensure it has the auth_success flag
+            if '?' in final_redirect_url:
+                final_redirect_url += "&auth_success=true"
+            else:
+                final_redirect_url += "?auth_success=true"
+        else:
+            # Absolute URL or fallback
+            final_redirect_url = saved_redirect
+    else:
+        final_redirect_url = f"{frontend_url}/?auth_success=true&email={email}"
+        
+    response = RedirectResponse(url=final_redirect_url)
     
     # v3.5.0 Secure Cookie Configuration for Production
     is_prod = settings.ENVIRONMENT == "production"

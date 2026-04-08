@@ -411,6 +411,76 @@ async def startup_event():
         except Exception as e:
             logger.error(f"  [VCC] Failed to create platform channel {name}: {e}")
 
+# Serve static files from React build
+# v5.7.27: Enhanced path detection for Railway/Docker/Local
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+project_root = os.path.dirname(base_dir)
+
+# Priority 1: backend/static (Production bundle)
+# Priority 2: project_root/frontend/dist (Local dev)
+# Priority 3: current_dir/static (Fallback)
+frontend_path = os.path.join(base_dir, "static")
+if not os.path.exists(frontend_path):
+    frontend_path = os.path.join(project_root, "frontend", "dist")
+if not os.path.exists(frontend_path):
+    frontend_path = os.path.join(os.getcwd(), "static")
+
+logger.info(f"📂 Frontend assets path: {frontend_path}")
+
+# --- 1. FRONTEND ROUTING MIDDLEWARE (v5.7.27) ---
+@app.middleware("http")
+async def frontend_interceptor(request: Request, call_next):
+    path = request.url.path
+    method = request.method
+    
+    # 1. Skip interception for API routes, known static assets, and non-GET requests
+    if (path.startswith(settings.API_V1_STR) or 
+        path.startswith("/api/") or 
+        path.startswith("/v1/") or
+        path.startswith("/assets/") or 
+        path.startswith("/static/") or
+        path.endswith((".ico", ".png", ".jpg", ".json", ".js", ".css", ".svg", ".webp")) or
+        method != "GET"):
+        return await call_next(request)
+
+    # 2. Intercept common frontend routes that should always return index.html
+    # This prevents 422 Unprocessable Entity errors caused by query parameters
+    is_spa_route = (
+        path == "/" or 
+        path.startswith("/auth/bind") or 
+        path.startswith("/chat") or 
+        path.startswith("/me") or
+        path.startswith("/profile") or
+        path.startswith("/login") or
+        path.startswith("/register") or
+        path.startswith("/command") or
+        path.startswith("/control") or
+        "." not in path.split("/")[-1]
+    )
+
+    if is_spa_route:
+        index_file = os.path.join(frontend_path, "index.html")
+        if os.path.exists(index_file):
+            logger.info(f"🎯 Intercepted SPA route {path} -> Serving index.html")
+            return FileResponse(index_file)
+        else:
+            logger.warning(f"⚠️ SPA route {path} intercepted but index.html missing at {index_file}")
+            
+    return await call_next(request)
+
+# --- 2. EXPLICIT SPA ROUTES (v5.7.27) ---
+# High-reliability fallback for critical pages to bypass middleware edge cases
+@app.get("/auth/bind")
+@app.get("/chat")
+@app.get("/me")
+@app.get("/login")
+@app.get("/register")
+async def spa_fallback(request: Request):
+    index_file = os.path.join(frontend_path, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return {"detail": "Frontend application not found. Please check deployment logs."}
+
 # Include routers
 app.include_router(api_router, tags=["api"])
 app.include_router(agent_router, prefix=f"{settings.API_V1_STR}", tags=["agent"])
@@ -428,41 +498,27 @@ app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["aut
 app.include_router(im_router, prefix=f"{settings.API_V1_STR}/im", tags=["im"])
 app.include_router(proxy_router, prefix=f"{settings.API_V1_STR}/checkin", tags=["checkin"])
 
-# Serve static files from React build
-# Use a relative path that works both locally and in Docker/Railway
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-frontend_path = os.path.join(base_dir, "static")
-
-# Fallback for local development if 'static' doesn't exist but 'frontend/dist' does
-if not os.path.exists(frontend_path):
-    frontend_path = os.path.join(os.path.dirname(base_dir), "frontend", "dist")
-
+# --- 2. STATIC ASSETS & FALLBACK (v5.7.24) ---
 if os.path.exists(frontend_path):
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
 
-    # v5.7.22: Final fix for Frontend SPA routing
-    # Handles /auth/bind and all other frontend routes with maximum compatibility
+    # Final catch-all to ensure any non-matched route returns index.html for SPA
     @app.get("/{full_path:path}")
     async def serve_frontend(request: Request, full_path: str = None):
-        # 1. Exclude API and internal paths
+        # 1. Exclude API routes
         if full_path and (full_path.startswith("api/") or full_path.startswith("v1/")):
              return {"detail": "Not Found"}
              
-        # 2. Check if it's a physical file in assets
-        if full_path and full_path.startswith("assets/"):
+        # 2. Check if it's a physical file in the frontend dist root (like sw.js, manifest.json)
+        if full_path:
             file_path = os.path.join(frontend_path, full_path)
-            if os.path.exists(file_path):
+            if os.path.isfile(file_path):
                 return FileResponse(file_path)
         
-        # 3. Serve the index.html for all other "page" routes
-        # Using index.html allows React Router to handle the URL on the client side
-        return FileResponse(os.path.join(frontend_path, "index.html"))
-             
-        # Check if the path exists as a physical file in the frontend build
-        file_path = os.path.join(frontend_path, full_path)
-        if os.path.isfile(file_path):
-            return FileResponse(file_path)
+        # 3. Serve index.html as fallback for SPA routing
+        index_file = os.path.join(frontend_path, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
             
-        # Fallback to index.html for all other routes (Single Page App support)
-        return FileResponse(os.path.join(frontend_path, "index.html"))
+        return {"detail": "Static assets not found"}
 
