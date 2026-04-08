@@ -403,17 +403,28 @@ async def process_im_binding(
     db: Session = Depends(get_db)
 ):
     """v5.5.8: Secure Identity Bridge."""
+    logger.info(f"🔗 BINDING REQUEST: platform={platform}, uid={uid}, sig={sig}, user_id={current_user.customer_id}")
+    
     if not hmac.compare_digest(sig, generate_binding_sig(platform, uid)):
+        logger.error(f"❌ BINDING SIG MISMATCH: expected={generate_binding_sig(platform, uid)}, received={sig}")
         raise HTTPException(status_code=403, detail="Invalid signature")
     
     # v5.7.18: Robust binding with Upsert logic to handle unique constraint
-    existing = db.query(UserIMBinding).filter_by(platform=platform, platform_uid=uid).first()
-    if existing:
-        existing.user_id = current_user.customer_id
-        existing.is_active = True
-        db.add(existing)
-    else:
-        db.add(UserIMBinding(user_id=current_user.customer_id, platform=platform, platform_uid=uid, is_active=True))
-    
-    db.commit()
-    return {"status": "success", "message": f"Linked to {platform}!", "user_name": f"{current_user.first_name}"}
+    try:
+        existing = db.query(UserIMBinding).filter_by(platform=platform, platform_uid=uid).first()
+        if existing:
+            logger.info(f"🔄 UPDATING EXISTING BINDING: id={existing.id}")
+            existing.user_id = current_user.customer_id
+            existing.is_active = True
+            db.add(existing)
+        else:
+            logger.info(f"🆕 CREATING NEW BINDING")
+            db.add(UserIMBinding(user_id=current_user.customer_id, platform=platform, platform_uid=uid, is_active=True))
+        
+        db.commit()
+        logger.info(f"✅ BINDING SUCCESSFUL for User {current_user.customer_id}")
+        return {"status": "success", "message": f"Linked to {platform}!", "user_name": f"{current_user.first_name}"}
+    except Exception as e:
+        logger.error(f"❌ BINDING DB ERROR: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database error during binding")
