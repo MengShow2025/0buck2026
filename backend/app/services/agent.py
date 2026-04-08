@@ -49,14 +49,14 @@ def get_dynamic_llm(user_id: int, db: SessionLocal):
     if profile and profile.ai_api_key:
         # Use User's Pro Key (BYOK)
         return ChatGoogleGenerativeAI(
-            model="gemini-3-flash-preview",
+            model="gemini-flash-latest",
             google_api_key=profile.ai_api_key,
             temperature=0
         ), True
     
     # Use System Flash Key (Subsidy)
     return ChatGoogleGenerativeAI(
-        model="gemini-3-flash-preview",
+        model="gemini-flash-latest",
         google_api_key=config_service.get_api_key("GOOGLE_API_KEY"),
         temperature=0
     ), False
@@ -248,7 +248,7 @@ async def run_agent(content: str, user_id: int, session_id: str = "default"):
             usage_stat = AIUsageStats(
                 user_id=user_id,
                 task_type="chat",
-            model_name="gemini-3-flash-preview", # Main model
+            model_name="gemini-flash-latest", # Main model
             tokens_in=tokens_in,
                 tokens_out=tokens_out,
                 cost_usd=(tokens_in * 0.0000035) + (tokens_out * 0.0000105), # Est. Pro pricing
