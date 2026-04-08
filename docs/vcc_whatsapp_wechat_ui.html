@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>0Buck VCC UI Concepts</title>
+    <style>
+        :root {
+            --wa-teal: #075E54;
+            --wa-light-teal: #128C7E;
+            --wa-light-green: #25D366;
+            --wa-bg: #ECE5DD;
+            --wa-bubble-out: #DCF8C6;
+            --wa-bubble-in: #FFFFFF;
+            --wa-text: #303030;
+            --wa-meta: #999999;
+            --wc-menu-bg: #F7F7F7;
+            --wc-border: #E5E5E5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .phone-mockup {
+            width: 375px;
+            height: 812px;
+            background-color: var(--wa-bg);
+            border-radius: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15), 0 0 0 10px #1a1a1a;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Status Bar (Fake) */
+        .status-bar {
+            height: 44px;
+            background-color: var(--wa-teal);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Header */
+        .header {
+            height: 60px;
+            background-color: var(--wa-teal);
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .back-btn {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            overflow: hidden;
+        }
+        
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .header-info {
+            flex: 1;
+        }
+
+        .header-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .header-status {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 15px;
+            font-size: 20px;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="%23ECE5DD"/><path d="M10 10c0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10-10 10-10-4.5-10-10zm40 40c0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10-10 10-10-4.5-10-10z" fill="%23e0d8d0" fill-opacity="0.5"/></svg>');
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            line-height: 1.4;
+            position: relative;
+            color: var(--wa-text);
+        }
+
+        .msg-in {
+            align-self: flex-start;
+            background-color: var(--wa-bubble-in);
+            border-top-left-radius: 0;
+        }
+
+        .msg-out {
+            align-self: flex-end;
+            background-color: var(--wa-bubble-out);
+            border-top-right-radius: 0;
+        }
+
+        .msg-time {
+            font-size: 11px;
+            color: var(--wa-meta);
+            float: right;
+            margin-top: 5px;
+            margin-left: 10px;
+        }
+
+        /* Catalog Style Card (Option B) */
+        .catalog-card {
+            width: 280px; /* Wider than normal message */
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            align-self: flex-start;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            border-top-left-radius: 0;
+        }
+
+        .catalog-image {
+            width: 100%;
+            height: 180px;
+            background-color: #eee;
+            background-image: url('https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .verified-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+        }
+
+        .catalog-content {
+            padding: 12px;
+        }
+
+        .catalog-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 4px;
+            color: #111;
+        }
+
+        .catalog-specs {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .catalog-price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .catalog-price {
+            font-weight: 700;
+            font-size: 18px;
+            color: #111;
+        }
+
+        .catalog-strike {
+            font-size: 13px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .catalog-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #E8F5E9;
+            color: var(--wa-light-teal);
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            border: 1px solid #C8E6C9;
+        }
+
+        /* WeChat Style Bottom Menu */
+        .input-area {
+            background-color: var(--wc-menu-bg);
+            border-top: 1px solid var(--wc-border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .wc-menu-bar {
+            display: flex;
+            height: 50px;
+            border-top: 1px solid #e5e5e5;
+        }
+
+        .wc-menu-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #333;
+            border-right: 1px solid #e5e5e5;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .wc-menu-btn:last-child {
+            border-right: none;
+        }
+
+        .wc-menu-icon {
+            margin-right: 5px;
+            font-size: 16px;
+        }
+
+        /* Keyboard Switcher */
+        .keyboard-switch {
+            width: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #555;
+            border-right: 1px solid #e5e5e5;
+            cursor: pointer;
+        }
+
+        /* Traditional Input Row (Hidden by default in this view, shown for context) */
+        .traditional-input {
+            display: none;
+            padding: 10px;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-box {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            padding: 8px 15px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+        }
+
+        /* Title container for the mockups */
+        .mockup-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .mockup-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* Popup Menu (WeChat style) */
+        .popup-menu {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            width: 120px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #eee;
+        }
+        
+        .popup-item {
+            padding: 12px 15px;
+            font-size: 14px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+            text-align: center;
+        }
+        
+        .popup-item:last-child {
+            border-bottom: none;
+        }
+        
+        .popup-arrow {
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-right: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* Cashback Radar Mini */
+        .radar-card {
+            width: 260px;
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            align-self: flex-start;
+            border-top-left-radius: 0;
+            margin-top: 5px;
+        }
+        
+        .radar-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .radar-progress-bg {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        
+        .radar-progress-fill {
+            height: 100%;
+            background: #FF9800;
+            width: 35%; /* Phase 7/20 */
+            border-radius: 4px;
+        }
+        
+        .radar-text {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="mockup-container">
+        <div class="mockup-title">Option B + WeChat Menu Integration</div>
+        <div class="phone-mockup">
+            <div class="status-bar">
+                <span>9:41</span>
+                <span>📶 🔋 🔋</span>
+            </div>
+            
+            <div class="header">
+                <div class="back-btn">‹</div>
+                <div class="avatar">🐘</div>
+                <div class="header-info">
+                    <div class="header-name">Dumbo (0Buck)</div>
+                    <div class="header-status">verified artisan assistant</div>
+                </div>
+                <div class="header-icons">
+                    <span>💰</span> <!-- Wallet -->
+                    <span>🛒</span> <!-- Orders -->
+                </div>
+            </div>
+
+            <div class="chat-area">
+                <div class="message msg-out">
+                    I need a good smart watch, something durable but not $500.
+                    <span class="msg-time">10:41 AM</span>
+                </div>
+                
+                <div class="message msg-in">
+                    I found a great option. It's from the same OEM factory that makes Garmin's mid-tier lines. Zero brand tax.
+                    <span class="msg-time">10:42 AM</span>
+                </div>
+
+                <!-- Catalog Card (BAP_ProductGrid) -->
+                <div class="catalog-card">
+                    <div class="catalog-image">
+                        <div class="verified-badge">⚖️ 0.12kg Verified</div>
+                    </div>
+                    <div class="catalog-content">
+                        <div class="catalog-title">Titanium Core Smartwatch Pro</div>
+                        <div class="catalog-specs">⚙️ OEM: Shenzhen Precision | 📦 15x8x4cm</div>
+                        <div class="catalog-price-row">
+                            <div class="catalog-price">$45.00</div>
+                            <div class="catalog-strike">$129.00</div>
+                        </div>
+                        <a href="#" class="catalog-btn">Check out & Get 100% Back</a>
+                    </div>
+                </div>
+                
+                <div class="message msg-out">
+                    How is my check-in rebate doing for the jacket?
+                    <span class="msg-time">10:45 AM</span>
+                </div>
+                
+                <!-- Radar Card (BAP_CashbackRadar) -->
+                <div class="radar-card">
+                    <div class="radar-header">
+                        <span>Cashback Radar</span>
+                        <span style="color: #FF9800;">$18.50 / $55.00</span>
+                    </div>
+                    <div class="radar-progress-bg">
+                        <div class="radar-progress-fill"></div>
+                    </div>
+                    <div class="radar-text">Phase 7 of 20 (Active)</div>
+                </div>
+
+            </div>
+
+            <!-- WeChat Style Bottom Menu -->
+            <div class="input-area">
+                <div class="wc-menu-bar">
+                    <div class="keyboard-switch">⌨️</div>
+                    
+                    <div class="wc-menu-btn" style="position: relative;">
+                        <span class="wc-menu-icon">⚡️</span> 0Buck 严选
+                        
+                        <!-- Popup for the first menu item -->
+                        <div class="popup-menu">
+                            <div class="popup-item">今日爆款</div>
+                            <div class="popup-item">免单拼团</div>
+                            <div class="popup-item">众筹新品</div>
+                            <div class="popup-arrow"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="wc-menu-btn">
+                        <span class="wc-menu-icon">💸</span> 我的返现
+                    </div>
+                    
+                    <div class="wc-menu-btn">
+                        <span class="wc-menu-icon">🙋‍♂️</span> 呼叫管家
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
