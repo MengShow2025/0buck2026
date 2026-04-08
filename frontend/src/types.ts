@@ -36,6 +36,7 @@ export type ViewType =
   | 'product-detail'
   | 'merchant-detail'
   | 'admin'
+  | 'bind'
   | 'me';
 
 export interface Channel {

@@ -22,15 +22,14 @@ class ReflectionService:
     
     def __init__(self):
         genai.configure(api_key=settings.GOOGLE_API_KEY)
-        self.model = genai.GenerativeModel('gemini-flash-latest')
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
 
     async def extract_facts(self, history: List[Dict[str, str]], user_id: int, db: Session):
         """
         v5.7.3 Superpowers Reflection:
         Extracts facts, identity changes, and pain points.
         """
-        from app.models.butler import UserButlerProfile, UserMemoryFact
-        from app.models.ledger import AIUsageStats
+        from app.models.butler import UserButlerProfile, UserMemoryFact, AIUsageStats
         
         # 0. Ensure Profile Exists
         profile = db.query(UserButlerProfile).filter(UserButlerProfile.user_id == user_id).first()
@@ -51,7 +50,9 @@ class ReflectionService:
             "1. 'new_facts': List of objects: [{'key': 'string', 'value': 'any', 'confidence': 0.0-1.0, 'is_conflict': bool}]\n"
             "   Focus on: personal preferences, constraints, locations.\n"
             "2. 'butler_identity': Object: {'butler_name': 'string', 'user_nickname': 'string'}\n"
-            "   Only include if the user explicitly GAVE you a name or TOLD you how to call them in this session.\n"
+            "   Only include if the user explicitly GAVE you a name or TOLD you how to call them. "
+            "   DO NOT use greetings (e.g., 'Hello', 'Hi', '你好'), first sentences of the chat, "
+            "   or common nouns unless it's clearly a naming intent like 'Your name is X'.\n"
             "3. 'unmet_needs': List of objects: [{'category': 'string', 'need': 'string', 'urgency': 1-5, 'is_pain_point': bool, 'sentiment': -1.0 to 1.0}]\n"
             "   Focus on: things the user wants but doesn't find, OR COMPLAINTS about current product quality/design/usability.\n\n"
             f"Conversation History:\n{formatted_history}\n\n"
@@ -73,12 +74,18 @@ class ReflectionService:
             identity = data.get("butler_identity", {})
             if identity:
                 updated = False
-                if identity.get("butler_name") and identity["butler_name"].strip():
-                    profile.butler_name = identity["butler_name"].strip()
+                forbidden_names = ["hello", "hi", "hey", "你好", "您好", "早上好", "中午好", "下午好", "晚上好", "greetings", "yo"]
+                
+                b_name = identity.get("butler_name", "").strip()
+                if b_name and b_name.lower() not in forbidden_names and len(b_name) < 30:
+                    profile.butler_name = b_name
                     updated = True
-                if identity.get("user_nickname") and identity["user_nickname"].strip():
-                    profile.user_nickname = identity["user_nickname"].strip()
+                
+                u_nick = identity.get("user_nickname", "").strip()
+                if u_nick and u_nick.lower() not in forbidden_names and len(u_nick) < 30:
+                    profile.user_nickname = u_nick
                     updated = True
+                
                 if updated:
                     logger.info(f"✅ Identity synchronized for user {user_id}: {profile.butler_name} / {profile.user_nickname}")
 
@@ -146,7 +153,7 @@ class ReflectionService:
             usage_stat = AIUsageStats(
                 user_id=user_id,
                 task_type="reflection",
-                model_name="gemini-flash-latest",
+                model_name="gemini-1.5-flash",
                 tokens_in=usage.prompt_token_count,
                 tokens_out=usage.candidates_token_count,
                 cost_usd=(usage.prompt_token_count * 0.000000075) + (usage.candidates_token_count * 0.0000003),

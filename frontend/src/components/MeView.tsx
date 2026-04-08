@@ -9,6 +9,8 @@ import {
   Sparkles, ArrowRight, Bell, MessageSquare, Users, Mail,
   Palette, Smartphone, EyeOff, Trash2, Menu, QrCode, Copy, Check
 } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { getApiUrl } from '../utils/api';
 
@@ -48,27 +50,50 @@ const FlipDigit = React.memo(({ value, color = "text-white" }: { value: string |
 ));
 
 export default function MeView({ 
-  isAuthenticated, 
-  onLoginClick, 
-  onLogout, 
-  agentName,
-  onAgentNameChange,
   deviceType = 'web',
-  onMenuClick,
-  status
+  onMenuClick
 }: { 
-  isAuthenticated: boolean; 
-  onLoginClick: () => void; 
-  onLogout: () => void;
-  agentName: string;
-  onAgentNameChange: (name: string) => void;
   deviceType?: string;
   onMenuClick?: () => void;
-  status?: any;
 }) {
   const { t, i18n } = useTranslation();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+  const { agentName, onAgentNameChange, userNickname, setUserNickname } = useAppContext() as any;
+  const { data: authData } = useQuery<any>({ queryKey: ['auth-me'] });
+  
+  // v5.7.1: Fetch user reward status
+  const { data: status } = useQuery<any>({ 
+    queryKey: ['user-status'],
+    queryFn: async () => {
+      const url = getApiUrl('/v1/butler/rewards/status');
+      const response = await axios.get(url);
+      return response.data;
+    },
+    enabled: !!authData?.user
+  });
+
+  const queryClient = useQueryClient();
+  
+  const currentUser = authData?.user;
+  const isAuthenticated = !!currentUser;
+
+  const onLogout = () => logoutMutation.mutate();
+  const onLoginClick = () => {
+    // Navigate to login page or open modal if available in context
+    window.location.href = '/login';
+  };
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await axios.post(getApiUrl('/v1/auth/logout'));
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(['auth-me'], null);
+      window.location.href = '/';
+    }
+  });
+
   const [showSettings, setShowSettings] = useState(false);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
@@ -82,6 +107,7 @@ export default function MeView({
   const [copiedSecret, setCopiedSecret] = useState(false);
   
   const [draftAgentName, setDraftAgentName] = useState(agentName);
+  const [draftUserNickname, setDraftUserNickname] = useState(userNickname);
   const [useByok, setUseByok] = useState(false);
   
   // v3.4.5: Dynamic Countdown Logic
@@ -101,10 +127,30 @@ export default function MeView({
   }, []);
 
   const isAgentNameDirty = useMemo(() => draftAgentName.trim() !== agentName.trim(), [agentName, draftAgentName]);
+  const isNicknameDirty = useMemo(() => draftUserNickname.trim() !== userNickname.trim(), [userNickname, draftUserNickname]);
 
   useEffect(() => {
     setDraftAgentName(agentName);
   }, [agentName]);
+
+  useEffect(() => {
+    setDraftUserNickname(userNickname);
+  }, [userNickname]);
+
+  const handleUpdateProfile = async () => {
+    try {
+      const url = getApiUrl('/v1/butler/account/settings');
+      await axios.post(url, {
+        butler_name: draftAgentName.trim(),
+        user_nickname: draftUserNickname.trim()
+      });
+      onAgentNameChange(draftAgentName.trim());
+      setUserNickname(draftUserNickname.trim());
+      queryClient.invalidateQueries({ queryKey: ['auth-me'] });
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+    }
+  };
 
   const handle2FASetup = async () => {
     if (isSettingUp) return;
@@ -581,30 +627,37 @@ export default function MeView({
                     Personal Butler Protocol
                   </p>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="relative group">
+                      <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1.5 block ml-1">Agent Name</label>
                       <input
                         value={draftAgentName}
-                        onChange={(e) => {
-                          setDraftAgentName(e.target.value);
-                          localStorage.setItem('butlerName', e.target.value);
-                          window.dispatchEvent(new Event('butlerNameChanged'));
-                        }}
+                        onChange={(e) => setDraftAgentName(e.target.value)}
                         placeholder="Name your agent"
                         className="w-full h-12 sm:h-14 px-5 rounded-2xl bg-black/40 border border-white/10 text-base font-bold text-white placeholder:text-zinc-600 focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all outline-none"
                       />
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                        <button
-                          type="button"
-                          disabled={!isAgentNameDirty}
-                          onClick={() => onAgentNameChange(draftAgentName.trim())}
-                          className="p-2.5 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:hover:scale-100"
-                        >
-                          <ArrowRight className="w-5 h-5" />
-                        </button>
-                      </div>
                     </div>
-                    <p className="text-[10px] font-bold text-zinc-500 ml-2 italic">The Butler will refer to itself by this name.</p>
+
+                    <div className="relative group">
+                      <label className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1.5 block ml-1">Your Nickname</label>
+                      <input
+                        value={draftUserNickname}
+                        onChange={(e) => setDraftUserNickname(e.target.value)}
+                        placeholder="How should I call you?"
+                        className="w-full h-12 sm:h-14 px-5 rounded-2xl bg-black/40 border border-white/10 text-base font-bold text-white placeholder:text-zinc-600 focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all outline-none"
+                      />
+                    </div>
+
+                    {(isAgentNameDirty || isNicknameDirty) && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        onClick={handleUpdateProfile}
+                        className="w-full py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      >
+                        {t('common.save_changes')}
+                      </motion.button>
+                    )}
                   </div>
                 </div>
 

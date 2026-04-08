@@ -1,4 +1,6 @@
 from datetime import datetime
+import logging
+import asyncio
 from typing import Annotated, Any, Dict, List, Optional, TypedDict
 
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -15,6 +17,8 @@ from app.services.butler_service import ButlerService
 from app.services.reflection_service import run_butler_learning
 from app.db.session import SessionLocal
 from app.models.butler import UserButlerProfile
+
+logger = logging.getLogger(__name__)
 
 # Define the state of the agent
 class AgentState(TypedDict):
@@ -67,33 +71,35 @@ async def supervisor(state: AgentState):
     user_id = state.get("user_id")
     
     db = SessionLocal()
-    butler_service = ButlerService(db)
-    
-    # --- v3.2 3-Layer Prompt Assembly ---
-    system_prompt = await butler_service.assemble_persona_prompt(user_id)
-    
-    # --- v3.3.1 C2M Wishing Well Guidance ---
-    last_user_msg = ""
-    for m in reversed(state["messages"]):
-        if m.type == "human":
-            last_user_msg = m.content
-            break
-    
-    if last_user_msg:
-        c2m_guidance = await butler_service.get_c2m_guidance_prompt(user_id, last_user_msg)
-        system_prompt += f"\n\n{c2m_guidance}"
-    
-    # Additional Context (Locale/Currency)
-    locale = state.get("locale", "en")
-    currency = state.get("currency", "USD")
-    system_prompt += f"\n\n### Current Context\n- Locale: {locale}\n- Currency: {currency}\n- Response Language: {locale}"
-    
-    llm, _ = get_dynamic_llm(user_id, db)
-    
-    llm_with_tools = llm.bind_tools(tools)
-    messages = [SystemMessage(content=system_prompt)] + state["messages"]
-    response = await llm_with_tools.ainvoke(messages)
-    db.close()
+    try:
+        butler_service = ButlerService(db)
+        
+        # --- v3.2 3-Layer Prompt Assembly ---
+        system_prompt = await butler_service.assemble_persona_prompt(user_id)
+        
+        # --- v3.3.1 C2M Wishing Well Guidance ---
+        last_user_msg = ""
+        for m in reversed(state["messages"]):
+            if m.type == "human":
+                last_user_msg = m.content
+                break
+        
+        if last_user_msg:
+            c2m_guidance = await butler_service.get_c2m_guidance_prompt(user_id, last_user_msg)
+            system_prompt += f"\n\n{c2m_guidance}"
+        
+        # Additional Context (Locale/Currency)
+        locale = state.get("locale", "en")
+        currency = state.get("currency", "USD")
+        system_prompt += f"\n\n### Current Context\n- Locale: {locale}\n- Currency: {currency}\n- Response Language: {locale}"
+        
+        llm, _ = get_dynamic_llm(user_id, db)
+        
+        llm_with_tools = llm.bind_tools(tools)
+        messages = [SystemMessage(content=system_prompt)] + state["messages"]
+        response = await llm_with_tools.ainvoke(messages)
+    finally:
+        db.close()
     
     # --- v3.5.0 AI Safety Sandbox: Enforce user_id in tool calls ---
     if response.tool_calls:
@@ -182,103 +188,102 @@ async def run_agent(content: str, user_id: int, session_id: str = "default"):
     4. Trigger Async Reflection for Persona Evolution.
     """
     db = SessionLocal()
-    shield = ShieldService(db)
-    rewards = RewardEngine(db)
-    
-    # 1. Dynamic LLM Selection
-    llm, is_byok = get_dynamic_llm(user_id, db)
-    
-    # 2. Prepare Initial State (v3.2: Context includes locale/currency)
-    profile = db.query(UserButlerProfile).filter_by(user_id=user_id).first()
-    initial_state = {
-        "messages": [HumanMessage(content=content)],
-        "query_params": {},
-        "search_results": [],
-        "user_id": user_id,
-        "is_byok": is_byok,
-        "locale": profile.detected_country if profile else "en",
-        "currency": profile.preferred_currency if profile else "USD",
-        "next_node": "supervisor"
-    }
-    
-    config = {"configurable": {"thread_id": session_id}}
-    
-    # 3. Run the LangGraph Agent
     try:
-        # v5.7.3: Added explicit timeout to prevent hanging
-        final_state = await asyncio.wait_for(
-            agent_executor.ainvoke(initial_state, config=config),
-            timeout=45.0
-        )
-    except asyncio.TimeoutError:
-        logger.error(f"❌ AI Agent Timeout for session {session_id}")
-        db.close()
-        return {
-            "id": f"msg_err_{datetime.now().timestamp()}",
-            "role": "assistant",
-            "content": "⚠️ 抱歉，0Buck 智脑响应超时，请稍后再试。",
-            "type": "text",
-            "is_byok": is_byok
-        }
-    except Exception as e:
-        logger.error(f"❌ AI Agent Execution Error: {str(e)}")
-        db.close()
-        return {
-            "id": f"msg_err_{datetime.now().timestamp()}",
-            "role": "assistant",
-            "content": f"⚠️ 0Buck 智脑遇到技术故障: {str(e)}",
-            "type": "text",
-            "is_byok": is_byok
-        }
-
-    last_msg = final_state["messages"][-1]
-    
-    # 4. Token Economics & Usage Tracking (v3.2)
-    if hasattr(last_msg, "response_metadata"):
-        usage = last_msg.response_metadata.get("token_usage", {})
-        tokens_in = usage.get("prompt_tokens", 0)
-        tokens_out = usage.get("completion_tokens", 0)
+        shield = ShieldService(db)
+        rewards = RewardEngine(db)
         
-        # Log to ai_usage_stats
-        usage_stat = AIUsageStats(
-            user_id=user_id,
-            task_type="chat",
-            model_name="gemini-1.5-flash", # Main model
-            tokens_in=tokens_in,
-            tokens_out=tokens_out,
-            cost_usd=(tokens_in * 0.0000035) + (tokens_out * 0.0000105), # Est. Pro pricing
-            session_id=session_id
-        )
-        db.add(usage_stat)
+        # 1. Dynamic LLM Selection
+        llm, is_byok = get_dynamic_llm(user_id, db)
         
-        # Track for BYOK Rewards (v3.1)
-        if is_byok and (tokens_in + tokens_out) > 0:
-            rewards.track_token_usage(user_id, tokens_in + tokens_out, "pro")
-    
-    db.commit()
-    
-    # 5. Trigger Async Reflection (v3.2 Evolution)
-    # v5.7.3: Use a fresh session for the background learning task to avoid 'Session closed' errors
-    history_dicts = []
-    for m in final_state["messages"]:
-        role = "assistant" if m.type == "ai" else "user"
-        history_dicts.append({"role": role, "content": m.content})
-    
-    async def background_learning():
-        new_db = SessionLocal()
+        # 2. Prepare Initial State (v3.2: Context includes locale/currency)
+        profile = db.query(UserButlerProfile).filter_by(user_id=user_id).first()
+        initial_state = {
+            "messages": [HumanMessage(content=content)],
+            "query_params": {},
+            "search_results": [],
+            "user_id": user_id,
+            "is_byok": is_byok,
+            "locale": profile.detected_country if profile else "en",
+            "currency": profile.preferred_currency if profile else "USD",
+            "next_node": "supervisor"
+        }
+        
+        config = {"configurable": {"thread_id": session_id}}
+        
+        # 3. Run the LangGraph Agent
         try:
-            await run_butler_learning(history_dicts, user_id, new_db)
-        finally:
-            new_db.close()
+            # v5.7.3: Added explicit timeout to prevent hanging
+            final_state = await asyncio.wait_for(
+                agent_executor.ainvoke(initial_state, config=config),
+                timeout=45.0
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"❌ AI Agent Timeout for session {session_id}")
+            return {
+                "id": f"msg_err_{datetime.now().timestamp()}",
+                "role": "assistant",
+                "content": "⚠️ 抱歉，0Buck 智脑响应超时，请稍后再试。",
+                "type": "text",
+                "is_byok": is_byok
+            }
+        except Exception as e:
+            logger.error(f"❌ AI Agent Execution Error: {str(e)}")
+            return {
+                "id": f"msg_err_{datetime.now().timestamp()}",
+                "role": "assistant",
+                "content": f"⚠️ 0Buck 智脑遇到技术故障: {str(e)}",
+                "type": "text",
+                "is_byok": is_byok
+            }
+
+        last_msg = final_state["messages"][-1]
+        
+        # 4. Token Economics & Usage Tracking (v3.2)
+        if hasattr(last_msg, "response_metadata"):
+            usage = last_msg.response_metadata.get("token_usage", {})
+            tokens_in = usage.get("prompt_tokens", 0)
+            tokens_out = usage.get("completion_tokens", 0)
             
-    asyncio.create_task(background_learning())
+            # Log to ai_usage_stats
+            usage_stat = AIUsageStats(
+                user_id=user_id,
+                task_type="chat",
+                model_name="gemini-1.5-flash", # Main model
+                tokens_in=tokens_in,
+                tokens_out=tokens_out,
+                cost_usd=(tokens_in * 0.0000035) + (tokens_out * 0.0000105), # Est. Pro pricing
+                session_id=session_id
+            )
+            db.add(usage_stat)
             
-    db.close()
-    
-    return {
-        "id": f"msg_ai_{datetime.now().timestamp()}",
-        "role": "assistant",
-        "content": last_msg.content,
-        "type": "text",
-        "is_byok": is_byok
-    }
+            # Track for BYOK Rewards (v3.1)
+            if is_byok and (tokens_in + tokens_out) > 0:
+                rewards.track_token_usage(user_id, tokens_in + tokens_out, "pro")
+        
+        db.commit()
+        
+        # 5. Trigger Async Reflection (v3.2 Evolution)
+        # v5.7.3: Use a fresh session for the background learning task to avoid 'Session closed' errors
+        history_dicts = []
+        for m in final_state["messages"]:
+            role = "assistant" if m.type == "ai" else "user"
+            history_dicts.append({"role": role, "content": m.content})
+        
+        async def background_learning():
+            new_db = SessionLocal()
+            try:
+                await run_butler_learning(history_dicts, user_id, new_db)
+            finally:
+                new_db.close()
+                
+        asyncio.create_task(background_learning())
+                
+        return {
+            "id": f"msg_ai_{datetime.now().timestamp()}",
+            "role": "assistant",
+            "content": last_msg.content,
+            "type": "text",
+            "is_byok": is_byok
+        }
+    finally:
+        db.close()

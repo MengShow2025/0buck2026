@@ -59,7 +59,7 @@ async def proxy_butler_chat(request: MinimaxChatRequest, db: Session = Depends(g
                     }
                 }
             ],
-            "model": "gemini-flash-latest",
+            "model": "gemini-1.5-flash",
             "base_resp": {
                 "status_code": 0,
                 "status_msg": "ok"

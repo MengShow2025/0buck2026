@@ -1,10 +1,25 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App.tsx';
+import { RouterProvider } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import './index.css';
 import './i18n/config'; // Import i18n config
-import { ThemeProvider } from './context/ThemeContext.tsx';
+import { ThemeProvider } from './context/ThemeContext';
+import { AppProvider } from './context/AppContext';
+import { router } from './router';
+
+// v5.7.1: Superpowers Performance - Query Client Setup
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
@@ -17,10 +32,13 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <App />
+        <AppProvider>
+          <RouterProvider router={router} />
+        </AppProvider>
       </ThemeProvider>
-    </BrowserRouter>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   </StrictMode>,
 );

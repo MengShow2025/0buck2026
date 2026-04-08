@@ -15,6 +15,9 @@ import BAPAttachmentRenderer from './BAPAttachmentRenderer';
 
 import { getApiUrl } from '../utils/api';
 
+import { useAppContext } from '../context/AppContext';
+import { useQuery } from '@tanstack/react-query';
+
 interface Message {
   id: string;
   type: 'user' | 'assistant';
@@ -30,16 +33,33 @@ interface Message {
   isProductScroller?: boolean;
 }
 
-interface AIButlerViewProps {
-  agentName: string;
-  userId?: number | string;
-  currentUser?: any;
-  onProductClick?: (product: Product) => void;
-  onBuyNow?: (product: Product) => void;
-  onAddToCart?: (product: Product) => void;
-}
+export default function AIButlerView() {
+  const { agentName, userNickname, selectedProduct, setSelectedProduct, setPreviousView, setSecurePayPayload, setSecurePayBackView } = useAppContext();
+  
+  // v5.7.1: Superpowers Performance - Use React Query for session and products
+  const { data: authData, refetch: refetchAuth } = useQuery<any>({ queryKey: ['auth-me'] });
+  const currentUser = authData?.user;
+  const userId = currentUser?.customer_id;
+  
+  const butlerName = agentName || 'AI Butler';
 
-export default function AIButlerView({ agentName, userId, currentUser, onProductClick, onBuyNow, onAddToCart }: AIButlerViewProps) {
+  const { data: realProducts = [] } = useQuery<Product[]>({
+    queryKey: ['discovery-products'],
+    queryFn: async () => {
+      const url = getApiUrl('/v1/products/discovery?limit=10');
+      const response = await fetch(url);
+      if (!response.ok) return [];
+      const data = await response.json();
+      const productsList = Array.isArray(data) ? data : (data.products || []);
+      return productsList.map((p: any) => ({
+        ...p,
+        id: String(p.id),
+        name: p.name || p.title || 'Unknown Product',
+        price: typeof p.price === 'number' ? `$${p.price.toFixed(2)}` : String(p.price)
+      })) as Product[];
+    }
+  });
+
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem('butler_messages');
     if (saved) {
@@ -50,56 +70,37 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
           timestamp: new Date(m.timestamp)
         }));
       } catch (e) {
-        console.error('Failed to parse saved messages:', e);
         return [];
       }
     }
     return [];
   });
+
   const [inputValue, setInputValue] = useState('');
   const [isNaming, setIsNaming] = useState(false);
-  const [butlerName, setButlerName] = useState(() => agentName || localStorage.getItem('butlerName') || '');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [realProducts, setRealProducts] = useState<Product[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Fetch real products from DB for recommendations
-    useEffect(() => {
-      const fetchProducts = async () => {
-        try {
-          const url = getApiUrl('/v1/products/discovery?limit=10');
-          const response = await fetch(url);
-          if (response.ok) {
-            const data = await response.json();
-            // Handle both array response and { products: [...] } response
-            const productsList = Array.isArray(data) ? data : (data.products || []);
-            if (productsList && Array.isArray(productsList)) {
-              setRealProducts(productsList.map((p: any) => ({
-                ...p,
-                id: String(p.id),
-                name: p.name || p.title || 'Unknown Product',
-                price: typeof p.price === 'number' ? `$${p.price.toFixed(2)}` : String(p.price)
-              })));
-            }
-          }
-        } catch (e) {
-          console.error('Failed to fetch real products for butler:', e);
-        }
-      };
-      fetchProducts();
-    }, []);
+  const onProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setPreviousView('chat');
+  };
+
+  const onBuyNow = (item: any) => {
+    setSecurePayPayload({
+      type: 'single', 
+      id: item.id,
+      name: item.name,
+      price: typeof item.price === 'string' ? parseFloat(item.price.replace(/[^0-9.]/g, '')) : item.price,
+      image: item.image,
+      quantity: item.quantity || 1
+    });
+    setSecurePayBackView('chat');
+  };
 
   // Persist messages to localStorage
   useEffect(() => {
     localStorage.setItem('butler_messages', JSON.stringify(messages));
   }, [messages]);
-
-  // Sync butlerName with agentName prop
-  useEffect(() => {
-    if (agentName) {
-      setButlerName(agentName);
-    }
-  }, [agentName]);
 
   const handleClearChat = () => {
     if (window.confirm('Clear all conversation history with your butler?')) {
@@ -109,35 +110,20 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
   };
 
   useEffect(() => {
-    const handleNameChange = () => {
-      setButlerName(localStorage.getItem('butlerName') || '');
-    };
-    
-    window.addEventListener('butlerNameChanged', handleNameChange);
-    return () => window.removeEventListener('butlerNameChanged', handleNameChange);
-  }, []);
-
-  useEffect(() => {
-    if (!butlerName) {
-      setIsNaming(true);
-    } else {
-      setIsNaming(false);
-      
-      // Only set initial messages if we don't have any
-      setMessages(prev => {
-        if (prev.length === 0) {
-          return [
-            {
-              id: 'welcome',
-              type: 'assistant',
-              content: `Greetings. I am ${butlerName}, your personal 0Buck concierge. How can I assist you with your global procurement or node network today?`,
-              timestamp: new Date()
-            }
-          ];
-        }
-        return prev;
-      });
-    }
+    // Only set initial messages if we don't have any
+    setMessages(prev => {
+      if (prev.length === 0) {
+        return [
+          {
+            id: 'welcome',
+            type: 'assistant',
+            content: `Greetings. I am ${butlerName}, your personal 0Buck concierge. How can I assist you with your global procurement or node network today?`,
+            timestamp: new Date()
+          }
+        ];
+      }
+      return prev;
+    });
   }, [butlerName]);
 
   const scrollToBottom = () => {
@@ -151,16 +137,6 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
-
-    if (isNaming) {
-      const newName = inputValue.trim();
-      setButlerName(newName);
-      localStorage.setItem('butlerName', newName);
-      window.dispatchEvent(new Event('butlerNameChanged'));
-      setIsNaming(false);
-      setInputValue('');
-      return;
-    }
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -183,6 +159,7 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          user_id: userId || 1, // v5.7.3: Pass real user ID for persistent identity
           butler_name: butlerName || agentName || '0Buck Butler',
           messages: [...messages.slice(-5), newMessage].map(m => ({
             role: m.type === 'assistant' ? 'assistant' : 'user',
@@ -199,6 +176,12 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
       }
       
       const content = data.choices?.[0]?.message?.content || "I've processed your request.";
+      
+      // v5.7.3: Superpowers Sync - Increased delay for Reflection Engine to commit changes
+      if (content.includes('以后我就叫') || content.includes('我就叫') || content.includes('My name is') || content.includes('贾维斯')) {
+        setTimeout(() => refetchAuth(), 5000);
+        setTimeout(() => refetchAuth(), 10000); // Second check for safety
+      }
       const isRecommending = content.toLowerCase().includes('推荐') || content.toLowerCase().includes('recommend') || content.toLowerCase().includes('buy') || content.toLowerCase().includes('购买');
 
       // Detect if AI output contains a JSON block for BAP Card
@@ -311,25 +294,12 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
         {/* Chat Interface Scroll Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-10 space-y-8 sm:space-y-12 no-scrollbar scroll-smooth">
           <div className="max-w-5xl mx-auto space-y-8 sm:space-y-12">
-            {isNaming ? (
-              <div className="flex flex-col items-center justify-center h-[50vh] text-center gap-8">
-                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center relative">
-                  <Sparkles className="w-12 h-12 text-primary" />
-                  <div className="absolute -inset-2 rounded-full border-2 border-primary/20 animate-ping"></div>
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-4xl font-black text-white tracking-tighter uppercase">Initiating Butler Protocol</h2>
-                  <p className="text-lg text-zinc-600 font-bold uppercase tracking-widest">Provide a designation to proceed.</p>
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* System/Time Marker */}
-                <div className="flex justify-center">
-                  <span className="text-[10px] uppercase tracking-[0.4em] text-zinc-700 font-bold bg-zinc-900/30 px-6 py-1.5 rounded-full border border-white/5 backdrop-blur-sm">Monday, Oct 24</span>
-                </div>
+            {/* System/Time Marker */}
+            <div className="flex justify-center">
+              <span className="text-[10px] uppercase tracking-[0.4em] text-zinc-700 font-bold bg-zinc-900/30 px-6 py-1.5 rounded-full border border-white/5 backdrop-blur-sm">Monday, Oct 24</span>
+            </div>
 
-                {messages.map((message) => (
+            {messages.map((message) => (
                   <div key={message.id} className={`flex w-full ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`flex gap-2 sm:gap-4 w-full sm:max-w-[85%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                       {/* Avatar */}
@@ -387,15 +357,13 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
                         <span className={`text-[8px] sm:text-[9px] text-zinc-600 px-1 font-bold uppercase tracking-widest`}>
                           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {message.type === 'user' ? 'Delivered' : 'Butler Concierge'}
                         </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-            <div ref={messagesEndRef} />
+              </div>
+            </div>
           </div>
-        </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+    </div>
 
         {/* Rich Input (Bottom of Terminal) */}
         <footer className="p-4 sm:p-10 bg-zinc-950/40 border-t border-zinc-800/30 flex-shrink-0">
@@ -405,7 +373,7 @@ export default function AIButlerView({ agentName, userId, currentUser, onProduct
               onChange={setInputValue}
               onSubmit={handleSendMessage}
               onClear={handleClearChat}
-              placeholder={isNaming ? "Assign designation..." : "Query the Luminous Ledger..."}
+              placeholder="Query the Luminous Ledger..."
               compact={false}
             />
             

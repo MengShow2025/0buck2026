@@ -24,7 +24,7 @@ class ButlerService:
     def __init__(self, db: Session):
         self.db = db
         genai.configure(api_key=settings.GOOGLE_API_KEY)
-        self.model = genai.GenerativeModel('gemini-flash-latest')
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
 
     async def assemble_persona_prompt(self, user_id: int) -> str:
         """

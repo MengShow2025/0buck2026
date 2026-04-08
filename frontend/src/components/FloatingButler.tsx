@@ -5,6 +5,8 @@ import { Product } from '../types';
 import ChatInput from './ChatInput';
 import BongoCat from './BongoCat';
 import { useDeviceType } from '../hooks/useDeviceType';
+import { useAppContext } from '../context/AppContext';
+import { useQuery } from '@tanstack/react-query';
 
 interface Message {
   id: string;
@@ -15,13 +17,22 @@ interface Message {
 
 import { getApiUrl } from '../utils/api';
 
-export default function FloatingButler({ onProductClick }: { onProductClick?: (product: Product) => void }) {
+interface FloatingButlerProps {
+  onProductClick?: (product: Product) => void;
+}
+
+export default function FloatingButler({ onProductClick }: FloatingButlerProps) {
+  const { agentName, userNickname } = useAppContext();
+  const { data: authData, refetch: refetchAuth } = useQuery<any>({ queryKey: ['auth-me'] });
+  const currentUser = authData?.user;
+  const userId = currentUser?.customer_id;
+  const butlerName = agentName || 'AI Butler';
+
   const deviceType = useDeviceType();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [butlerName, setButlerName] = useState(() => localStorage.getItem('butlerName') || '');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -65,15 +76,6 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
-
-  useEffect(() => {
-    // Listen for name changes in localStorage
-    const handleStorageChange = () => {
-      setButlerName(localStorage.getItem('butlerName') || '');
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
 
   useEffect(() => {
     if (butlerName && messages.length === 0) {
@@ -143,20 +145,6 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
     const valueToSend = overrideValue !== undefined ? overrideValue : inputValue;
     if (!valueToSend.trim()) return;
 
-    if (!butlerName) {
-      const newName = valueToSend.trim();
-      setButlerName(newName);
-      localStorage.setItem('butlerName', newName);
-      window.dispatchEvent(new Event('butlerNameChanged'));
-      setMessages([{
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: `Great! My name is ${newName}. How can I assist you today?`
-      }]);
-      setInputValue('');
-      return;
-    }
-
     const newMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
@@ -177,6 +165,7 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            user_id: userId || 1, // v5.7.3: Pass real user ID for persistent identity
             messages: messages.slice(-5).map(m => ({
               role: m.type === 'assistant' ? 'assistant' : 'user',
               content: m.content
@@ -192,6 +181,11 @@ export default function FloatingButler({ onProductClick }: { onProductClick?: (p
         }
         
         const content = data.choices?.[0]?.message?.content || "I've processed your request.";
+
+        // v5.7.2: Superpowers Sync - Refresh auth profile if name/nickname might have changed
+        if (content.includes('以后我就叫') || content.includes('我就叫') || content.includes('My name is')) {
+          setTimeout(() => refetchAuth(), 2000);
+        }
         const isRecommending = content.toLowerCase().includes('推荐') || content.toLowerCase().includes('recommend') || content.toLowerCase().includes('buy') || content.toLowerCase().includes('购买');
 
         setMessages(prev => [...prev, {

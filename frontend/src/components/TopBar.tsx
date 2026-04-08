@@ -1,40 +1,64 @@
-import { Search, MoreVertical, UserCircle, Bell, ShoppingCart, ArrowLeft, Sparkles, Share2, Menu } from 'lucide-react';
+import { Search, Bell, ShoppingCart, ArrowLeft, Share2, Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'motion/react';
-import { ViewType } from '../types';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useAppContext } from '../context/AppContext';
+import { useMemo } from 'react';
 
 export interface TopBarProps {
-  title?: string;
-  subtitle?: string;
-  showSearch?: boolean;
-  onBack?: () => void;
-  onShare?: () => void;
   onMenuClick?: () => void;
-  currentView?: ViewType;
-  onViewChange?: (view: ViewType) => void;
-  isAuthenticated?: boolean;
-  onUserClick?: () => void;
-  hideHeader?: boolean;
-  cartItemsCount?: number;
 }
 
-export default function TopBar({ 
-  title, 
-  subtitle, 
-  currentView, 
-  onViewChange, 
-  showSearch = true, 
-  onBack,
-  onShare,
-  onMenuClick,
-  isAuthenticated = false,
-  onUserClick,
-  hideHeader = false,
-  cartItemsCount = 0
-}: TopBarProps) {
-  if (hideHeader) return null;
-
+export default function TopBar({ onMenuClick }: TopBarProps) {
   const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { cartItems, agentName, selectedMerchant } = useAppContext();
+  const { data: authData } = useQuery<any>({ queryKey: ['auth-me'] });
+  
+  const currentUser = authData?.user;
+  const isAuthenticated = !!currentUser;
+  const cartItemsCount = cartItems.length;
+
+  const currentPath = location.pathname.toLowerCase().replace(/\/$/, "");
+
+  const headerInfo = useMemo(() => {
+    if (currentPath === "/explore") return { title: t('nav.explore'), subtitle: t('explore.subtitle') };
+    if (currentPath === "/chat") return { title: agentName || 'AI Butler', subtitle: agentName ? t('settings.butler_protocol') : t('nav.wait_for_naming') };
+    if (currentPath === "/circle") return { title: t('nav.lounge'), subtitle: t('nav.private_talks') };
+    if (currentPath === "/messages") return { title: t('nav.messages'), subtitle: t('nav.editorial_conv') };
+    if (currentPath === "/activity") return { title: t('nav.feed'), subtitle: t('feed.subtitle') };
+    if (currentPath === "/pay") return { title: t('secure_pay.title'), subtitle: t('secure_pay.subtitle'), showSearch: false };
+    if (currentPath === "/cart") return { title: t('stash.title'), subtitle: t('stash.subtitle'), showSearch: false };
+    if (currentPath === "/me") return { hideHeader: true };
+    if (currentPath === "/command") return { title: '0Buck Admin', subtitle: 'Global Decision Engine', showSearch: false };
+    if (currentPath.startsWith("/product/")) return { hideHeader: true };
+    if (currentPath === "/login" || currentPath === "/register") return { hideHeader: true };
+    if (currentPath === "/square") return { title: t('nav.square'), subtitle: t('square.subtitle') };
+    if (currentPath.startsWith("/merchant/")) return { 
+      title: selectedMerchant?.name || 'Supplier Marketplace', 
+      subtitle: 'Verified Global Node',
+      showSearch: false,
+      onBack: () => navigate(-1),
+      onShare: () => {
+        if (navigator.share) {
+          navigator.share({
+            title: selectedMerchant?.name || 'Supplier Marketplace',
+            text: `Check out ${selectedMerchant?.name} on 0Buck Global Supply Index`,
+            url: window.location.href,
+          }).catch(console.error);
+        } else {
+          navigator.clipboard.writeText(window.location.href);
+          alert('Link copied to clipboard!');
+        }
+      }
+    };
+    return { title: t('nav.prime'), subtitle: t('prime.subtitle') };
+  }, [currentPath, t, agentName, selectedMerchant, navigate]);
+
+  if (headerInfo.hideHeader) return null;
+
+  const { title, subtitle, showSearch = true, onBack, onShare } = headerInfo;
   
   return (
     <header className="sticky top-0 w-full flex justify-between items-center px-6 md:px-12 py-4 md:py-6 z-30 bg-background/80 backdrop-blur-xl border-b border-zinc-500/10 transition-all">
@@ -91,7 +115,7 @@ export default function TopBar({
           <span className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full border-2 border-background"></span>
         </button>
         <button 
-          onClick={() => onViewChange && onViewChange('cart')}
+          onClick={() => navigate('/cart')}
           className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-all relative"
         >
           <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -103,11 +127,11 @@ export default function TopBar({
         </button>
         <div className="h-6 sm:h-8 w-[1px] bg-zinc-500/10 mx-1 sm:mx-2"></div>
         <button 
-          onClick={onUserClick}
+          onClick={() => navigate('/me')}
           className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-xl hover:bg-surface-container-high transition-all group"
         >
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-bold text-on-surface">{isAuthenticated ? "Julian Rossi" : t('nav.guest')}</p>
+            <p className="text-xs font-bold text-on-surface">{isAuthenticated ? (currentUser?.first_name || "User") : t('nav.guest')}</p>
             <p className="text-[10px] text-on-surface-variant font-medium">{isAuthenticated ? t('nav.pro_member') : t('nav.guest_mode')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-surface-container-low overflow-hidden border border-zinc-500/10 group-hover:border-primary transition-all relative">
