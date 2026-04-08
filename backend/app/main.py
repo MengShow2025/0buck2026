@@ -293,7 +293,16 @@ def sync_db_schema():
                     logger.warning(f"⚠️ Failed to add {col.name} to user_butler_profiles: {e}")
                     conn.rollback()
 
-        # 7. Create GIN Indexes for JSONB fields (PostgreSQL only)
+        # 7. Global Cleanup: Reset invalid butler names (v5.7.15)
+        try:
+            bad_name = "有什么好产品推荐"
+            conn.execute(text("UPDATE user_butler_profiles SET butler_name = NULL WHERE butler_name = :bad_name"), {"bad_name": bad_name})
+            conn.commit()
+            logger.info(f"🧹 Successfully cleared invalid butler names: {bad_name}")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to cleanup butler names: {e}")
+
+        # 8. Create GIN Indexes for JSONB fields (PostgreSQL only)
         if engine.dialect.name == 'postgresql':
             index_stmts = [
                 "CREATE INDEX IF NOT EXISTS idx_product_attributes ON products USING gin (attributes)",

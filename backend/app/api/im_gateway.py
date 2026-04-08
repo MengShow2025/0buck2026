@@ -100,16 +100,8 @@ async def generic_brain_process(platform: str, platform_uid: str, text: str, cha
         # Composite Session for Persona Projection
         session_id = f"{platform}_{chat_id}_{platform_uid}" if chat_type == "group" else f"{platform}_{platform_uid}"
         
-        # 1. Send Immediate Thinking Status
-        thinking_msgs = {
-            "zh": "🔍 0Buck 智脑正在深度思考中，请稍等片刻...",
-            "ja": "🔍 0Buck AIブレインが深く考えています、少々お待ちください...",
-            "es": "🔍 El cerebro de IA de 0Buck está pensando profundamente, por favor espere un momento...",
-            "fr": "🔍 Le cerveau IA de 0Buck réfléchit profondément, veuillez patienter un instant...",
-            "de": "🔍 Das 0Buck KI-Gehirn denkt tief nach, bitte warten Sie einen Moment...",
-            "en": "🔍 0Buck AI Brain is thinking deeply, please wait a moment..."
-        }
-        thinking_msg = thinking_msgs.get(lang, thinking_msgs["en"])
+        # 1. Send Immediate Thinking Status (Minimal Rotating Icon)
+        thinking_msg = "🌀"
         
         # v5.6.5: Thinking status shouldn't have a login link yet (too early)
         await send_rich_message(platform, platform_uid, thinking_msg, "0Buck AI Brain", None, lang)

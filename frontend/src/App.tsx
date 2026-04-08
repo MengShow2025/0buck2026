@@ -60,10 +60,11 @@ export default function App() {
 
   // Sync butler name and nickname from profile
   useEffect(() => {
-    if (currentUser?.butler_name) {
-      setAgentName(currentUser.butler_name);
-      localStorage.setItem('butlerName', currentUser.butler_name);
-    }
+    // v5.7.15: Support resetting butler name to default
+    const bName = currentUser?.butler_name || 'AI Butler';
+    setAgentName(bName);
+    localStorage.setItem('butlerName', bName);
+    
     if (currentUser?.user_nickname) {
       setUserNickname(currentUser.user_nickname);
       localStorage.setItem('userNickname', currentUser.user_nickname);
