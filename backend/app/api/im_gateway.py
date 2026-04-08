@@ -88,16 +88,18 @@ async def generic_brain_process(platform: str, platform_uid: str, text: str, cha
         
         sig = generate_binding_sig(platform, platform_uid)
         
-        # v5.7.17: Normalize domain to STOREFRONT_DOMAIN for consistent cookie sharing
-        domain = settings.STOREFRONT_DOMAIN.strip()
-        base_url = f"https://{domain}" if not domain.startswith("http") else domain.rstrip("/")
-        
+        # v5.7.20: Use a more robust URL construction
+        domain = settings.STOREFRONT_DOMAIN.strip().rstrip("/")
+        if not domain.startswith("http"):
+            base_url = f"https://{domain}"
+        else:
+            base_url = domain
+            
         raw_bind_url = f"{base_url}/auth/bind?platform={platform}&uid={platform_uid}&sig={sig}"
         
-        if platform == "feishu":
-            # Force open in Feishu's internal browser
-            bind_url = f"https://open.feishu.cn/open-apis/authen/v1/index?redirect_uri={raw_bind_url}&app_id={settings.FEISHU_APP_ID}"
-            # Alternative: direct link with feishu internal flag
+        # Determine appropriate binding message based on is_guest
+        if is_guest:
+            # v5.6.6: Add Feishu-specific immersive browser flags
             bind_url = f"{raw_bind_url}&lk_with_external=false"
         else:
             bind_url = raw_bind_url
@@ -122,8 +124,12 @@ async def generic_brain_process(platform: str, platform_uid: str, text: str, cha
             logger.error(f"AI Agent Error: {ai_err}")
             main_reply = f"⚠️ 0Buck 智脑暂时无法响应: {str(ai_err)}" if lang == "zh" else f"⚠️ 0Buck AI Brain error: {str(ai_err)}"
         
-        # 3. Send final response (Footer/Login link is handled elegantly by send_rich_message)
-        await send_rich_message(platform, platform_uid, main_reply, "0Buck AI Brain", bind_url if is_guest else None, lang)
+        # 3. Send final response (v5.7.20: Enhanced footer for guests)
+        if is_guest:
+            # v5.6.4: Only suggest binding if they haven't yet
+            main_reply += f"\n\n--- \n 💡 提示：检测到您尚未登录。点击 [立即登录]({bind_url})，即可解锁订单跟踪和专属生意记忆功能。" if lang == "zh" else f"\n\n--- \n 💡 Tip: You are not logged in. [Login Now]({bind_url}) to unlock order tracking and personalized memory."
+            
+        await send_rich_message(platform, platform_uid, main_reply, "0Buck AI Brain", None, lang)
         logger.info(f"✅ [{platform.upper()}] Response complete for {platform_uid}")
         
     except Exception as e:

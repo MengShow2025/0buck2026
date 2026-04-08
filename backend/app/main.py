@@ -440,9 +440,21 @@ if not os.path.exists(frontend_path):
 if os.path.exists(frontend_path):
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
 
+    # v5.7.20: Explicitly handle root and common frontend routes to prevent 404
+    @app.get("/")
+    async def serve_index():
+        return FileResponse(os.path.join(frontend_path, "index.html"))
+
+    @app.get("/auth/bind")
+    async def serve_bind_page():
+        return FileResponse(os.path.join(frontend_path, "index.html"))
+
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
         # v3.9.1: Correctly allow non-API routes like /command to be handled by React Router
+        if not full_path or full_path == "/":
+             return FileResponse(os.path.join(frontend_path, "index.html"))
+             
         if full_path.startswith("api/") or full_path.startswith("v1/"):
              return {"detail": "Not Found"}
              
