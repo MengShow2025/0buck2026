@@ -204,7 +204,33 @@ async def run_agent(content: str, user_id: int, session_id: str = "default"):
     config = {"configurable": {"thread_id": session_id}}
     
     # 3. Run the LangGraph Agent
-    final_state = await agent_executor.ainvoke(initial_state, config=config)
+    try:
+        # v5.7.3: Added explicit timeout to prevent hanging
+        final_state = await asyncio.wait_for(
+            agent_executor.ainvoke(initial_state, config=config),
+            timeout=45.0
+        )
+    except asyncio.TimeoutError:
+        logger.error(f"❌ AI Agent Timeout for session {session_id}")
+        db.close()
+        return {
+            "id": f"msg_err_{datetime.now().timestamp()}",
+            "role": "assistant",
+            "content": "⚠️ 抱歉，0Buck 智脑响应超时，请稍后再试。",
+            "type": "text",
+            "is_byok": is_byok
+        }
+    except Exception as e:
+        logger.error(f"❌ AI Agent Execution Error: {str(e)}")
+        db.close()
+        return {
+            "id": f"msg_err_{datetime.now().timestamp()}",
+            "role": "assistant",
+            "content": f"⚠️ 0Buck 智脑遇到技术故障: {str(e)}",
+            "type": "text",
+            "is_byok": is_byok
+        }
+
     last_msg = final_state["messages"][-1]
     
     # 4. Token Economics & Usage Tracking (v3.2)
@@ -232,15 +258,20 @@ async def run_agent(content: str, user_id: int, session_id: str = "default"):
     db.commit()
     
     # 5. Trigger Async Reflection (v3.2 Evolution)
-    # We pass the history to the learning service to extract new facts
-    # In a real production app, this should be sent to a Celery/Redis queue
-    import asyncio
+    # v5.7.3: Use a fresh session for the background learning task to avoid 'Session closed' errors
     history_dicts = []
     for m in final_state["messages"]:
         role = "assistant" if m.type == "ai" else "user"
         history_dicts.append({"role": role, "content": m.content})
     
-    asyncio.create_task(run_butler_learning(history_dicts, user_id, db))
+    async def background_learning():
+        new_db = SessionLocal()
+        try:
+            await run_butler_learning(history_dicts, user_id, new_db)
+        finally:
+            new_db.close()
+            
+    asyncio.create_task(background_learning())
             
     db.close()
     

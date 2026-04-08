@@ -42,6 +42,10 @@ async def proxy_butler_chat(request: MinimaxChatRequest, db: Session = Depends(g
     # Use 'web' platform prefix for session isolation but user-level persistence
     session_id = f"web_{user_id}"
     
+    # v5.7.3: Check connectivity if user_id is 1 (Guest/System account)
+    if user_id == 1 and not settings.GOOGLE_API_KEY:
+        raise HTTPException(status_code=503, detail="AI Brain is offline (Missing System Key)")
+
     try:
         response = await run_agent(content=last_msg, user_id=user_id, session_id=session_id)
         

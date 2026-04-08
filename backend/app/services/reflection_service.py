@@ -26,22 +26,20 @@ class ReflectionService:
 
     async def extract_facts(self, history: List[Dict[str, str]], user_id: int, db: Session):
         """
-        v3.2 Laser Slicing: Extracts speaker-centric facts from a conversation.
-        Serialized: Uses with_for_update() on ButlerProfile to prevent race conditions.
+        v5.7.3 Superpowers Reflection:
+        Extracts facts, identity changes, and pain points.
         """
-        # 1. Acquire row lock for this user to prevent concurrent memory corruption
-        try:
-            profile = db.query(UserButlerProfile).filter(UserButlerProfile.user_id == user_id).with_for_update().first()
-            if not profile:
-                profile = UserButlerProfile(user_id=user_id)
-                db.add(profile)
-                db.commit()
-                profile = db.query(UserButlerProfile).filter(UserButlerProfile.user_id == user_id).with_for_update().first()
-        except IntegrityError:
-            db.rollback()
-            profile = db.query(UserButlerProfile).filter(UserButlerProfile.user_id == user_id).with_for_update().first()
+        from app.models.butler import UserButlerProfile, UserMemoryFact
+        from app.models.ledger import AIUsageStats
+        
+        # 0. Ensure Profile Exists
+        profile = db.query(UserButlerProfile).filter(UserButlerProfile.user_id == user_id).first()
+        if not profile:
+            profile = UserButlerProfile(user_id=user_id, personality={}, affinity_score=0)
+            db.add(profile)
+            db.commit() # Create immediately
+            db.refresh(profile)
 
-        # 2. Format history for the AI
         formatted_history = ""
         for msg in history:
             role = "User" if msg["role"] == "user" else "Butler"
@@ -49,10 +47,12 @@ class ReflectionService:
 
         prompt = (
             "You are the 0Buck Reflection Engine. Your task is to extract NEW factual insights and user pain points from the conversation.\n\n"
-            "OUTPUT FORMAT: A JSON object with two keys:\n"
+            "OUTPUT FORMAT: A JSON object with three keys:\n"
             "1. 'new_facts': List of objects: [{'key': 'string', 'value': 'any', 'confidence': 0.0-1.0, 'is_conflict': bool}]\n"
             "   Focus on: personal preferences, constraints, locations.\n"
-            "2. 'unmet_needs': List of objects: [{'category': 'string', 'need': 'string', 'urgency': 1-5, 'is_pain_point': bool, 'sentiment': -1.0 to 1.0}]\n"
+            "2. 'butler_identity': Object: {'butler_name': 'string', 'user_nickname': 'string'}\n"
+            "   Only include if the user explicitly GAVE you a name or TOLD you how to call them in this session.\n"
+            "3. 'unmet_needs': List of objects: [{'category': 'string', 'need': 'string', 'urgency': 1-5, 'is_pain_point': bool, 'sentiment': -1.0 to 1.0}]\n"
             "   Focus on: things the user wants but doesn't find, OR COMPLAINTS about current product quality/design/usability.\n\n"
             f"Conversation History:\n{formatted_history}\n\n"
             "Output JSON only:"
@@ -69,7 +69,20 @@ class ReflectionService:
                 
             data = json.loads(text)
             
-            # 2. Persist Facts to Database (LTM)
+            # 2. Update Butler Identity (v5.7.3)
+            identity = data.get("butler_identity", {})
+            if identity:
+                updated = False
+                if identity.get("butler_name") and identity["butler_name"].strip():
+                    profile.butler_name = identity["butler_name"].strip()
+                    updated = True
+                if identity.get("user_nickname") and identity["user_nickname"].strip():
+                    profile.user_nickname = identity["user_nickname"].strip()
+                    updated = True
+                if updated:
+                    logger.info(f"✅ Identity synchronized for user {user_id}: {profile.butler_name} / {profile.user_nickname}")
+
+            # 3. Persist Facts to Database (LTM)
             extracted_facts = data.get("new_facts", [])
             for item in extracted_facts:
                 key = item.get("key")
