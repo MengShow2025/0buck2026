@@ -668,6 +668,7 @@ async def auth_callback(provider: str, request: Request, db: Session = Depends(g
 
 @router.get("/me")
 async def get_my_info(
+    db: Session = Depends(get_db),
     current_user: UserExt = Depends(get_current_user)
 ):
     """
