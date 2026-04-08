@@ -51,7 +51,7 @@ def sync_db_schema():
     v4.6.9: Robust Hot Schema Migration.
     Adds missing columns to existing tables by checking existence first.
     """
-    from sqlalchemy import Column, Text, JSON, text, Float, DateTime, Numeric, Boolean, Integer, BigInteger, inspect, func
+    from sqlalchemy import Column, Text, String, JSON, text, Float, DateTime, Numeric, Boolean, Integer, BigInteger, inspect, func
     from sqlalchemy.dialects.postgresql import JSONB
     
     # Cross-dialect column type mapping

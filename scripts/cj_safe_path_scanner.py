@@ -262,15 +262,28 @@ async def main():
     cj_service = CJDropshippingService()
     supply_chain = SupplyChainService(db)
     
-    print("🚀 0Buck v5.6.3 Mirror Extractor (Weight & Size Precision)...")
+    print("🚀 0Buck v5.6.4 Mirror Extractor (Industrial 14-Point Standard)...")
     
-    search_results = await cj_service.search_products("Tuya Wifi Smart Door", size=3)
-    if search_results:
-        for p in search_results:
-            mirror_data = await mirror_extract_cj(cj_service, p)
-            if mirror_data: await ingest_v56(db, mirror_data, supply_chain)
+    # 1. Targeted Sweep for Tuya Smart Home Items
+    search_keywords = ["Tuya Smart Door", "Tuya Smart Plug", "Tuya Smart Camera", "Tuya Smart Sensor"]
+    
+    for kw in search_keywords:
+        print(f"\n📂 Sweeping Keyword: {kw}")
+        search_results = await cj_service.search_products(kw, size=5)
+        
+        if search_results:
+            print(f"   ✅ Found {len(search_results)} items. Processing...")
+            for p in search_results:
+                try:
+                    await asyncio.sleep(1.0) # Avoid hitting APIs too fast
+                    mirror_data = await mirror_extract_cj(cj_service, p, original_kw=kw)
+                    if mirror_data: 
+                        await ingest_v56(db, mirror_data, supply_chain)
+                except Exception as e:
+                    print(f"   ❌ Error: {e}")
                 
     db.close()
+    print("\n🏁 Standard Draft Library Ingestion Complete.")
 
 if __name__ == "__main__":
     asyncio.run(main())
