@@ -42,22 +42,33 @@ def get_order_status(order_id: str) -> Dict[str, Any]:
     }
     url = f"{SHOPIFY_API_URL}/orders/{order_id}.json"
     
+    db = SessionLocal()
     try:
         with httpx.Client() as client:
             response = client.get(url, headers=headers)
             if response.status_code == 200:
                 order_data = response.json().get("order", {})
+                
+                # Zone 2: PII Masking via ShieldService
+                from app.services.shield_service import ShieldService
+                shield = ShieldService(db)
+                masked_order = shield.mask_order_data(order_data)
+                
                 return {
-                    "order_id": order_data.get("id"),
-                    "financial_status": order_data.get("financial_status"),
-                    "fulfillment_status": order_data.get("fulfillment_status"),
-                    "total_price": order_data.get("total_price"),
-                    "created_at": order_data.get("created_at")
+                    "order_id": masked_order.get("id"),
+                    "financial_status": masked_order.get("financial_status"),
+                    "fulfillment_status": masked_order.get("fulfillment_status"),
+                    "total_price": masked_order.get("total_price"),
+                    "created_at": masked_order.get("created_at"),
+                    "customer": masked_order.get("customer", {}),
+                    "shipping_address": masked_order.get("shipping_address", {})
                 }
             else:
                 return {"error": f"Failed to fetch order: {response.text}"}
     except Exception as e:
         return {"error": str(e)}
+    finally:
+        db.close()
 
 @tool
 def get_user_rewards_info(customer_id: int) -> Dict[str, Any]:

@@ -30,18 +30,18 @@
 - **BYOK (Bring Your Own Key)**: 支持用户配置自定义 Gemini/MiniMax API Key。
 
 ## 9. 0Buck IM 智理网关 (v5.5 - The Sensory Extension)
-
-0Buck AI 大脑通过统一 IM 网关 (Unified IM Gateway) 延伸至第三方通讯平台，实现“对话即商业”的闭环。
-
-### 9.1 架构设计
-- **多端适配器 (Adapters)**: 针对飞书、WhatsApp、Telegram 提供标准化 Webhook 接入。
-- **身份隧道 (Identity Bridge)**: 通过 `UserIMBinding` 建立 `platform_uid` 与 `customer_id` 的 1:1 映射。
-- **大脑代理 (IMBrainProxy)**: 将 IM 上下文（消息 ID、媒体类型）透明转发给 LangGraph Agent 核心。
-
-### 9.2 核心能力
-- **个性化共生**: 共享 L1/L2/L3 Persona OS 架构，记忆跨端同步。
-- **主动式脉冲**: 基于全网热点感应，主动向高好感度 (`Affinity > 80`) 用户推送痛点对齐商品。
-- **无感化工具**: 在 IM 聊天中直接调用物流雷达、签到返现、C2M 许愿池等后端 Skills。
+ 
+ 0Buck AI 大脑通过统一 IM 网关 (Unified IM Gateway) 延伸至第三方通讯平台（如 WhatsApp, Telegram, 飞书），实现“对话即商业”的跨平台闭环。管家不再被局限于 0Buck App 内，而是像触手一样伸向用户最常用的聊天工具。
+ 
+ ### 9.1 架构设计：OpenClaw 模式的触角化
+ - **多端适配器 (Adapters)**: 针对各大 IM 平台提供标准化 Webhook 接入。前端的 IM 仅作为展示 UI，真正的“大脑”和“手脚”全在 0Buck 的 LangGraph Agent 核心。
+ - **身份隧道 (Identity Bridge)**: 通过 `UserIMBinding` 表，建立 `platform_uid` (如 WhatsApp 手机号) 与 0Buck 核心 `customer_id` 的 1:1 物理级映射。
+ - **大脑代理 (IMBrainProxy)**: 将 IM 的上下文（消息 ID、图片、语音）透明转发给 0Buck 后端，后端执行工具调用（查单、推荐、退款）后，再将纯文本或富媒体链接推回给 IM。
+ 
+ ### 9.2 核心能力与商业降维打击
+ - **个性化共生**: 管家在 WhatsApp 里的性格、记忆、好感度，与 0Buck App 内 100% 实时同步。
+ - **主动式脉冲 (Push Notification)**: 当用户的某笔订单物流异常，或其收藏的商品即将售罄时，管家不再发冰冷的邮件，而是直接在 WhatsApp 里弹出一句：“船长，我刚查到您的那个包裹卡在海关了，我已经帮您提交了加急申请，别担心~”
+ - **无感化工具调用**: 用户在 Telegram 里发一句：“帮我查下上次买的狗粮到哪了”，管家直接调用 `get_order_status`，并在聊天里回复物流卡片。真正做到“系统即聊天”。
 
 ---
 *Last Updated: 2026-04-05*

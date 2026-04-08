@@ -1,23 +1,26 @@
-## 0. 0Buck 选品标准作业程序 (Selection SOP v2.0 - Data-Driven Pulse)
-0Buck 的选品逻辑从“商品驱动”全面转向“数据脉冲驱动”，旨在捕捉全球最真实、最急迫的用户痛点与消费热点。
-
-### 八步选品法 (The 8-Step Method)
-1. **多维度需求感应 (Multi-Channel Pulse Sensing)**:
-   - **搜索趋势 (Search Trends)**: 监测 Google Keywords / Google Trends 的关键词搜索量激增及季节性变化。
-   - **广告投放 (Ad Intelligence)**: 分析 Google Ads、Facebook Ads、TikTok Ads 的投放广度、视频播放量及预估转化率（通过高频出现的爆款广告判定痛点）。
-   - **竞端增长 (Growth Platforms)**: 分析 Temu、Shein、TikTok Shop、Amazon Best Sellers 中快速增长（MoM > 30%）的黑马类目与热销单品。
-2. **痛点与方案定义 (Pain Point & Solution)**: 根据感应到的热点，定义能解决具体问题的“产品方案”（例如：针对电费激增，寻找“分时段智能能耗管理插座”）。
-3. **1688 深度溯源 (1688 Deep Sourcing)**: 在 1688 寻找质量、起订量及利润空间（Margin）符合 0Buck 高标准的同款。
-4. **全球市场审计 (Global Market Audit)**: 对比 Amazon/eBay 同类商品（优选同供应商）的零售价。
-5. **返现规则预判 (Profit Pre-audit)**: 预估利润空间，初步划分返现规则。
-6. **商家全量入库 (Merchant Onboarding)**: 锁定供应商及其全店产品线。
-7. **目录利润精算 (Catalog Analysis)**: 逐一审计该店商品的利润率，执行分流：
-   - **Discard**: < 1.5x (毛利过低，舍弃)。
-   - **TRAFFIC**: 1.5x - 4.0x (普通商品)。
-   - **PROFIT**: >= 4.0x (返现商品，标记 **"100% BACK"**)。
-8. **优化、去敏与上线 (Polish & Launch)**: 执行 v3.5 脱敏、润色、多币种转换，正式发布。
-
-## 1. 核心愿景 (Core Vision)
+## 0. 0Buck 选品标准作业程序 (Selection SOP v3.0 - The Merchant Ecosystem)
+ 0Buck 的选品逻辑从“商品驱动”全面转向“数据脉冲驱动”，最终落地为**“以商家为核心个体的销售矩阵”**。
+ 
+ ### 核心 6 步选品法 (The 6-Step Ecosystem Method)
+ 
+ 1. **热点感应 (Pulse Sensing)**:
+    - 发现时下热点话题、需求、痛点、爆发行业及热议商品（通过 TikTok/Google/竞对平台追踪）。
+ 2. **单品切入 (Surgical Entry)**:
+    - 精准切入寻找能完美解决该痛点/需求的 1688 源头单品。
+ 3. **多维比价与货源锁定 (Margin Audit & Sourcing)**:
+    - 横向对比传统平台（Amazon/eBay/AliExpress）的实际销售价格和划线价格。
+    - 根据 0Buck 后端拿到的 1688 真实拿货价，计算出利润率倍数（Margin Ratio）。
+    - 必须从符合利润条件（如 >4.0x 或引流款 >1.5x）的同类型供应商中，**同时选出 3 家左右作为备选货源池**，以防单点断货。
+ 4. **润色上架 (Polish & Launch)**:
+    - 对选出的核心单品执行“九点心理狙击法”文案润色、图片去敏、多币种换算后，正式上架。
+ 5. **供应商全量拓品 (Merchant Matrix Onboarding)**:
+    - **核心飞轮**：以该爆款单品为诱饵，系统同步从这 3 家供应商的店铺中，筛选出所有符合 0Buck 利润率与质量标准的其他商品。
+    - **整体上架**：将这些商品连同工厂背书一起打包上架，**形成以“代号商家（0Buck Verified Artisan）”为个体的销售团体模式**。让用户不仅买单品，还能“逛工厂”。
+ 6. **优胜劣汰跟进 (Supplier Darwinism)**:
+    - **系统记账**：0Buck 后台记录每个供应商的发货时效、客诉率、退货率及拼团转化率。
+    - **末位淘汰**：持续给这 3 家备选供应商打分考核，最终优胜劣汰。留下的顶级供应商将成为该品类的“御用工匠”。未来出现同类热点商品时，AI 优先向其询价寻货，形成高度绑定的 S2b2C 生态。
+ 
+ ## 1. 核心愿景 (Core Vision)
 构建“供应无感化”的 AI 驱动跨境电商平台。通过对上游 1688 供应链的深度脱敏、品牌重塑与 100% 返现激励，为全球用户提供极致性价比的智能生活体验。
 
 ## 2. 智理入库规范 (The Brain Protocol)

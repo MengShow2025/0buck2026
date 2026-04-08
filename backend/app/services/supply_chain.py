@@ -87,25 +87,67 @@ class SupplyChainService:
         }
 
     async def _call_1688_api(self, method: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """v4.6: Real 1688 API Gateway Integration"""
+        """
+        v4.7.0: Real 1688 API Gateway Integration with Anti-Ban (Superpowers).
+        Implements proxy rotation, random User-Agents, and request jitter.
+        """
+        import random
+        import asyncio
+        
         if not self.api_key or not self.api_base_url:
             logger.warning("1688 API Configuration missing. Falling back to simulation.")
             return None
+
+        # Anti-Ban: Random Jitter (0.5s to 2.5s) to simulate human behavior
+        jitter = random.uniform(0.5, 2.5)
+        logger.info(f"🛡️ [Anti-Ban] Applying request jitter: {jitter:.2f}s")
+        await asyncio.sleep(jitter)
+
+        # Anti-Ban: Random User-Agents Pool
+        user_agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15",
+        ]
+        
+        # Anti-Ban: Proxy Rotation (Fetch from settings if configured)
+        proxies = None
+        proxy_list = os.getenv("PROXY_POOL", "").split(",")
+        if proxy_list and proxy_list[0]:
+            selected_proxy = random.choice(proxy_list).strip()
+            proxies = {
+                "http://": selected_proxy,
+                "https://": selected_proxy
+            }
+            logger.info(f"🛡️ [Anti-Ban] Using Proxy: {selected_proxy}")
+
+        headers = {
+            "User-Agent": random.choice(user_agents),
+            "Accept": "application/json",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Connection": "keep-alive"
+        }
             
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(proxies=proxies) as client:
             try:
                 # Add authentication headers/params as per 1688 API spec
-                # This is a generic implementation using common patterns
                 api_params = {
                     "method": method,
                     "api_key": self.api_key,
                     "timestamp": datetime.now().isoformat(),
                     **params
                 }
-                response = await client.get(self.api_base_url, params=api_params, timeout=15.0)
+                response = await client.get(self.api_base_url, params=api_params, headers=headers, timeout=15.0)
                 if response.status_code == 200:
                     return response.json()
-                logger.error(f"1688 API Error: {response.status_code} - {response.text}")
+                elif response.status_code in [403, 429]:
+                    logger.error(f"🛡️ [Anti-Ban] Rate limited or blocked by 1688 (Status: {response.status_code}). Consider updating proxy pool.")
+                else:
+                    logger.error(f"1688 API Error: {response.status_code} - {response.text}")
+                return None
+            except httpx.ProxyError as e:
+                logger.error(f"🛡️ [Anti-Ban] Proxy connection failed: {e}")
                 return None
             except Exception as e:
                 logger.error(f"1688 API Call failed: {e}")

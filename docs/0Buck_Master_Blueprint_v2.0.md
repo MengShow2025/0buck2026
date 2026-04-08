@@ -1,7 +1,25 @@
 # 0Buck Master Blueprint v2.0 (Final Confirmed - 2026-04-02)
 
 ## 1. 核心定位 (Core Positioning)
-AI 驱动的"供应无感化"跨境社交电商。将复杂的供应链（1688/Alibaba）包装为用户透明的"供应库"。
+AI 驱动的"供应无感化"跨境社交无头电商 (Headless E-commerce)。
+将复杂的供应链（1688/Alibaba）包装为用户透明的"供应库"。
+
+### 1.1 四大技术与业务铁律 (The Four Iron Rules)
+1. **Shopify 的“绝对工具人”定位 (Headless Bridge & Draft Order Dictatorship)**:
+   - **前端引流**：完全在 `0buck.com`，利用 Liquid 脚本强制跳转，拦截所有访问默认店铺的自然流量。
+   - **资源剥削**：仅白嫖 Shopify 的全球 CDN（存图文视频）和 Checkout 收银台（解决最核心的支付安全合规）。
+   - **运费与定价剥夺权**：结账瞬间，0Buck 后端合并 1688 多商家的运费并计入 0.5% 汇率对冲，直接调用 Shopify **Draft Order API (草稿订单)**。强行把算好的总价硬塞进 Shopify，生成一个不可更改的 `checkout_url` 甩给用户。Shopify 彻底沦为一个无情的刷卡机。
+   - **后端同步 (防掉单)**：通过 Webhook 异步防掉单队列，将支付信号转化为平台内部的返现计划与分销分润。
+2. **VCC (Vortex Chat Container) 架构 —— “对话即系统”**:
+   - 摒弃传统“货架式”页面跳转，所有交互通过 GetStream 聊天流完成。
+   - 后端下发 BAP (Business Attachment Protocol) 结构化 JSON，前端渲染为交互卡片（商品矩阵、返现雷达、物流地图）。
+3. **AI 的“双模触发”与算力精益学 (Token Diet)**:
+   - **明线 (Pro 模型)**：用户显式 `@管家` 或触发意图词时，AI 介入并使用“九点心理狙击法”推荐商品。
+   - **气氛组截胡 (The Wingman AI)**：在公共群聊中，若 AI 监测到高热度从众讨论（如某用户刚晒出爆款单品），AI 适时冒泡制造 FOMO（错失恐惧症）：“刚好这款供应商还在搞活动，目前还有 5 个免单拼团名额没用完哦~”，实现群聊带货。
+   - **暗线 (Flash 模型)**：每日凌晨异步静默提取群聊记录（脱水 Dehydration），生成用户画像标签存入 PostgreSQL，实现“不聊也懂你”。
+4. **数据的“三层防串台”隔离 (Security & Privacy)**:
+   - **群聊私有投影**：公共群聊中的敏感 BAP 卡片（如金钱进度）通过 Targeted Message 机制仅本人可见。
+   - **影子隔离**：AI 执行任务时仅接触脱敏后的“影子 ID”和标签，核心账本库 (Zone 1) 与 AI 交互区 (Zone 3) 物理阻断。
 
 ---
 

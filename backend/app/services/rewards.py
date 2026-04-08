@@ -109,21 +109,17 @@ class RewardsService:
         random.shuffle(all_normals)
         
         # 3. Structural Probability Distribution (P3-P20)
-        # Early: P3-P10 (8 slots) | Late: P11-P20 (10 slots)
+        # P3-P20 are drawn from the remaining 18 units, but big hits are weighted
+        # to appear more frequently in P11-P20.
         slots = [None] * 18
         
-        # Place big hits with 80% weight towards Late Stage
         for hit in big_hits:
-            # 0.2 prob for index 0-7 (P3-P10), 0.8 prob for index 8-17 (P11-P20)
+            # 20% chance to place in P3-P10 (indices 0-7), 80% chance in P11-P20 (indices 8-17)
             target_stage = 'late' if random.random() < 0.8 else 'early'
             
             placed = False
             while not placed:
-                if target_stage == 'early':
-                    idx = random.randint(0, 7)
-                else:
-                    idx = random.randint(8, 17)
-                
+                idx = random.randint(0, 7) if target_stage == 'early' else random.randint(8, 17)
                 if slots[idx] is None:
                     slots[idx] = hit
                     placed = True
@@ -532,7 +528,7 @@ class RewardsService:
     def check_group_buy_success(self, order_id: int, product_id: Optional[int] = None):
         """
         v3.4.7 Progressive Settle: Settle 1 item for every 3 invites.
-        The last item can have 3 or more invites.
+        If user already has 3 group buys, they get 1 free. If they reach 6, they get the 2nd free, etc.
         """
         campaigns = self.db.query(GroupBuyCampaign).filter(
             GroupBuyCampaign.owner_order_id == order_id,
@@ -550,7 +546,7 @@ class RewardsService:
                 continue
 
             # Calculate how many items SHOULD be free based on current_count
-            # Rule: 3 invites = 1 free item. 
+            # Rule: Every 3 invites = 1 free item. 
             items_to_free = campaign.current_count // 3
             
             # Cap it at purchased_quantity
@@ -562,7 +558,7 @@ class RewardsService:
                 newly_freed = items_to_free - campaign.refunded_quantity
                 print(f"Group Buy Progress! Order {order_id} Item {campaign.product_id} freed {newly_freed} more items.")
                 
-                # Update status if fully freed
+                # Update status
                 campaign.refunded_quantity = items_to_free
                 if campaign.refunded_quantity >= campaign.purchased_quantity:
                     campaign.status = "success"

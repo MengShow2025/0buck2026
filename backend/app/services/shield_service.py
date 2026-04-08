@@ -120,3 +120,51 @@ class ShieldService:
             del masked["supplier_id_1688"]
             
         return masked
+
+    def mask_order_data(self, order_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        v4.7.0: PII Masking for Orders (Zone 2 Shadow Data Gateway).
+        Strips or masks name, phone, exact address before passing to Zone 3 (LLM).
+        """
+        masked = order_data.copy()
+
+        # Mask Customer Name
+        if "customer" in masked and isinstance(masked["customer"], dict):
+            cust = masked["customer"]
+            first_name = cust.get("first_name", "")
+            last_name = cust.get("last_name", "")
+            masked["customer"] = {
+                "masked_name": f"{first_name[0] if first_name else ''}***{last_name[-1] if last_name else ''}"
+            }
+            # Remove exact email/phone
+            for pii_key in ["email", "phone"]:
+                if pii_key in cust:
+                    masked["customer"][f"has_{pii_key}"] = bool(cust[pii_key])
+
+        # Mask Shipping Address
+        if "shipping_address" in masked and isinstance(masked["shipping_address"], dict):
+            addr = masked["shipping_address"]
+            masked["shipping_address"] = {
+                "city": addr.get("city", "Unknown"),
+                "province": addr.get("province", "Unknown"),
+                "country": addr.get("country", "Unknown"),
+                "zip_prefix": str(addr.get("zip", ""))[:3] + "***" if addr.get("zip") else ""
+            }
+            # Completely remove exact street addresses and phone numbers
+            for key in ["address1", "address2", "phone", "name", "first_name", "last_name"]:
+                if key in addr:
+                    masked["shipping_address"].pop(key, None)
+
+        # Mask Billing Address
+        if "billing_address" in masked:
+            masked.pop("billing_address", None) # Usually not needed by LLM
+
+        # Add Shadow IDs for line items if needed
+        if "line_items" in masked and isinstance(masked["line_items"], list):
+            for item in masked["line_items"]:
+                if "product_id" in item:
+                    item["shadow_product_id"] = self.get_shadow_id(str(item["product_id"]), "product")
+                    # Don't delete original product_id if LLM needs to reference it, but masking it is safer
+                    # item.pop("product_id", None)
+
+        return masked

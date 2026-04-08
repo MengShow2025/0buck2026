@@ -54,12 +54,12 @@ def calculate_order_reward(db: Session, order_data: Dict[str, Any], referrer_id:
         if referrer:
             if referrer.user_type == "kol":
                 # KOL: Use negotiated rate if set, else default 15%
-                rate = referrer.dist_rate if referrer.dist_rate is not None else rates["kol_dist_default"]
+                rate = Decimal(str(referrer.dist_rate)) if referrer.dist_rate is not None else rates["kol_dist_default"]
                 return reward_base * rate
             else:
                 # User: Tiered (3.0% Silver, 4.0% Gold, 5.0% Platinum)
                 if referrer.dist_rate is not None:
-                    return reward_base * referrer.dist_rate
+                    return reward_base * Decimal(str(referrer.dist_rate))
                 
                 if referrer.user_tier == "platinum": return reward_base * rates["dist_platinum"]
                 elif referrer.user_tier == "gold": return reward_base * rates["dist_gold"]
@@ -68,9 +68,6 @@ def calculate_order_reward(db: Session, order_data: Dict[str, Any], referrer_id:
     # 2. Group Buy Suppression (Check if this order is an invitee in a Group Buy)
     # If the order was triggered by a Group Buy share code, it was handled by join_group_buy.
     # We should NOT pay a fan reward to the inviter if it's a group buy order.
-    from app.models.ledger import GroupBuyCampaign
-    # We check if this specific order was triggered by a Group Buy code.
-    # (This information needs to be passed in order_data or derived from webhooks)
     if order_data.get("is_group_buy_invitee"):
         print(f"Order {order_id} is a Group Buy invitee. Suppressing Fan Reward.")
         return Decimal('0.0')
@@ -85,20 +82,18 @@ def calculate_order_reward(db: Session, order_data: Dict[str, Any], referrer_id:
             if days_since_reg <= 730:
                 if inviter.user_type == "kol":
                     # KOL Fan: Use negotiated rate if set, else default 5%
-                    rate = inviter.fan_rate if inviter.fan_rate is not None else rates["kol_fan_default"]
+                    rate = Decimal(str(inviter.fan_rate)) if inviter.fan_rate is not None else rates["kol_fan_default"]
                     return reward_base * rate
                 else:
                     # User Fan: Tiered (1.5% Silver, 2.0% Gold, 3.0% Platinum)
                     if inviter.fan_rate is not None:
-                        return reward_base * inviter.fan_rate
+                        return reward_base * Decimal(str(inviter.fan_rate))
                         
                     if inviter.user_tier == "platinum": return reward_base * rates["fan_platinum"]
                     elif inviter.user_tier == "gold": return reward_base * rates["fan_gold"]
                     else: return reward_base * rates["fan_silver"]
-
-    return Decimal('0.0')
-
-    return Decimal('0.0')
+            else:
+                print(f"Fan relationship expired for user {customer_id} -> inviter {inviter.customer_id} (Days: {days_since_reg})")
 
     return Decimal('0.0')
 

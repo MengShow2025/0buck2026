@@ -36,15 +36,16 @@
 
 ---
 
-## 4. 支付闭环：Shopify Headless Bridge
-
-### 4.1 安全隔离
-- 点击卡片 `[ 立即购买 ]` 触发 **Secure Overlay**。
-- 前端弹出 Shopify 托管的收银台浮层。
-- 用户直接在 Shopify 安全环境下输入敏感信息。
-
-### 4.2 状态同步
-- 监听 Shopify Webhook -> 更新 0Buck 订单状态 -> 自动在聊天频道追发支付成功确认卡片。
+## 4. 支付闭环：Shopify Headless Bridge 与运费独裁 (Draft Order Dictatorship)
+ 
+ ### 4.1 安全隔离与结账剥夺
+ - 点击卡片 `[ 立即购买 ]` 触发 **Secure Overlay**。
+ - **定价独裁**：在调起支付前，0Buck 后端迅速合并 1688 多商家的运费，并计入 0.5% 汇率对冲。随后直接调用 Shopify 的 **Draft Order API (草稿订单)**，将算好的总价硬塞入 Shopify。
+ - **收银台呈现**：前端弹出 Shopify 托管的收银台浮层 (`checkout_url`)。Shopify 彻底沦为无情的刷卡机，完全丧失运费与折扣的计算权。
+ - 用户直接在 Shopify 安全环境下输入敏感信息。
+ 
+ ### 4.2 状态同步与防掉单队列
+ - 监听 Shopify Webhook (`orders/paid`) -> 将支付信号推入高可用队列（如 Celery/Redis）防掉单 -> 更新 0Buck 订单状态 -> 自动在聊天频道追发支付成功确认卡片。
 
 ---
 
