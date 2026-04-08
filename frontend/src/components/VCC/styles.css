@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* 0Buck Brand Colors replacing WhatsApp Green */
+    --wa-teal: #F35B25; /* 0Buck Orange (Primary) */
+    --wa-bg: #ECE5DD;   /* Chat Background (Clean Light Gray/Beige) */
+    --wa-bubble-out: #FFE0D3; /* Light Orange for Outgoing */
+    --wa-bubble-in: #FFFFFF;  /* White for Incoming */
+    --brand-gray: #7A7A7A; /* 0Buck Secondary Gray */
+  }
+}
