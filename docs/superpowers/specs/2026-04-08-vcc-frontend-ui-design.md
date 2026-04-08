@@ -10,14 +10,28 @@
 
 ## 2. 界面结构 (Interface Architecture)
 
-### 2.1 顶部导航栏 (Header)
+### 2.1 整体色调与布局 (Color & Layout)
+*   **视觉对标**: WhatsApp / 微信小店
+*   **核心色彩**:
+    *   **亮色模式 (Light Mode)**: 
+        *   主色调采用 **0Buck 活力橙 (Orange: #F35B25)**，替代 WhatsApp 原本的绿色。
+        *   辅色采用 **高级灰 (Grey: #7A7A7A)**，用于文字和次要边框。
+        *   背景采用浅色干净底纹。
+    *   **暗色模式 (Dark Mode)**: 
+        *   参考 **微信 (WeChat) 暗黑模式**。深灰色背景 (#111111) 与柔和的纯黑组件框。
+        *   0Buck 活力橙在暗色下自动降低饱和度，保证视觉舒适。
+*   **主题切换 (Theme & i18n)**:
+    *   系统支持**自动跟随系统 (Auto-detect)** 与**手动设置**亮/暗模式。
+    *   支持**多语言 (Multi-language)**，初始包含英语和中文。
+
+### 2.2 顶部导航栏 (Header)
 *   **视觉对标**: WhatsApp 聊天头部
 *   **左侧**: 后退按钮 + AI管家 Dumbo 头像与在线状态 (显示为 "Verified Artisan Assistant")
 *   **右侧**: 移除音视频通话按钮，替换为 **核心资产入口**:
     *   💰 **Wallet (钱包)**: 点击侧滑弹出 Drawer，展示当前余额、积分与续签卡。
     *   📦 **Orders (订单)**: 点击侧滑弹出 Drawer，展示历史订单、拼团状态和物流追踪。
 
-### 2.2 核心聊天流 (Vortex Stream)
+### 2.3 核心聊天流 (Vortex Stream)
 *   **视觉对标**: WhatsApp 原生聊天气泡
 *   **背景**: 浅米色背景 (`#ECE5DD`) 配合暗色涂鸦底纹。
 *   **普通消息**:
@@ -27,7 +41,7 @@
     *   采用 **Catalog Style (目录流卡片)**。
     *   打破常规气泡宽度，采用稍宽的卡片 (占屏幕宽度 80%-85%)，卡片左上角紧贴左侧头像。
 
-### 2.3 底部交互区 (Bottom Input & Quick Replies)
+### 2.4 底部交互区 (Bottom Input & Quick Replies)
 *   **视觉对标**: 现代 AI APP (如 ChatGPT / Claude) 的输入框设计
 *   **核心逻辑**: 永远保持输入框常驻，鼓励用户随时打字聊天；同时在输入框上方提供横向滑动的快捷胶囊，降低电商操作门槛。
 *   **布局**:
@@ -52,7 +66,35 @@
 *   **标题**: Cashback Radar (右侧显示 `当前已返 / 总额`)
 *   **进度条**: 橙色主色调，显示当前的返现期数 (如 Phase 7 of 20)。
 
-## 4. 前端技术栈实现建议
+## 4. BAP 交互协议与"System as Chat" (系统即聊天)
+
+### 4.1 传统业务卡片渲染
+当 AI 通过 Stream 发送带有 `attachments` 的消息时，前端 `MessageInterceptor` 将捕获并渲染为自定义 BAP 卡片：
+1.  **ProductGridCard (`0B_PRODUCT_GRID`)**: WhatsApp Catalog Style 呈现商品。
+2.  **CashbackRadarCard (`0B_CASHBACK_RADAR`)**: 呈现用户当前的返现漏斗进度。
+
+### 4.2 "System as Chat" 隐藏动作指令 (Hidden Actions)
+这是 0Buck 独创的交互模式。用户不必去汉堡菜单里寻找设置项。
+用户输入: "太亮了，换成黑色模式" 或 "Change to dark mode"
+AI 响应: 
+```json
+{
+  "text": "已经为您切换到暗黑模式啦！🌙",
+  "attachments": [{
+    "type": "0B_SYSTEM_ACTION",
+    "action": "SET_THEME",
+    "value": "dark"
+  }]
+}
+```
+**前端拦截逻辑**:
+前端解析到 `0B_SYSTEM_ACTION` 时，不会渲染这张卡片（它是隐藏的），而是直接调用 `AppContext.setTheme('dark')` 修改整个系统的 CSS 变量。
+**支持的系统指令**:
+*   `SET_THEME`: "dark" | "light" | "system"
+*   `SET_LANGUAGE`: "en" | "zh" | "es"
+*   `NAVIGATE`: "orders" | "wallet" | "community" (触发底端或侧边抽屉弹窗)
+
+## 5. 前端技术栈实现建议
 1.  **框架**: React + TailwindCSS (快速复刻 WhatsApp/WeChat UI 细节)。
 2.  **聊天引擎**: Stream Chat React SDK (`stream-chat-react`)。
 3.  **BAP 渲染器**: 通过重写 Stream 的 `Message` UI 组件，当 `message.attachments` 包含 `0B_CARD_V3` 类型时，拦截并渲染自定义的 React 组件 (如 `<CatalogCard />`)。

@@ -10,15 +10,16 @@
 
 ---
 
-### Task 1: Setup VCC Base Layout & Theme
+### Task 1: Setup VCC Base Layout, Theme (Dark Mode) & i18n Context
 
 **Files:**
+- Create: `frontend/src/components/VCC/AppContext.tsx`
 - Create: `frontend/src/components/VCC/VortexContainer.tsx`
 - Create: `frontend/src/components/VCC/VCCHeader.tsx`
-- Create: `frontend/src/components/VCC/styles.css`
+- Modify: `frontend/src/components/VCC/styles.css`
 
-- [ ] **Step 1: Create custom CSS variables for WhatsApp theme**
-Write Tailwind layer config or raw CSS in `styles.css` for `--wa-teal`, `--wa-bg`, `--wa-bubble-in`, `--wa-bubble-out`.
+- [ ] **Step 1: Update styles.css for Dark Mode Support**
+Add `.dark` class variables mirroring WeChat Dark Mode, but retaining 0Buck Orange accents.
 
 ```css
 @tailwind base;
@@ -27,12 +28,63 @@ Write Tailwind layer config or raw CSS in `styles.css` for `--wa-teal`, `--wa-bg
 
 @layer base {
   :root {
-    --wa-teal: #075E54;
+    --wa-teal: #F35B25; /* 0Buck Orange */
     --wa-bg: #ECE5DD;
-    --wa-bubble-out: #DCF8C6;
+    --wa-bubble-out: #FFE0D3;
     --wa-bubble-in: #FFFFFF;
+    --brand-gray: #7A7A7A;
+    
+    /* WeChat Style Dark Mode Overrides */
+    &.dark {
+      --wa-teal: #D94B1B; /* Slightly muted orange for dark mode */
+      --wa-bg: #111111;   /* Deep WeChat Gray/Black */
+      --wa-bubble-out: #2C2C2C; /* Darker outgoing bubble */
+      --wa-bubble-in: #1E1E1E;  /* Darker incoming bubble */
+      --brand-gray: #999999;
+      color: #E5E5E5;
+    }
   }
 }
+```
+
+- [ ] **Step 2: Create AppContext for Theme & Language**
+
+```tsx
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+type Theme = 'light' | 'dark' | 'system';
+type Language = 'en' | 'zh';
+
+interface AppContextType {
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+  language: Language;
+  setLanguage: (l: Language) => void;
+}
+
+export const AppContext = createContext<AppContextType | null>(null);
+
+export const AppProvider = ({ children }: { children: React.ReactNode }) => {
+  const [theme, setTheme] = useState<Theme>('system');
+  const [language, setLanguage] = useState<Language>('zh');
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
+
+  return (
+    <AppContext.Provider value={{ theme, setTheme, language, setLanguage }}>
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+export const useAppContext = () => useContext(AppContext)!;
 ```
 
 - [ ] **Step 2: Implement VCCHeader**
