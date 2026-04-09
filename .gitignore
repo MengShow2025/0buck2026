@@ -35,6 +35,7 @@ pip-log.txt
 curl_output.txt
 
 # Temp / Local
+.worktrees/
 .accio/
 .chrome-profile/
 .vscode/
