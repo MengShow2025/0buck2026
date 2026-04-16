@@ -332,3 +332,17 @@
 - 已完成：`payment/quote` 对“可浏览但不可结算”的商品 ID（如 Discovery 返回候选商品）返回明确业务错误 `product_not_ready_for_checkout:{id}`，替代误导性的 `product_not_found`。
 - 已验证：`/healthz` 返回 `200`；登录态 `POST /rewards/payment/quote` 对 `product_id=85` 返回 `400 product_not_ready_for_checkout:85`（符合预期语义）。
 - 已验证：前端 `npm run build` 通过（exit code 0）。
+
+## 本轮进展（第 48 批：Checkout Quote 成功流恢复）
+- 已完成：`payment/quote` 增加“候选商品仅估价”模式（仅限 quote 阶段），允许 Candidate 商品使用 `estimated_sale_price/comp_price_usd` 参与报价计算；下单阶段仍保持严格校验。
+- 已验证：登录态 `POST /rewards/payment/quote` 对 `product_id=1` 返回 `200`，成功拿到 `quote_token` 与 `summary.final_due`。
+- 已验证：对无可用价格的候选商品（如 `product_id=85`）返回 `400 invalid_product_price:85`，错误语义明确。
+- 结论：Checkout 从“系统级 500/不可用”恢复为“可成功报价 + 可解释业务错误”状态，前端可据此做下一步交互（显示报价或提示商品需补全价格）。
+
+## 本轮进展（第 49 批：Checkout 前端预检与错误可视化）
+- 已完成：`CheckoutDrawer` 在最终提交前接入真实 `orderApi.createQuote` 预检，不再直接走纯 mock 下单链路。
+- 已完成：对关键业务错误做前端可读提示并阻止继续下单：
+  - `product_not_ready_for_checkout` -> 商品未完成结算配置；
+  - `invalid_product_price` -> 商品价格待补全；
+  - `product_not_found` -> 商品不存在或已下架。
+- 已验证：前端 `npm run build` 通过（exit code 0），无新增 TS 诊断错误。
