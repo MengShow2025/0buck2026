@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response, JSONResponse
 from sqlalchemy.orm import Session
 from datetime import datetime
 import json
@@ -30,7 +30,9 @@ from app.api.social import router as social_router
 from app.api.system import router as system_router
 from app.api.stream import router as stream_router
 from app.api.auth import router as auth_router
+from app.api.users import router as users_router
 from app.api.im_gateway import router as im_router
+from app.api.deps import get_current_admin, get_current_user
 from app.services.rewards import RewardsService
 from app.services.stream_chat import stream_chat_service
 
@@ -38,10 +40,31 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
 import logging
+import time
+import uuid
+from prometheus_client import Counter, Histogram, Gauge, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST
+from app.core.request_context import request_id_var, traceparent_var
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+HTTP_REQUESTS_TOTAL = Counter(
+    "http_requests_total",
+    "Total HTTP requests",
+    ["method", "path", "status"],
+)
+HTTP_REQUEST_DURATION_SECONDS = Histogram(
+    "http_request_duration_seconds",
+    "HTTP request duration in seconds",
+    ["method", "path"],
+)
+# AI Key Exhaustion Metric (Option A)
+AI_KEY_EXHAUSTION_RATE = Gauge(
+    "ai_key_exhaustion_rate",
+    "Ratio of AI API Keys currently in cooldown blacklist (0.0 to 1.0)",
+)
 
 # Note: DB initialization and schema migration have been moved to scripts/init_db_tables.py
 # to avoid concurrency issues during multi-worker startup.
@@ -74,7 +97,7 @@ async def root():
     return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
 
 @api_router.get("/diag/paths")
-async def diagnostic_paths():
+async def diagnostic_paths(admin: UserExt = Depends(get_current_admin)):
     """v5.7.28: Internal diagnostic to troubleshoot SPA loading."""
     import os
     return {
@@ -92,6 +115,11 @@ async def diagnostic_paths():
 async def healthz():
     """v5.7.32: Direct health check to verify backend reachability."""
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
+
+@app.get("/metrics")
+async def metrics():
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 @api_router.get("/health")
 async def health_check():
@@ -112,7 +140,7 @@ async def sync_1688_product(product_id: str, db: Session = Depends(get_db)):
     }
 
 @api_router.get("/users/{customer_id}")
-async def get_user_profile(customer_id: str, db: Session = Depends(get_db)):
+async def get_user_profile(customer_id: str, db: Session = Depends(get_db), admin: UserExt = Depends(get_current_admin)):
     # v3.5.0: Legacy endpoint, using system ID for read-only query
     rewards = RewardsService(db, current_user_id=1)
     summary = rewards.get_wallet_summary(int(customer_id))
@@ -128,21 +156,29 @@ async def get_user_profile(customer_id: str, db: Session = Depends(get_db)):
     }
 
 @api_router.get("/customer/sync/{customer_id}")
-async def sync_customer_to_shopify(customer_id: str, db: Session = Depends(get_db)):
+async def sync_customer_to_shopify(
+    customer_id: str,
+    db: Session = Depends(get_db),
+    current_user: UserExt = Depends(get_current_user),
+):
     """
     Force a sync between local database and Shopify for a specific customer.
     Called when user checks balance or level to ensure 100% accuracy.
     """
-    rewards = RewardsService(db, current_user_id=1)
-    success = rewards.sync_customer_data_to_shopify(int(customer_id))
-    
-    if success:
-        return {"status": "success", "message": f"Data synced for customer {customer_id}"}
-    else:
-        return {"status": "failed", "message": "Failed to sync data to Shopify. Check permissions."}
+    requested_id = int(customer_id)
+    if current_user.customer_id != requested_id and current_user.user_type not in ["kol", "admin"]:
+        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
+
+    rewards = RewardsService(db, current_user_id=current_user.customer_id)
+    rewards.ensure_user_exists(requested_id)
+    return {"status": "success", "message": f"User {customer_id} ensured"}
 
 @app.on_event("startup")
 async def startup_event():
+    if not settings.STREAM_API_KEY or not settings.STREAM_API_SECRET:
+        logger.warning("  [VCC] Skip platform channel bootstrap: Stream API keys missing.")
+        return
+
     # v3.4 VCC: Pre-create global platform channels
     channels = [
         ("messaging", "global_commerce", "COMMERCE HUB", {"platform_role": "global"}),
@@ -152,7 +188,17 @@ async def startup_event():
 
     for c_type, c_id, name, extra in channels:
         try:
-            stream_chat_service.create_channel(c_type, c_id, name, extra_data=extra)
+            await asyncio.wait_for(
+                asyncio.to_thread(
+                    stream_chat_service.create_channel,
+                    c_type,
+                    c_id,
+                    name,
+                    None,
+                    extra,
+                ),
+                timeout=3.0,
+            )
             logger.info(f"  [VCC] Platform Channel Ready: {name} ({c_id})")
         except Exception as e:
             logger.error(f"  [VCC] Failed to create platform channel {name}: {e}")
@@ -173,6 +219,17 @@ if not os.path.exists(frontend_path):
 
 logger.info(f"📂 Frontend assets path: {frontend_path}")
 
+@app.middleware("http")
+async def ngrok_bypass_middleware(request: Request, call_next):
+    """
+    Bypass ngrok's anti-phishing interstitial page for API endpoints,
+    especially Webhooks that cannot click 'Visit Site'.
+    """
+    response = await call_next(request)
+    # Add header to skip ngrok browser warning
+    response.headers["ngrok-skip-browser-warning"] = "true"
+    return response
+
 # --- 1. RAILWAY NATIVE SPA ROUTING (v5.7.33) ---
 @app.middleware("http")
 async def railway_spa_interceptor(request: Request, call_next):
@@ -186,6 +243,7 @@ async def railway_spa_interceptor(request: Request, call_next):
         path.startswith("/v1/") or
         path == "/healthz" or
         path == "/health" or
+        path == "/metrics" or
         path.startswith("/diag/")
     )
     
@@ -207,6 +265,41 @@ async def railway_spa_interceptor(request: Request, call_next):
         return FileResponse(container_index)
             
     return await call_next(request)
+
+
+@app.middleware("http")
+async def request_id_and_metrics(request: Request, call_next):
+    start = time.perf_counter()
+    request_id = request.headers.get("x-request-id") or uuid.uuid4().hex
+    request.state.request_id = request_id
+    token = request_id_var.set(request_id)
+    tp_token = traceparent_var.set(request.headers.get("traceparent"))
+
+    response = None
+    status_code = 500
+    try:
+        response = await call_next(request)
+        status_code = getattr(response, "status_code", 500)
+        return response
+    finally:
+        request_id_var.reset(token)
+        traceparent_var.reset(tp_token)
+        duration = time.perf_counter() - start
+        method = request.method
+        route = request.scope.get("route")
+        path_label = getattr(route, "path", None) or request.url.path
+
+        HTTP_REQUESTS_TOTAL.labels(method=method, path=path_label, status=str(status_code)).inc()
+        HTTP_REQUEST_DURATION_SECONDS.labels(method=method, path=path_label).observe(duration)
+
+        logger.info(
+            f"request_id={request_id} trace_id={tp_token or 'none'} method={method} path={path_label} status={status_code} duration_ms={int(duration*1000)}"
+        )
+
+        if response is not None:
+            response.headers["x-request-id"] = request_id
+            if tp_token:
+                response.headers["x-trace-id"] = str(tp_token)
 
 # --- 2. RAILWAY SPA FALLBACK (v5.7.31) ---
 # High-reliability fallback for Railway.
@@ -251,8 +344,8 @@ async def root_spa():
     return FileResponse("/app/static/index.html")
 
 # Include routers
+app.include_router(users_router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
 app.include_router(api_router, tags=["api"])
-app.include_router(agent_router, prefix=f"{settings.API_V1_STR}", tags=["agent"])
 app.include_router(agent_router, prefix=f"{settings.API_V1_STR}/agent", tags=["agent"])
 app.include_router(admin_router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
 app.include_router(webhooks_router, prefix=f"{settings.API_V1_STR}/webhooks", tags=["webhooks"])
@@ -276,7 +369,7 @@ if os.path.exists(frontend_path):
     async def serve_frontend(request: Request, full_path: str = None):
         # 1. Exclude API routes
         if full_path and (full_path.startswith("api/") or full_path.startswith("v1/")):
-             return {"detail": "Not Found"}
+             return JSONResponse(status_code=404, content={"detail": "Not Found"})
              
         # 2. Check if it's a physical file in the frontend dist root (like sw.js, manifest.json)
         if full_path:
@@ -290,4 +383,3 @@ if os.path.exists(frontend_path):
             return FileResponse(index_file)
             
         return {"detail": "Static assets not found"}
-

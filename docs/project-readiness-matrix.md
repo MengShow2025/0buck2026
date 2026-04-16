@@ -1,0 +1,285 @@
+# 项目完成程度总表
+
+更新时间：2026-04-16
+维护说明：本文件作为“模块完成度唯一对照表”，后续按批次更新状态与阻断项。
+
+## 总览矩阵
+| 模块 | 当前状态 | 可落地评估 | 关键证据 |
+|---|---|---|---|
+| 后端应用骨架（路由/中间件/健康检查） | 高完成 | 可落地 | [main.py](file:///Users/long/Desktop/0buck/backend/app/main.py) |
+| 认证与权限 | 高完成 | 可落地（需持续回归） | [auth.py](file:///Users/long/Desktop/0buck/backend/app/api/auth.py), [admin.py](file:///Users/long/Desktop/0buck/backend/app/api/admin.py) |
+| 奖励/积分引擎（核心） | 高完成 | 可落地（已补齐 pytest 环境并通过关键回归） | [rewards.py](file:///Users/long/Desktop/0buck/backend/app/services/rewards.py), [finance_engine.py](file:///Users/long/Desktop/0buck/backend/app/services/finance_engine.py) |
+| 积分兑换（后端） | 中高完成 | 条件可落地（已支持配置化兑换目录） | [rewards.py](file:///Users/long/Desktop/0buck/backend/app/services/rewards.py), [rewards.py](file:///Users/long/Desktop/0buck/backend/app/api/rewards.py), [admin.py](file:///Users/long/Desktop/0buck/backend/app/api/admin.py) |
+| Shopify/Webhook/异步任务 | 中高完成 | 条件可落地 | [webhooks.py](file:///Users/long/Desktop/0buck/backend/app/api/webhooks.py), [shopify_tasks.py](file:///Users/long/Desktop/0buck/backend/app/workers/shopify_tasks.py) |
+| IM 网关 | 中高完成 | 条件可落地（已切换 DB 幂等去重并补关键回归） | [im_gateway.py](file:///Users/long/Desktop/0buck/backend/app/api/im_gateway.py), [dedup.py](file:///Users/long/Desktop/0buck/backend/app/gateway/dedup.py) |
+| 前端 VCC 核心聊天体验 | 高完成 | 可落地（本地策略版） | [ChatRoomDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/ChatRoomDrawer.tsx), [ChatMessagesPane.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/ChatMessagesPane.tsx) |
+| 前端 Drawer 体系 | 高完成 | 可落地 | [GlobalDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/GlobalDrawer.tsx) |
+| 发现/官方群模块 | 高完成 | 可落地 | [LoungeDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/LoungeDrawer.tsx), [DiscoverSections.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/DiscoverSections.tsx) |
+| 结账链路（前端） | 中高完成 | 条件可落地（已接后端防篡改校验） | [CheckoutDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/CheckoutDrawer.tsx), [api.ts](file:///Users/long/Desktop/0buck/frontend/src/services/api.ts) |
+| 商品发现数据源（前端） | 高完成 | 可落地（Neon 正式库 candidate_products 已连通） | [personalized_matrix_service.py](file:///Users/long/Desktop/0buck/backend/app/services/personalized_matrix_service.py), [products.py](file:///Users/long/Desktop/0buck/backend/app/api/products.py), [ProductDetailDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/ProductDetailDrawer.tsx) |
+| 前端测试自动化 | 中低完成 | 条件可执行（已有最小自动化门禁） | [frontend/package.json](file:///Users/long/Desktop/0buck/frontend/package.json), [chat-final-qa-checklist.md](file:///Users/long/Desktop/0buck/frontend/docs/chat-final-qa-checklist.md) |
+| 发布流程/运维文档 | 中高完成 | 可落地（已接统一自动门禁） | [checklist.md](file:///Users/long/Desktop/0buck/ops/release/checklist.md), [verify_release_gate.sh](file:///Users/long/Desktop/0buck/ops/release/verify_release_gate.sh), [backend.md](file:///Users/long/Desktop/0buck/ops/slo/backend.md) |
+
+## P0 阻断清单
+| ID | 阻断项 | 影响 | 优先级 | 证据 |
+|---|---|---|---|---|
+| BLK-P0-01 | 积分活动/兑换后端一致性缺口（自动化回归环境未补齐） | 奖励稳定性、财务正确性 | 已解除 | [rewards.py](file:///Users/long/Desktop/0buck/backend/app/services/rewards.py), [finance_engine.py](file:///Users/long/Desktop/0buck/backend/app/services/finance_engine.py), [rewards.py](file:///Users/long/Desktop/0buck/backend/app/api/rewards.py), [admin.py](file:///Users/long/Desktop/0buck/backend/app/api/admin.py) |
+| BLK-P0-02 | 结账防篡改仍需补“防重放/签名票据”机制 | 支付风控完备性 | 已解除 | [rewards.py](file:///Users/long/Desktop/0buck/backend/app/api/rewards.py), [shopify_payment_service.py](file:///Users/long/Desktop/0buck/backend/app/services/shopify_payment_service.py), [CheckoutDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/CheckoutDrawer.tsx) |
+| BLK-P0-03 | QA 自动化和发布门禁仍偏弱（仅最小集） | 上线质量可控性不足 | 已解除 | [verify_release_gate.sh](file:///Users/long/Desktop/0buck/ops/release/verify_release_gate.sh), [checklist.md](file:///Users/long/Desktop/0buck/ops/release/checklist.md) |
+
+## 当前执行顺序（已确认）
+1. 修复积分活动/兑换后端阻断并补回归。
+2. 前端积分页接真实接口（明细、兑换、规则一致性）。
+3. 清理结账 mock，打通真实下单链路。
+4. 补自动化验收最小集并更新矩阵状态。
+
+## 本轮进展（第 1 批）
+- 已完成：积分后端配置化能力落地（非交易积分细则、交易倍率、兑换目录均支持后台配置）。
+- 已完成：新增用户态积分接口（规则查询、兑换目录、行为积分发放、按 item_code 兑换）。
+- 已完成：新增管理态配置接口（积分规则、倍率、兑换目录）。
+- 已验证：`compileall` 与关键模块导入通过。
+- 待补齐：`pytest` 环境缺失，自动化回归需在补齐依赖后执行并回填结果。
+
+## 本轮进展（第 2 批）
+- 已完成：前端积分页核心链路接入真实接口（积分余额、积分明细、兑换目录、按 item_code 兑换）。
+- 已完成：`rewardApi` 扩展积分相关接口，并修正签到接口参数（补充 `user_id`）。
+- 已完成：`AppContext` 接入积分/钱包状态同步，钱包卡片与积分页不再依赖固定 mock 数值。
+- 已验证：`frontend` 构建通过（`npm run build`）。
+- 待补齐：兑换“续签卡”场景仍需在前端补充显式计划选择器（当前自动选取活跃计划）。
+
+## 本轮进展（第 3 批）
+- 已完成：`CheckoutDrawer` 核心下单链路由 `mockApi` 切换为真实接口（`/rewards/payment/pre-check` + `/rewards/payment/create-order`）。
+- 已完成：余额抵扣场景改为先走后端预检冻结，再创建订单；支持无收银台 URL 时直接走支付成功流程。
+- 已验证：`frontend` 二次构建通过（`npm run build`）。
+- 待补齐：优惠券拉取/叠加计算仍为前端临时逻辑，后续需接后端真实优惠券源。
+
+## 本轮进展（第 4 批）
+- 已完成：执行后端最小自动化门禁（`python -m compileall backend/app`）通过。
+- 已完成：执行前端最小自动化门禁（`npm run build`）通过。
+- 已完成：将自动化门禁结果回填到矩阵，并下调 QA 阻断优先级（P0 -> P1，表示可运行但仍需增强）。
+
+## 本轮进展（第 5 批-1）
+- 已完成：新增结账优惠券真实接口 `GET /rewards/payment/discounts?subtotal=...`，替换前端 mock 源的后端能力已就绪。
+
+## 本轮进展（第 5 批-2）
+- 已完成：`CheckoutDrawer` 对接真实优惠券接口（不再依赖 `mockApi.getAvailableDiscounts`）。
+- 已完成：积分兑换页新增“签到计划选择器”，续签卡兑换可显式选择目标计划后再提交。
+- 已验证：`python -m compileall backend/app/api/rewards.py` 与 `npm run build` 均通过。
+
+## 本轮进展（第 5 批-3）
+- 已完成：修正规则理解并文档化，“优惠券多选”仅在可叠加条件满足时才允许，已写入主规范文档。
+- 已完成：矩阵阻断项同步更新，明确当前 P0 焦点为“叠加规则后端统一判定”而非“优惠券列表 mock”。
+
+## 本轮进展（第 6 批）
+- 已完成：后端新增优惠券评估接口 `POST /rewards/payment/discounts/evaluate`，一次返回“可用性判定 + 叠加合法性 + 最佳组合推荐”。
+- 已完成：结账页对接评估接口，前端不再默认允许多选，改为按后端规则动态限制并提示冲突原因。
+- 已完成：结账页新增“推荐组合”一键应用入口，展示当前最佳券组合。
+- 已完成：新增后端单测 `backend/tests/test_coupon_stacking_rules.py`（覆盖可用性、叠加、推荐逻辑）。
+- 已验证：`compileall` 与前端 `npm run build` 通过；`pytest` 仍因环境缺少依赖未执行。
+
+## 本轮进展（第 7 批）
+- 已完成：下单接口新增后端二次强校验（商品价格后端重算、优惠券后端重算、余额上限校验），防止抓包篡改 `price/balance/discount`。
+- 已完成：新增全余额支付防护，若余额不足覆盖应付金额或试图“满额支付+折扣混用”将直接拒绝。
+- 已完成：支付服务增加防御式校验，`create_final_order_direct` 在余额不足时拒绝创建 `paid` 订单。
+- 已完成：结账请求增加 `applied_discount_codes` 透传，前后端统一以后端裁决结果为准。
+- 已验证：`compileall` 与前端 `npm run build` 通过；`pytest` 仍受环境缺少依赖限制。
+
+## 本轮进展（第 8 批）
+- 已完成：追加结账防抓包加固（后端重算商品金额、重算优惠、限制余额上限、拒绝异常全余额支付）。
+- 已完成：支付服务防御式兜底，余额不足时禁止直接创建 `paid` 订单，防止篡改 `is_full_payment` 绕过。
+- 已完成：前端结账 `product_id` 标准化，避免 `p1/w3` 非法 ID 进入下单链路。
+- 已完成：商品详情与发现流新增 `candidate_products` 对接（详情 fallback + 发现回退优先读取正式候选表）。
+- 已验证：`compileall` 与前端 `npm run build` 通过；`pytest` 因环境缺少依赖仍未执行。
+
+## 本轮进展（第 9 批）
+- 已完成：`CheckoutDrawer` 商品信息改为实时读取后端产品详情，不再使用本地硬编码商品价格映射。
+- 已完成：`ProductDetailDrawer` 去除 demo 商品短路逻辑，统一按产品 ID 走后端正式接口。
+- 已完成：商品详情接口补 `candidate_products` 回退映射，发现流回退优先读取 `candidate_products`。
+- 已验证：`compileall` 与前端 `npm run build` 通过。
+
+## 本轮进展（第 10 批）
+- 已完成：新增结账签名报价票据 `POST /rewards/payment/quote`（5 分钟有效），下单必须携带 `quote_token`。
+- 已完成：下单口加入 `quote_token` 强校验（用户绑定、商品指纹、金额字段一致性）与一次性 `jti` 防重放校验。
+- 已完成：新增签名验签单测（roundtrip + 篡改拒绝）并扩展金额护栏用例。
+- 已验证：`compileall` 与前端 `npm run build` 通过；`pytest` 因环境缺依赖仍未执行。
+
+## 本轮进展（第 11 批）
+- 已完成：`ProductDetailDrawer` 的“加入购物车”改为真实购物车写入（`vcc_cart_items`），不再仅静态展示按钮。
+- 已完成：`CartDrawer` 去除硬编码商品，改为“本地购物车条目 + 后端商品详情”实时渲染，并支持加减数量与自动移除。
+- 已完成：`VCCHeader` 购物车角标改为实时读取购物车数量，不再固定 `3`。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 12 批）
+- 已完成：`DesktopShopView` 去除 demo 商品数组，改为实时读取 `productApi.getDiscovery()`。
+- 已完成：`PrimeDrawer` 去除 `MOCK_PRODUCTS` 回退，统一展示正式发现接口数据。
+- 已完成：`DesktopSocialView` 右侧 C2W 模块改为动态读取发现数据，不再固定 `p1/p2`。
+- 已完成：`SquareDrawer` 的 C2W/Wishlist 商品卡改为动态发现数据，清理 `p*/w*` 伪 ID 传递。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 13 批）
+- 已完成：新增用户订单真实接口 `GET /rewards/orders/me`，桌面订单页不再依赖 `MOCK_ORDERS`。
+- 已完成：`DesktopOrdersView` 对接真实订单接口并保持筛选/搜索能力。
+- 已完成：`DesktopSidebar` 购物车角标改为实时读取 `vcc_cart_items`，去除固定 mock 值。
+- 已验证：后端 `compileall` 与前端 `npm run build` 通过。
+
+## 本轮进展（第 14 批）
+- 已完成：`DesktopWalletView` 交易流水改为真实接口（`rewardApi.getTransactions`），收益卡片由真实流水聚合生成。
+- 已完成：`DesktopNotificationsView` 改为真实数据聚合（订单通知 + 资金流水通知），移除静态通知数组依赖。
+- 已完成：前端通知/钱包数据链路与用户身份绑定，避免无用户时误读 mock 数据。
+- 已验证：后端 `compileall` 与前端 `npm run build` 通过。
+
+## 本轮进展（第 15 批）
+- 已完成：`DesktopSocialView` 的“热门话题 + 动态流”改为 discovery 数据驱动，不再依赖固定 `TRENDING_TOPICS/FEEDS` 常量。
+- 已完成：`DesktopSquarePanel` 的“话题榜 + C2W 列表 + Feed 网格”改为 discovery 数据生成，去除主干静态内容源。
+- 已完成：社交流商品点击链路继续保持真实产品 ID 传递，避免伪 ID 回流。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 16 批）
+- 已完成：`DesktopContactsPanel` 改为读取本地真实联系人/好友请求存储（`vcc_local_contacts`、`vcc_new_friend_requests`），移除硬编码联系人列表依赖。
+- 已完成：`DesktopLoungePanel` 会话列表改为读取本地会话元数据（`vcc_custom_groups`、`vcc_local_contacts`、`vcc_chat_meta`、`vcc_chat_unread_counts`）并渲染真实消息缓存。
+- 已完成：`DesktopFansPanel` 改为聚合真实订单与流水接口（`orderApi.getMyOrders` + `rewardApi.getTransactions`）生成统计、明细与收益构成。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 17 批）
+- 已完成：`OrderCenterDrawer` 去除 `DUMMY_ORDERS`，改为读取真实订单接口（`orderApi.getMyOrders`）并按标签筛选。
+- 已完成：`CouponsDrawer` 去除 `MOCK_STORE_COUPONS/MOCK_PLATFORM_PERKS`，改为读取真实优惠券与积分兑换目录（`orderApi.getDiscounts` + `rewardApi.getPointsExchangeCatalog`）。
+- 已完成：订单中心与优惠券页维持原交互结构，同时统一为真实数据驱动。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 18 批）
+- 已完成：`AddressDrawer` 对接真实地址接口（`/butler/addresses`），支持列表、新增、编辑、删除、设默认，不再使用静态 `INITIAL_ADDRESSES`。
+- 已完成：`api.ts` 新增 `addressApi`，统一地址 CRUD 调用入口。
+- 已完成：`MyFeedsDrawer` 从“每次启动固定 mock”改为本地持久化数据源（`vcc_my_feeds`），避免重启后回退到静态初始内容。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 19 批）
+- 已完成：`LoungeDrawer` 搜索结果与通讯录好友由本地真实联系人/官方群/活动数据动态生成，去除固定样例搜索结果依赖。
+- 已完成：`LoungeDrawer` 会话合并策略增强（官方群 + 本地群 + 本地联系人），并支持从通讯录直接进入真实私聊会话。
+- 已完成：修复本轮类型约束问题，保持聊天室入口行为与现有上下文兼容。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 20 批）
+- 已完成：`ContactsDrawer` 去除 `FALLBACK_NEW_FRIENDS` 与 `FALLBACK_CONTACTS` 静态回退，统一改为实时发现用户 + 本地联系人融合。
+- 已完成：通讯录分类计数改为动态值（发现用户数量、本地联系人数量），不再使用固定数字。
+- 已完成：联系人主列表维持“GetStream 通讯录 + 本地联系人 + 黑名单管理”结构，但已剥离硬编码样例依赖。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 21 批）
+- 已完成：`DesktopShopView` 类目筛选从固定 `CATEGORIES` 常量改为基于 `productApi.getDiscovery()` 返回商品动态生成，并在筛选逻辑中生效。
+- 已完成：`SquareDrawer` 话题榜从固定 `TOPICS` 常量改为基于 discovery 商品分类计数实时生成，保留无数据兜底提示。
+- 已完成：`LoungeDrawer` 官方群最近消息由 `discoverConfig`（活动/广告/动态）派生，移除多条固定演示会话，保留 AI 管家与订单助手官方入口。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 22 批）
+- 已完成：`DesktopSquarePanel` 左侧分类从固定 `CATEGORIES` 常量改为按 discovery 数据动态生成，Feed 列表支持“分类 + 搜索”联合过滤。
+- 已完成：`DesktopSquarePanel` 左侧热门话题列表改为使用实时 `topics` 数据，不再引用未定义/固定常量，补充空数据兜底文案。
+- 已完成：`MyFeedsDrawer` 移除 `INITIAL_MY_FEEDS` 演示初始化逻辑，改为仅使用本地持久化 `vcc_my_feeds` 作为真实来源。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 23 批）
+- 已完成：`LoungeDrawer` 将固定 `CHAT_LIST` 重构为“系统会话 + 本地持久化系统会话（`vcc_system_chats`）”，不再保留演示型官方话题项。
+- 已完成：残留静态关键字扫描（`MOCK/DUMMY/FALLBACK/INITIAL_/TOPICS/CATEGORIES/CHAT_LIST`）在 `frontend/src/components/VCC` 范围内清零。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 24 批）
+- 已完成：新增结账提交幂等模块 `checkout_idempotency`，对 `client_submit_token` 做格式校验并生成用户维度事件 ID，防止重复提交。
+- 已完成：`/rewards/payment/quote` 与 `/rewards/payment/create-order` 增加 `client_submit_token` 绑定校验，若同一用户重复提交将返回 `409 duplicate_checkout_submission`。
+- 已完成：前端 `CheckoutDrawer` 下单链路增加 `client_submit_token`，并在 quote/create 两阶段透传，确保前后端同一提交上下文。
+- 已完成：新增后端单测 `backend/tests/test_checkout_idempotency.py`，覆盖 token 规范化、非法字符拒绝、用户隔离事件 ID。
+- 已验证：`python3 -m unittest backend/tests/test_checkout_idempotency.py`、`python3 -m compileall ...`、前端 `npm run build` 通过。
+
+## 本轮进展（第 25 批）
+- 已完成：按用户提供连接串更新数据库入口（根 `.env` 与 `backend/.env`），并为运行时增加 DB URL 规范化（检测 `channel_binding=require` 时切换 `postgresql+psycopg` 驱动）。
+- 已完成：Neon 正式库连通性实测通过：`candidate_products` 可读（当前计数 61，抽样查询成功）。
+- 已完成：新增后端单测 `backend/tests/test_db_url_normalization.py`，覆盖带 `channel_binding` 场景 URL 规范化逻辑。
+
+## 本轮进展（第 26 批）
+- 已完成：补齐本地 pytest 运行能力，并修复报价签名“篡改用例”测试（原断言方式无效，改为“解码改值后重编码不重签”真实篡改路径）。
+- 已完成：关键后端回归集通过（`test_coupon_stacking_rules` + `test_checkout_idempotency` + `test_db_url_normalization`）。
+- 已验证：`python3 -m compileall backend/app/...` 与前端 `npm run build` 通过。
+
+## 本轮进展（第 27 批）
+- 已完成：新增统一发布门禁脚本 `ops/release/verify_release_gate.sh`（compileall + pytest 关键套件 + frontend build）。
+- 已完成：门禁脚本实跑通过，并同步补充到发布清单 `ops/release/checklist.md`。
+- 已完成：矩阵中 QA 门禁阻断（BLK-P0-03）从 P1 更新为“已解除”。
+
+## 本轮进展（第 28 批）
+- 已完成：IM Webhook 去重从进程内 `set` 切换到 DB 幂等去重（`processed_webhook_events`），覆盖 Feishu/Telegram/WhatsApp/Discord。
+- 已完成：`/im/feishu` 与 `/im/telegram` 路由去除裸 `except`，改为结构化异常日志，便于线上排障。
+- 已完成：新增 `IM_GATEWAY_ENABLE_CELERY` 配置兼容入口（保留 `CELERY_ENABLED` 兼容）。
+- 已完成：新增回归测试 `backend/tests/test_im_gateway_dedup.py`，验证事件 key 规范化行为。
+
+## 本轮进展（第 29 批）
+- 已完成：新增 key APIs 冒烟测试 `backend/tests/smoke/test_backend_key_apis.py` 并纳入发布门禁。
+- 已完成：修复商品详情接口在正式库字段漂移时的 500 问题（`products` 表查询异常时自动回退候选商品链路）。
+- 已完成：发布门禁脚本升级为 compile + 5 组关键 pytest + frontend build，并实跑通过（18 passed）。
+
+## 本轮进展（第 30 批）
+- 已完成：`0Buck_i18n_Translation_Table.csv` 中新增页面相关的英文缺失项清零（`Current_EN` 不再含中文/空值）。
+- 已完成：同步修复关键条目翻译质量与一致性（如 `coupon.*`、`product.discovery_mode`、`profile.nickname_placeholder`、`ai.resp.payment_success`）。
+- 已完成：补齐 `pocket.support` 中文模板值（`客服`）与英文模板值（`Customer Service`），为后续多语言扩展保留稳定模板列。
+
+## 本轮进展（第 31 批）
+- 已完成：`LoungeDrawer` 所有用户可见中文硬编码替换为 i18n key（顶部 Tab、官方群/个人会话分组、发现区块、联系人卡片、恢复隐藏群按钮等）。
+- 已完成：`discoverConfig` 从中文文案常量改为 key 常量，渲染时统一通过 `t(...)` 翻译，避免英文环境回落中文。
+- 已完成：补齐 `0Buck_i18n_Translation_Table.csv` 的 Lounge 新增 key（分组名、状态、时间、CTA、系统消息等）并执行 `sync_i18n.py` 生成 `en.json/zh.json`。
+- 已验证：Lounge 文件中文硬编码扫描结果为 `0`，前端 `npm run build` 通过。
+
+## 本轮进展（第 32 批）
+- 已完成：`ShareDrawer` 中文硬编码 39 处全部替换为 i18n key，包含状态提示、卡片类型、输入占位、模板预览、使用说明与奖励说明。
+- 已完成：补齐 Share 新增文案 key 到 `0Buck_i18n_Translation_Table.csv`（`share.tip.*`、`share.status.*`、`share.card.*`、`share.input.*`、`share.reward_*`）。
+- 已完成：修复 `voucher.resurgence_name` 英文值残留中文问题；执行 `sync_i18n.py` 后 `en.json` 中文残留为 `0`。
+- 已验证：`ShareDrawer` 中文硬编码扫描结果为 `0`，前端 `npm run build` 通过。
+- 已完成：全量扫描 `frontend/src/components/VCC` 英文化残留基线（仍有 32 个文件、1243 行中文待后续分批迁移，最大头为 `AppContext.tsx`）。
+
+## 本轮进展（第 33 批）
+- 已完成：按用户指定参考源 `frontend_副本` 回补 `frontend/src/components/VCC`，修复此前批量替换导致的页面缺失/损坏。
+- 已完成：对回补后的关键页二次修复（`DesktopLoungePanel`、`ShareDrawer`、`PaymentSuccessScreen`、`GroupTopActions` 等），避免副本覆盖掉已确认方案。
+- 已完成：`ShareDrawer` 恢复“外部 IM 平台 + 生成分享链接卡片 + 链接反解模板 + 平台发送”完整链路。
+- 已完成：`App.tsx` 增加 AI 离线兜底回复（后端不可达时不再完全失效）。
+- 已验证：前端 `npm run build` 通过。
+
+## 本轮进展（第 34 批）
+- 已完成：`DesktopLoungePanel` 恢复为讨论后版本链路（复用 `LoungeDrawer`，恢复搜索/会话入口/联系人管理等交互）。
+- 已完成：`ShareDrawer` 关键链路复核（生成卡片、链接反解、模板选择、发送动作）并确认接口调用层完整。
+- 已完成：`aiApi.chat` 新增 12 秒超时，后端 AI 挂起时前端可触发离线兜底，不再无限等待。
+- 已完成：后端 `/butler/chat` Guest 路径改为本地快速意图兜底，移除对外部模型的强依赖，避免未登录场景长时间卡住。
+- 已完成：后端启动时 Stream 平台频道预创建增加键缺失短路与超时保护，降低启动阻塞风险。
+- 已验证：前端 `npm run build`、后端 `py_compile` 通过；`/healthz` 可达性在本地存在间歇性启动阻塞，仍需继续定位（当前不影响前端离线兜底可用）。
+
+## 本轮进展（第 35 批）
+- 已完成：定位“服务不可用”根因为前端开发服务未运行（`localhost:5173` 连接拒绝），并非业务接口逻辑崩溃。
+- 已完成：拉起前端开发服务 `npm run dev`，恢复本地页面连通。
+- 已完成：浏览器侧回归 `http://localhost:5173/` 与 `http://localhost:8000/`，页面可正常加载并可触发 AI 输入发送动作。
+- 已验证：`curl -I http://localhost:5173/` 返回 `200`，`/healthz` 返回 `ok`，`POST /api/v1/butler/chat` 在未登录场景可快速返回引导消息（不再超时卡死）。
+
+## 本轮进展（第 36 批：未修复项审计）
+- 审计结论：你反馈正确，当前仍有“可用但未完全收敛”项，主要集中在 i18n 残留、自动化覆盖深度、以及后端启动稳定性。
+- 已验证：`frontend/src/components/VCC` 范围中文残留扫描仍有 18 个文件命中、7263 处匹配（最大头 `AppContext.tsx`），说明英文化迁移仍有实质工作量。
+- 已确认：总览矩阵中仍标注为“中低/中高完成”的模块（前端测试自动化、积分兑换后端、Shopify/Webhook/异步任务、IM 网关、结账链路前端）需要继续提级到“高完成”。
+- 已确认：后端健康接口在本地偶发启动阻塞问题尚未彻底归零（见第 34 批记录），需补充稳定性验证和异常场景回归。
+- 下一批执行顺序：1) 先清理英文化硬编码 Top 文件（`AppContext.tsx` + Desktop 核心视图）；2) 补前端关键链路自动化（AI/Share/Lounge/Checkout smoke）；3) 回归后端启动稳定性并回填提级结果。
+
+## 本轮进展（第 37 批）
+- 已完成：移除 `AppContext.tsx` 已废弃的内嵌翻译大对象（当前翻译链路统一走 `frontend/src/i18n` 的 `translate()`），避免“假阳性中文残留”干扰治理。
+- 已完成：Desktop 英文化修复首批文件：`DesktopSidebar.tsx`、`DesktopRightPanel.tsx`、`DesktopChatView.tsx`、`DesktopShopView.tsx`、`DesktopOrdersView.tsx`、`DesktopWalletView.tsx`。
+- 已验证：前端多轮 `npm run build` 均通过，新增改动未引入诊断错误。
+- 已验证：`frontend/src/components/VCC` 中文残留计数由第 36 批基线的 18 文件/7263 处下降到 11 文件/1786 处。
+
+## 本轮进展（第 38 批）
+- 已完成：`DesktopContactsPanel.tsx` 全量可见中文替换（列表文案、状态、搜索占位、按钮动作），该文件中文残留清零。
+- 已验证：前端 `npm run build` 通过。
+- 已验证：`frontend/src/components/VCC` 中文残留进一步下降到 10 文件/1676 处。
+- 剩余 Top 文件：`DesktopNotificationsView.tsx`、`NotificationDrawer.tsx`、`DesktopSocialView.tsx`、`DesktopProfileView.tsx`、`DesktopSquarePanel.tsx`、`DesktopFansPanel.tsx`、`PaymentSuccessScreen.tsx`、`AuthDrawer.tsx`、`SettingsDrawer.tsx`、`ProductDetailDrawer.tsx`。
+
+## 本轮进展（第 39 批）
+- 已完成：Drawer 英文化补齐：`AuthDrawer.tsx`、`PaymentSuccessScreen.tsx`、`ProductDetailDrawer.tsx`、`SettingsDrawer.tsx`。
+- 已完成：Desktop 核心社交域英文化补齐：`DesktopNotificationsView.tsx`、`DesktopProfileView.tsx`、`DesktopSocialView.tsx`、`DesktopFansPanel.tsx`、`DesktopSquarePanel.tsx`。
+- 已完成：`NotificationDrawer.tsx` 大规模 fallback 文案英文化，分组标题、详情字段、通知摘要、footer 提示统一英文。
+- 已验证：前端连续多轮 `npm run build` 均通过（无新增诊断错误）。
+- 已验证：`frontend/src/components/VCC` 范围中文硬编码扫描结果为 0（No matches found）。
+
+## 本轮进展（第 40 批）
+- 已完成：继续 smoke 回归时发现并记录 dev 侧历史控制台异常（`useAppContext must be used within an AppProvider` 旧日志残留），当前页面可正常渲染与交互，未出现新的构建级阻断。
+- 已完成：补充核查 `localhost:5173` 与 `localhost:8000` 链路可达，前端可加载主界面及卡片数据请求。
+- 下一步：继续做功能级 smoke（AI/Share/Lounge/Checkout）的操作路径回归，并将每条链路结果逐项回填本表提级。
