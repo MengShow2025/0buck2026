@@ -283,3 +283,12 @@
 - 已完成：继续 smoke 回归时发现并记录 dev 侧历史控制台异常（`useAppContext must be used within an AppProvider` 旧日志残留），当前页面可正常渲染与交互，未出现新的构建级阻断。
 - 已完成：补充核查 `localhost:5173` 与 `localhost:8000` 链路可达，前端可加载主界面及卡片数据请求。
 - 下一步：继续做功能级 smoke（AI/Share/Lounge/Checkout）的操作路径回归，并将每条链路结果逐项回填本表提级。
+
+## 本轮进展（第 41 批）
+- 已完成：修复 `App.tsx` 的重复 `AppProvider` 包裹（Provider 仅保留在 `main.tsx`），消除 dev 热更新期间的上下文错位风险。
+- 已验证：前端 `npm run build` 通过（无阻断错误）。
+- 已完成：关键链路 smoke（接口级）：
+  - `AI`：`POST /api/v1/butler/chat` 返回 `200`，Guest 引导消息可正常返回。
+  - `Share`：`POST /api/v1/im/promo/cards/generate` 返回 `401`（未登录鉴权生效）；`/from-link` 返回 `400 invalid_promo_link`（参数校验生效）。
+  - `Checkout`：`/api/v1/rewards/payment/quote` 与 `/payment/discounts` 在未登录态均返回 `401`（鉴权生效）。
+- 说明：`Lounge/Share/Checkout` 的完整业务成功流需登录态 Token；当前已确认“路由可达 + 鉴权/校验行为正确”。
