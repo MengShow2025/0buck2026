@@ -374,6 +374,7 @@ def _prepare_checkout_context(
     db: Session,
     payload: Dict[str, Any],
     customer_id: int,
+    allow_candidate_quote: bool = False,
 ) -> Dict[str, Any]:
     raw_items = payload.get("items", [])
     balance_used = Decimal(str(payload.get("balance_used", "0")))
@@ -400,11 +401,18 @@ def _prepare_checkout_context(
         )
         if not product:
             candidate = (
-                db.query(CandidateProduct.id)
+                db.query(CandidateProduct.id, CandidateProduct.estimated_sale_price, CandidateProduct.comp_price_usd)
                 .filter(CandidateProduct.id == product_id)
                 .first()
             )
             if candidate:
+                if allow_candidate_quote:
+                    sale_price = Decimal(str(candidate.estimated_sale_price or candidate.comp_price_usd or 0))
+                    if sale_price <= 0:
+                        raise HTTPException(status_code=400, detail=f"invalid_product_price:{product_id}")
+                    subtotal += sale_price * quantity
+                    sanitized_items.append({"product_id": product_id, "quantity": quantity})
+                    continue
                 raise HTTPException(status_code=400, detail=f"product_not_ready_for_checkout:{product_id}")
             cj_row = db.execute(
                 text("SELECT id FROM cj_raw_products WHERE id = :pid LIMIT 1"),
@@ -1238,7 +1246,12 @@ def create_checkout_quote(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    ctx = _prepare_checkout_context(db=db, payload=payload.dict(), customer_id=current_user.customer_id)
+    ctx = _prepare_checkout_context(
+        db=db,
+        payload=payload.dict(),
+        customer_id=current_user.customer_id,
+        allow_candidate_quote=True,
+    )
     jti = str(uuid.uuid4())
     exp_ts = int(time.time()) + 300
     quote_payload = {
