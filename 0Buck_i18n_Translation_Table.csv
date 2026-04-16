@@ -1,0 +1,1289 @@
+Key,Category,Original_ZH,Original_EN,Current_ZH,Current_EN
+address.add_desc,address,填写后加入当前地址列表,Will be added to your address list immediately,填写后加入当前地址列表,Will be added to your address list immediately
+address.add_new_btn,address,Add New Address,Add New Address,Add New Address,Add New Address
+address.add_title,address,添加新地址,Add New Address,添加新地址,Add New Address
+address.address_line_1,address,Address Line 1,Address Line 1,Address Line 1,Address Line 1
+address.australia,address,Australia,Australia,Australia,Australia
+address.canada,address,Canada,Canada,Canada,Canada
+address.cancel,address,取消,Cancel,取消,Cancel
+address.city,address,City,City,City,City
+address.country_au,address,Australia,Australia,Australia,Australia
+address.country_ca,address,Canada,Canada,Canada,Canada
+address.country_eu,address,Europe,Europe,Europe,Europe
+address.country_other,address,Other,Other,Other,Other
+address.country_select,address,选择国家/地区,Select Country/Region,选择国家/地区,Select Country/Region
+address.country_uk,address,United Kingdom,United Kingdom,United Kingdom,United Kingdom
+address.country_us,address,United States,United States,United States,United States
+address.default,address,Default,Default,Default,Default
+address.default_badge,address,Default,Default,Default,Default
+address.delete,address,Delete,Delete,Delete,Delete
+address.edit,address,Edit,Edit,Edit,Edit
+address.europe,address,Europe,Europe,Europe,Europe
+address.full_name,address,Full Name,Full Name,Full Name,Full Name
+address.other,address,Other,Other,Other,Other
+address.phone_number,address,Phone Number,Phone Number,Phone Number,Phone Number
+address.placeholder_address1,address,Address Line 1,Address Line 1,Address Line 1,Address Line 1
+address.placeholder_address2,address,Address Line 2 (Optional),Address Line 2 (Optional),Address Line 2 (Optional),Address Line 2 (Optional)
+address.placeholder_city,address,City,City,City,City
+address.placeholder_name,address,Full Name,Full Name,Full Name,Full Name
+address.placeholder_phone,address,Phone Number,Phone Number,Phone Number,Phone Number
+address.placeholder_state,address,State / Province,State / Province,State / Province,State / Province
+address.placeholder_zip,address,ZIP / Postal Code,ZIP / Postal Code,ZIP / Postal Code,ZIP / Postal Code
+address.save,address,保存地址,Save Address,保存地址,Save Address
+address.set_default,address,设为默认地址,Set as Default,设为默认地址,Set as Default
+address.set_default_btn,address,Set Default,Set Default,Set Default,Set Default
+address.state_province,address,State / Province,State / Province,State / Province,State / Province
+address.united_kingdom,address,United Kingdom,United Kingdom,United Kingdom,United Kingdom
+address.united_states,address,United States,United States,United States,United States
+address.zip_postal_code,address,ZIP / Postal Code,ZIP / Postal Code,ZIP / Postal Code,ZIP / Postal Code
+addressdrawer.set_default,addressdrawer,Set Default,Set Default,Set Default,Set Default
+ai.action.start_rebate,ai,查看订单详情,View Order Details,查看订单详情,View Order Details
+ai.input_placeholder,ai,输入您的需求...,Enter sourcing needs...,输入您的需求...,Enter sourcing needs...
+ai.quick_reply.auto_currency,ai,本地货币,Auto Currency,本地货币,Auto Currency
+ai.quick_reply.check_in,ai,去签到,Check-in,去签到,Check-in
+ai.quick_reply.dark_mode,ai,暗黑模式,Dark Mode,暗黑模式,Dark Mode
+ai.quick_reply.jpy,ai,展示日元,Show JPY,展示日元,Show JPY
+ai.quick_reply.notify_off,ai,关闭通知,Silence,关闭通知,Silence
+ai.resp.address,ai,好的，这是收货地址管理页面，请您在此添加或修改地址。📦,Sure， here is the address management page. 📦,好的，这是收货地址管理页面，请您在此添加或修改地址。📦,Sure， here is the address management page. 📦
+ai.resp.check_in,ai,太棒了！您今天已签到。请继续保持哦！✨,Great! You'，,太棒了！您今天已签到。请继续保持哦！✨,Great! You'，
+ai.resp.check_in_success,ai,太棒了！您今天的签到已完成。要继续保持哦！✨,Great! Your check-in for today is complete. Keep it up! ✨,太棒了！您今天的签到已完成。要继续保持哦！✨,Great! Your check-in for today is complete. Keep it up! ✨
+ai.resp.clear_memory,ai,我已清空了当前偏好记忆。从现在起我们重新认识！🧠✨,"I have cleared my current memory of your preferences. From now on, we will get to know each other anew！🧠✨",我已清空了当前偏好记忆。从现在起我们重新认识！🧠✨,"I have cleared my current memory of your preferences. From now on, we will get to know each other anew！🧠✨"
+ai.resp.coupons,ai,马上为您打开卡券中心。🎟️,Opening the Coupon Center. 🎟️,马上为您打开卡券中心。🎟️,Opening the Coupon Center. 🎟️
+ai.resp.currency_auto,ai,已开启本地货币标价。我会根据您的地区自动以本地货币展示价格。🌍,Local currency pricing is now enabled. I will automatically display prices in your local currency based on your region. 🌍,已开启本地货币标价。我会根据您的地区自动以本地货币展示价格。🌍,Local currency pricing is now enabled. I will automatically display prices in your local currency based on your region. 🌍
+ai.resp.currency_cny,ai,好的，已经为您切换到人民币 (CNY) 价格。💴,Switched price display to CNY! 💴,好的，已经为您切换到人民币 (CNY) 价格。💴,Switched price display to CNY! 💴
+ai.resp.currency_eur,ai,没问题，已为您切换到欧元 (EUR) 价格。💶,Switched price display to EUR! 💶,没问题，已为您切换到欧元 (EUR) 价格。💶,Switched price display to EUR! 💶
+ai.resp.currency_gbp,ai,好的，已为您切换到英镑 (GBP) 价格。💷,Switched price display to GBP! 💷,好的，已为您切换到英镑 (GBP) 价格。💷,Switched price display to GBP! 💷
+ai.resp.currency_hkd,ai,好的，已为您切换到港币 (HKD) 价格。💵,Switched price display to HKD! 💵,好的，已为您切换到港币 (HKD) 价格。💵,Switched price display to HKD! 💵
+ai.resp.currency_jpy,ai,没问题，价格显示已经为您切换到日元 (JPY) 啦！💴,Switched price display to JPY! 💴,没问题，价格显示已经为您切换到日元 (JPY) 啦！💴,Switched price display to JPY! 💴
+ai.resp.currency_usd,ai,好的，价格显示已经为您切换到美元 (USD) 啦！💵,Switched price display to USD! 💵,好的，价格显示已经为您切换到美元 (USD) 啦！💵,Switched price display to USD! 💵
+ai.resp.dark_mode,ai,已经为您切换到暗黑模式啦！🌙,Switched to Dark Mode! 🌙,已经为您切换到暗黑模式啦！🌙,Switched to Dark Mode! 🌙
+ai.resp.initial_dumbo,ai,阿龙，您好！有什么可以帮您的吗？,Hi， A-Long! What can I help you with today?,阿龙，您好！有什么可以帮您的吗？,Hi， A-Long! What can I help you with today?
+ai.resp.lang_en,ai,No problem! I have switched the system language to English for you. 🇺🇸,No problem! Switched system language to English. 🇺🇸,No problem! I have switched the system language to English for you. 🇺🇸,No problem! Switched system language to English. 🇺🇸
+ai.resp.lang_zh,ai,没问题，系统语言已经为您切换回简体中文啦！🇨🇳,No problem! Switched system language back to Chinese. 🇨🇳,没问题，系统语言已经为您切换回简体中文啦！🇨🇳,No problem! Switched system language back to Chinese. 🇨🇳
+ai.resp.light_mode,ai,已经为您切换到明亮模式啦！☀️,Switched to Light Mode! ☀️,已经为您切换到明亮模式啦！☀️,Switched to Light Mode! ☀️
+ai.resp.lounge,ai,为您打开沙龙！💬,Opening the Lounge for you! 💬,为您打开沙龙！💬,Opening the Lounge for you! 💬
+ai.resp.mock_user_tech,ai,（开发测试）我在这里，随时待命。,(Dev test) I’m here and ready.,（开发测试）我在这里，随时待命。,(Dev test) I’m here and ready.
+ai.resp.notify_off,ai,好的，我已经帮您关闭了系统推送通知。现在不会有人打扰您了。🔕,Done， notifications turned off. No one will disturb you now. 🔕,好的，我已经帮您关闭了系统推送通知。现在不会有人打扰您了。🔕,Done， notifications turned off. No one will disturb you now. 🔕
+ai.resp.notify_on,ai,收到！推送通知已开启，我会及时把重要信息通知给您的。🔔,Got it! Notifications are on. I'，,收到！推送通知已开启，我会及时把重要信息通知给您的。🔔,Got it! Notifications are on. I'，
+ai.resp.payment_success,ai,太棒了老板！您的订单已确认，返现挑战已将启。✨ 检测到您已成功下单 {orderId}。货物签收且过退货期后的次日 0 点，系统将为您自动开启签到返现。我会为您全程盯紧物流，请放心！,Great news boss! Your order {orderId} is confirmed and cashback challenge is queued. After delivery is confirmed and return window passes the check-in cashback starts automatically at 00:00 next day. I monitor logistics for you throughout.,太棒了老板！您的订单已确认，返现挑战已将启。✨ 检测到您已成功下单 {orderId}。货物签收且过退货期后的次日 0 点，系统将为您自动开启签到返现。我会为您全程盯紧物流，请放心！,Great news boss! Your order {orderId} is confirmed and cashback challenge is queued. After delivery is confirmed and return window passes the check-in cashback starts automatically at 00:00 next day. I monitor logistics for you throughout.
+ai.resp.persona_friendly,ai,好的 Boss！我已经切换到了热情活泼的管家性格！🎉 接下来有什么可以帮您的吗？,"Okay, Boss! I've switched to my enthusiastic and lively butler persona! 🎉 Is there anything I can help you with next?",好的 Boss！我已经切换到了热情活泼的管家性格！🎉 接下来有什么可以帮您的吗？,"Okay, Boss! I've switched to my enthusiastic and lively butler persona! 🎉 Is there anything I can help you with next?"
+ai.resp.persona_loli,ai,大哥哥好！我换成可爱模式啦，喵呜～ 🌸 有什么需要帮忙的吗？,"Hi big brother! I've switched to cute mode, meow~ 🌸 Is there anything I can help you with?，",大哥哥好！我换成可爱模式啦，喵呜～ 🌸 有什么需要帮忙的吗？,"Hi big brother! I've switched to cute mode, meow~ 🌸 Is there anything I can help you with?，"
+ai.resp.persona_tsundere,ai,哼，本小姐才不想理你呢，不过既然你非要我帮忙... 说吧，想干嘛？,"Hmph, I don't want to talk to you, but since you insist on my help... So, what do you want?",哼，本小姐才不想理你呢，不过既然你非要我帮忙... 说吧，想干嘛？,"Hmph, I don't want to talk to you, but since you insist on my help... So, what do you want?"
+ai.resp.settings,ai,已经为您打开设置中心。⚙️,Opening Settings. ⚙️,已经为您打开设置中心。⚙️,Opening Settings. ⚙️
+ai.resp.show_products,ai,好的，为您挑选了几款我们平台的热门严选商品，您可以随便看看！✨,Sure， here are some popular hand-picked items for you! ✨,好的，为您挑选了几款我们平台的热门严选商品，您可以随便看看！✨,Sure， here are some popular hand-picked items for you! ✨
+ai.resp.wallet,ai,正在为您打开钱包。这里可以查看您的余额、积分和大模型调用奖励哦！💰,Opening your wallet. You can check your balance， points， and rewards here! 💰,正在为您打开钱包。这里可以查看您的余额、积分和大模型调用奖励哦！💰,Opening your wallet. You can check your balance， points， and rewards here! 💰
+ai.resp.withdraw,ai,没问题，这是您的提现通道。💸 祝您提款顺利！,No problem， here is your withdrawal portal. 💸 Good luck!,没问题，这是您的提现通道。💸 祝您提款顺利！,No problem， here is your withdrawal portal. 💸 Good luck!
+ai.thinking,ai,正在检索最优货源...,Optimizing sourcing...,正在检索最优货源...,Optimizing sourcing...
+ai.welcome_msg,ai,您好！我是您的 AI 管家，能为你服务是我的荣幸。,Welcome. I am your AI Butler. It is my honor to serve you.,您好！我是您的 AI 管家，能为你服务是我的荣幸。,Welcome. I am your AI Butler. It is my honor to serve you.
+api_model.api_key,api_model,API 密钥,API Key,API 密钥,API Key
+api_model.api_key_placeholder,api_model,输入 API 密钥 (sk-...),Enter API Key (sk-...),输入 API 密钥 (sk-...),Enter API Key (sk-...)
+api_model.desc,api_model,接入您自己的 大模型，享受无限制的对话体验，同时还能赚取算力共享奖励。,Connect your own API Key to enjoy unlimited chat and earn compute sharing rewards.,接入您自己的 大模型，享受无限制的对话体验，同时还能赚取算力共享奖励。,Connect your own API Key to enjoy unlimited chat and earn compute sharing rewards.
+api_model.model,api_model,模型,Model,模型,Model
+api_model.privacy_note,api_model,您的密钥仅通过不可逆加密存储于您本机的本地环境 (Local Storage) 中。所有模型请求均由您的设备端直接发起直连服务商，绝不经过或上传至 0Buck 服务器，100% 确保您的隐私与资产安全。,Your key is stored only in your local storage via irreversible encryption. All requests are made directly from your device to the provider. 0Buck never sees or stores your private keys.,您的密钥仅通过不可逆加密存储于您本机的本地环境 (Local Storage) 中。所有模型请求均由您的设备端直接发起直连服务商，绝不经过或上传至 0Buck 服务器，100% 确保您的隐私与资产安全。,Your key is stored only in your local storage via irreversible encryption. All requests are made directly from your device to the provider. 0Buck never sees or stores your private keys.
+api_model.provider,api_model,服务商,Provider,服务商,Provider
+api_model.success_desc,api_model,您的自定义 API 已生效。后续聊天将优先使用此模型，并可获得相应的 API 贡献奖励。,Your custom API is now active. Subsequent chats will prioritize this model， and you can earn API contribution rewards.,您的自定义 API 已生效。后续聊天将优先使用此模型，并可获得相应的 API 贡献奖励。,Your custom API is now active. Subsequent chats will prioritize this model， and you can earn API contribution rewards.
+api_model.success_title,api_model,大模型添加成功,Model Added Successfully,大模型添加成功,Model Added Successfully
+app.address_add,app,address_add,address_add,address_add,address_add
+app.api_model_add,app,api_model_add,api_model_add,api_model_add,api_model_add
+app.coupons,app,卡券,coupons,卡券,coupons
+app.fans,app,粉丝,fans,粉丝,fans
+app.lounge,app,沙龙,lounge,沙龙,lounge
+app.settings,app,设置,settings,设置,settings
+app.wallet,app,钱包,wallet,钱包,wallet
+app.withdraw,app,提现,withdraw,提现,withdraw
+auth.0buck_explorer,auth,0Buck Explorer,0Buck Explorer,0Buck Explorer,0Buck Explorer
+auth.auto_create_desc,auth,系统将为新用户自动创建账号。,Account created automatically on first sign-in.,系统将为新用户自动创建账号。,Account created automatically on first sign-in.
+auth.continue,auth,继续,Continue,继续,Continue
+auth.create_account_action,auth,创建账号,Create Account,创建账号,Create Account
+auth.create_password,auth,创建密码,Create Password,创建密码,Create Password
+auth.didn_t_receive_it,auth,收到了吗?,Didn't receive it?,收到了吗?,Didn't receive it?
+auth.email_placeholder,auth,邮箱地址,Email Address,邮箱地址,Email Address
+auth.forgot_password,auth,忘记密码？,Forgot Password?,忘记密码？,Forgot Password?
+auth.login_action,auth,立即登录,Log In,立即登录,Log In
+auth.login_signup_desc,auth,购物签到全返新纪元,A New Era of Full Cashback on Shopping Check-ins,购物签到全返新纪元,A New Era of Full Cashback on Shopping Check-ins
+auth.otp_sent_to,auth,验证码已发送至,Verification code sent to,验证码已发送至,Verification code sent to
+auth.password_placeholder,auth,输入密码,Enter Password,输入密码,Enter Password
+auth.resend,auth,重新发送,Resend,重新发送,Resend
+auth.social_or,auth,或使用其他方式,Or connect with,或使用其他方式,Or connect with
+auth.verify_action,auth,验证,Verify,验证,Verify
+auth.verify_email,auth,身份验证,Verify Email,身份验证,Verify Email
+auth.welcome,auth,欢迎体验 0Buck,Welcome to 0Buck,欢迎体验 0Buck,Welcome to 0Buck
+auth.welcome_back,auth,欢迎回来,Welcome Back,欢迎回来,Welcome Back
+cart.checkout,cart,去结算,Checkout,去结算,Checkout
+cart.empty,cart,账单为空,List is empty,账单为空,List is empty
+cart.go_shopping,cart,去逛逛,Go Shopping,去逛逛,Go Shopping
+cart.mock_product_1_name,cart,Handcrafted Ceramic Mug,Handcrafted Ceramic Mug,Handcrafted Ceramic Mug,Handcrafted Ceramic Mug
+cart.mock_product_1_variant,cart,Matte Black,Matte Black,Matte Black,Matte Black
+cart.mock_product_2_name,cart,Organic Cotton T-Shirt,Organic Cotton T-Shirt,Organic Cotton T-Shirt,Organic Cotton T-Shirt
+cart.mock_product_2_variant,cart,Large / Olive Green,Large / Olive Green,Large / Olive Green,Large / Olive Green
+cart.title,cart,采购清单,Sourcing List,采购清单,Sourcing List
+cashback.daily_title,cashback,每日签到返现,Daily check-in cashback,每日签到返现,Daily check-in cashback
+cashback.fully_paid,cashback,奖励已全额发放,Bonus distribution,奖励已全额发放,Bonus distribution
+cashback.go_center,cashback,签到中心,Check-in Center,签到中心,Check-in Center
+cashback.pending_notice_desc,cashback,您的订单已支付成功。当您确认收货且超过7天无退货期后，签到返现将于次日0点自动开启。AI管家将全程为您监控物流进度。,Your order has been paid successfully. After delivery is confirmed and the 7-day return window passes the cashback check-in starts automatically at 00:00 next day. Your AI Butler monitors logistics throughout.,您的订单已支付成功。当您确认收货且超过7天无退货期后，签到返现将于次日0点自动开启。AI管家将全程为您监控物流进度。,Your order has been paid successfully. After delivery is confirmed and the 7-day return window passes the cashback check-in starts automatically at 00:00 next day. Your AI Butler monitors logistics throughout.
+cashback.pending_notice_title,cashback,订单有效完成后自动开启,Automatically open after the order is completed.,订单有效完成后自动开启,Automatically open after the order is completed.
+cashback.pending_subtitle,cashback,等待货物签收,Awaiting Delivery,等待货物签收,Awaiting Delivery
+cashback.pending_title,cashback,签到返现将开启,Check-in Cashback Pending,签到返现将开启,Check-in Cashback Pending
+cashback.phase_prefix,cashback,第,NO.,第,NO.
+cashback.phase_suffix,cashback,期,P,期,P
+cashback.total_prefix,cashback,共,Total,共,Total
+cashback.total_suffix,cashback,期,P,期,P
+cashback.view_order,cashback,查看订单,View Order,查看订单,View Order
+cashbackradarcard.100_cashback_program,cashbackradarcard,购物全返,100% Cashback Program,购物全返,100% Cashback Program
+chat.anyone_there,chat,有人在吗？,Anyone there?,有人在吗？,Anyone there?
+chat.geek_week,chat,Geek Week: 参与讨论赢取积分,Geek Week: Join discussion for points,Geek Week: 参与讨论赢取积分,Geek Week: Join discussion for points
+chat.input_placeholder,chat,说点什么...,Type a message...,说点什么...,Type a message...
+chat.keyboard_desc,chat,这款机械键盘手感极佳，强烈推荐！,This mechanical keyboard feels amazing， highly recommended!,这款机械键盘手感极佳，强烈推荐！,This mechanical keyboard feels amazing， highly recommended!
+chat.official_announcement,chat,官方公告,Official Notice,官方公告,Official Notice
+chat.online,chat,在线,Online,在线,Online
+chat.order_now,chat,立即下单,Order Now,立即下单,Order Now
+chat.owner_recommend,chat,群主推荐,Owner Picks,群主推荐,Owner Picks
+chat.topic_opinion,chat,关于这个话题，大家怎么看？,What do you think about this topic?,关于这个话题，大家怎么看？,What do you think about this topic?
+chat.view_activity,chat,查看活动,View Event,查看活动,View Event
+chat.welcome_to,chat,欢迎来到,Welcome to,欢迎来到,Welcome to
+chatroom.artisan_crafted_wireless_earbu,chatroom,匠心打造的无线降噪耳机,Artisan Crafted Wireless Earbuds with Noise Cancellation,匠心打造的无线降噪耳机,Artisan Crafted Wireless Earbuds with Noise Cancellation
+chatroom.pinned,chatroom,默认,pinned,默认,pinned
+chatroom.user_a,chatroom,User_A,User_A,User_A,User_A
+checkout.123_artisan_ave_new_york_ny_10,checkout,123 Artisan Ave， New York， NY 10001,123 Artisan Ave， New York， NY 10001,123 Artisan Ave， New York， NY 10001,123 Artisan Ave， New York， NY 10001
+checkout.available_balance,checkout,可用余额,Available balance,可用余额,Available balance
+checkout.back_to_checkout,checkout,返回支付页,Back to Checkout,返回支付页,Back to Checkout
+checkout.balance_deduction,checkout,余额抵扣,Balance Deduction,余额抵扣,Balance Deduction
+checkout.balance_pay,checkout,余额支付,0Buck Balance,余额支付,0Buck Balance
+checkout.can_stack,checkout,（可叠加）,(Stackable),（可叠加）,(Stackable)
+checkout.confirm,checkout,核对订单,Confirm Order,核对订单,Confirm Order
+checkout.confirm_order_total,checkout,确认订单 •,Confirm Order •,确认订单 •,Confirm Order •
+checkout.crypto_pay,checkout,USDC 支付,USDC Crypto,USDC 支付,USDC Crypto
+checkout.discounts_applied,checkout,选用,Selected,选用,Selected
+checkout.estimated_total,checkout,预计总额,Estimated Total,预计总额,Estimated Total
+checkout.full_balance_payment,checkout,全额余额支付,Full Balance Payment,全额余额支付,Full Balance Payment
+checkout.item_total,checkout,合计,Total,合计,Total
+checkout.long,checkout,Long,Long,Long,Long
+checkout.min_spend,checkout,最低消费,Min spend,最低消费,Min spend
+checkout.mixed_payment_desc,checkout,剩余金额将通过第三方支付方式结算,Remaining amount will be settled via 3rd party payment,剩余金额将通过第三方支付方式结算,Remaining amount will be settled via 3rd party payment
+checkout.no_voucher_available,checkout,暂无可用代金券,No Vouchers Available,暂无可用代金券,No Vouchers Available
+checkout.order_summary,checkout,订单汇总,Order Summary,订单汇总,Order Summary
+checkout.payment_methods_supported,checkout,支持的支付方式,Supported Payment Methods,支持的支付方式,Supported Payment Methods
+checkout.payment_success_desc,checkout,您的订单已确认，返现挑战已将启,Your order is confirmed and the cashback challenge is starting.,您的订单已确认，返现挑战已将启,Your order is confirmed and the cashback challenge is starting.
+checkout.payment_success_title,checkout,支付成功！,Payment Successful!,支付成功！,Payment Successful!
+checkout.paypal,checkout,PayPal,PayPal,PayPal,PayPal
+checkout.place_order,checkout,立即下单,Place Order,立即下单,Place Order
+checkout.redirecting_to_shopify,checkout,正在为您跳转至 Shopify 收银台...,Redirecting to Shopify Checkout...,正在为您跳转至 Shopify 收银台...,Redirecting to Shopify Checkout...
+checkout.remaining_to_pay,checkout,剩余应付,Remaining to pay,剩余应付,Remaining to pay
+checkout.secure_checkout,checkout,100% 购物返现,Secure 100% Rebate Checkout,100% 购物返现,Secure 100% Rebate Checkout
+checkout.securing_connection,checkout,正在连接 Shopify 加密收银台...,Securing connection to Shopify...,正在连接 Shopify 加密收银台...,Securing connection to Shopify...
+checkout.select_voucher,checkout,选择代金券,Select Voucher,选择代金券,Select Voucher
+checkout.tap_to_toggle,checkout,点击切换,Tap to toggle,点击切换,Tap to toggle
+checkout.tax,checkout,预计税费,Estimated Tax,预计税费,Estimated Tax
+checkout.total,checkout,总计,Total,总计,Total
+checkout.use_balance,checkout,使用账户余额抵扣,Use account balance,使用账户余额抵扣,Use account balance
+checkout.voucher,checkout,代金券,Voucher,代金券,Voucher
+common.add,common,添加,Add,添加,Add
+common.all,common,全部,All,全部,All
+common.all_selected,common,全选,All,全选,All
+common.back,common,返回,Back,返回,Back
+common.cancel,common,取消,Cancel,取消,Cancel
+common.change,common,更改,Change,更改,Change
+common.checkout_count,common,去结算 ({count}),Checkout ({count}),去结算 ({count}),Checkout ({count})
+common.completed,common,Completed,Completed,Completed,Completed
+common.confirm,common,确定,Confirm,确定,Confirm
+common.copy,common,复制,Copy,复制,Copy
+common.currency_usd,common,USD,USD,USD,USD
+common.days,common,天,days,天,days
+common.delete,common,移除,Remove,移除,Remove
+common.details,common,查看详情,Details,查看详情,Details
+common.edit,common,编辑,Edit,编辑,Edit
+common.error,common,操作失败,Error,操作失败,Error
+common.fans_requirement,common,活跃粉丝,Active Fans,活跃粉丝,Active Fans
+common.friday,common,星期五,Friday,星期五,Friday
+common.ignore,common,忽略,Ignore,忽略,Ignore
+common.is_friend,common,已是好友,Friends,已是好友,Friends
+common.loading,common,正在处理...,Processing...,正在处理...,Processing...
+common.logs,common,条日志,logs,条日志,logs
+common.manage,common,管理,Manage,管理,Manage
+common.me,common,我,Me,我,Me
+common.members,common,位成员,members,位成员,members
+common.monday,common,星期一,Monday,星期一,Monday
+common.more,common,更多,More,更多,More
+common.no_data,common,暂无记录,No Data,暂无记录,No Data
+common.no_messages,common,暂无消息,No messages yet,暂无消息,No messages yet
+common.now,common,刚刚,Just Now,刚刚,Just Now
+common.remove_all,common,清除全部,Remove All,清除全部,Remove All
+common.saturday,common,星期六,Saturday,星期六,Saturday
+common.save,common,保存,Save,保存,Save
+common.share_earn,common,分享赚奖励,Share & Earn,分享赚奖励,Share & Earn
+common.spend_requirement,common,累计消费,Total Spend,累计消费,Total Spend
+common.success,common,操作成功,Success,操作成功,Success
+common.sunday,common,星期日,Sunday,星期日,Sunday
+common.thursday,common,星期四,Thursday,星期四,Thursday
+common.total,common,合计:,Total:,合计:,Total:
+common.tuesday,common,星期二,Tuesday,星期二,Tuesday
+common.unit_earned,common,已赚取,Earned,已赚取,Earned
+common.unit_items,common,件商品,items,件商品,items
+common.unit_points,common,积分,PTS,积分,PTS
+common.unit_reviews,common,条评价,reviews,条评价,reviews
+common.wednesday,common,星期三,Wednesday,星期三,Wednesday
+common.yesterday,common,昨天,Yesterday,昨天,Yesterday
+contact.accept,contact,接受,receive,接受,receive
+contact.added,contact,已添加,Get,已添加,Get
+contact.discover,contact,发现,Find,发现,Find
+contact.expired,contact,已过期,Expired,已过期,Expired
+contact.groups,contact,群聊,Community,群聊,Community
+contact.my_feeds,contact,我的动态,Activity,我的动态,Activity
+contact.new_friends,contact,新的朋友,New friends,新的朋友,New friends
+contact.search_placeholder,contact,搜索联系人、群聊...,"Search contacts, group chats...",搜索联系人、群聊...,"Search contacts, group chats..."
+contact.star_friends,contact,星标朋友,Starred friends,星标朋友,Starred friends
+contacts.added,contacts,更多,added,更多,added
+contacts.alex,contacts,Alex,Alex,Alex,Alex
+contacts.alex_design,contacts,Alex Design,Alex Design,Alex Design,Alex Design
+contacts.carl,contacts,Carl,Carl,Carl,Carl
+contacts.david_w,contacts,David Wilson,David Wilson,David Wilson,David Wilson
+contacts.elena_r,contacts,Elena Rodriguez,Elena Rodriguez,Elena Rodriguez,Elena Rodriguez
+contacts.geek_master,contacts,Geek Master,Geek Master,Geek Master,Geek Master
+contacts.gtja_support,contacts,GTJA Support,GTJA Support,GTJA Support,GTJA Support
+contacts.jessie,contacts,Jessie,Jessie,Jessie,Jessie
+contacts.lorna,contacts,Lorna,Lorna,Lorna,Lorna
+contacts.lorna_tech,contacts,Lorna Tech,Lorna Tech,Lorna Tech,Lorna Tech
+contacts.mike_j,contacts,Mike Johnson,Mike Johnson,Mike Johnson,Mike Johnson
+contacts.premium_wine_17277618867,contacts,Premium Wine 17277618867,Premium Wine 17277618867,Premium Wine 17277618867,Premium Wine 17277618867
+contacts.sarah_c,contacts,Sarah Chen,Sarah Chen,Sarah Chen,Sarah Chen
+contacts.user_a,contacts,User A,User A,User A,User A
+contacts.user_b,contacts,User B,User B,User B,User B
+contacts.vortex_fan,contacts,Vortex Fan,Vortex Fan,Vortex Fan,Vortex Fan
+coupon.condition_electronics,coupon,Applicable to Electronics,Applicable to Electronics,Applicable to Electronics,Applicable to Electronics
+coupon.condition_min_50,coupon,Min. spend,Min. spend,Min. spend,Min. spend
+coupon.condition_no_min,coupon,No minimum spend,No minimum spend,No minimum spend,No minimum spend
+coupon.expired_label,coupon,已失效,Expired,已失效,Expired
+coupon.expiring_badge,coupon,Expiring,Expiring,Expiring,Expiring
+coupon.get_action,coupon,去拿券 (Get Coupons),Get Coupons,去拿券 (Get Coupons),Get Coupons
+coupon.get_desc,coupon,前往活动中领取无门槛折扣券，获得最大优惠！,Head over to the event to claim your no-minimum-spend discount coupon and get the best deals!,前往活动中领取无门槛折扣券，获得最大优惠！,Head over to the event to claim your no-minimum-spend discount coupon and get the best deals!
+coupon.no_discounts,coupon,暂无可用购物折扣,No available shopping discounts,暂无可用购物折扣,No available shopping discounts
+coupon.no_perks,coupon,暂无平台特权,No platform perks available,暂无平台特权,No platform perks available
+coupon.perks_desc,coupon,您可以用积分兑换续签卡、解锁高级会员标识，享受更多权益。,"You can use points to renew your membership card, unlock premium membership badges, and enjoy more benefits.",您可以用积分兑换续签卡、解锁高级会员标识，享受更多权益。,"You can use points to renew your membership card, unlock premium membership badges, and enjoy more benefits."
+coupon.title_free_ship,coupon,Free Shipping Voucher,Free Shipping Voucher,Free Shipping Voucher,Free Shipping Voucher
+coupon.title_geek_week,coupon,Geek Week Special,Geek Week Special,Geek Week Special,Geek Week Special
+coupon.title_new_user,coupon,New User Bonus,New User Bonus,New User Bonus,New User Bonus
+coupon.type_cash,coupon,Cash OFF,Cash OFF,Cash OFF,Cash OFF
+coupon.type_discount,coupon,Discount,Discount,Discount,Discount
+coupon.type_shipping,coupon,Shipping,Shipping,Shipping,Shipping
+coupon.valid_2_days,coupon,Expiring in 2 days,Expiring in 2 days,Expiring in 2 days,Expiring in 2 days
+coupon.value_free,coupon,Free,Free,Free,Free
+coupons.available,coupons,available,available,available,available
+coupons.expiring,coupons,Expiring,Expiring,Expiring,Expiring
+coupons.expiring_soon,coupons,expiring_soon,expiring_soon,expiring_soon,expiring_soon
+coupons.free,coupons,Free,Free,Free,Free
+coupons.free_shipping_voucher,coupons,Free Shipping Voucher,Free Shipping Voucher,Free Shipping Voucher,Free Shipping Voucher
+coupons.geek_week_special,coupons,Geek Week Special,Geek Week Special,Geek Week Special,Geek Week Special
+coupons.new_user_bonus,coupons,New User Bonus,New User Bonus,New User Bonus,New User Bonus
+coupons.used,coupons,used,used,used,used
+couponsdrawer.10,couponsdrawer,$10,$10,$10,$10
+couponsdrawer.20,couponsdrawer,20%,20%,20%,20%
+customer.reply,customer,客服回访,Customer service follow-up,客服回访,Customer service follow-up
+fan.active_rates,fan,当前生效比例,Current Active Rates,当前生效比例,Current Active Rates
+fan.all_tiers,fan,全等级比例对比,All Tiers Comparison,全等级比例对比,All Tiers Comparison
+fan.apply_now,fan,立即申请,Apply Now,立即申请,Apply Now
+fan.cashback_amount,fan,签到返现金额,Cashback Amount,签到返现金额,Cashback Amount
+fan.check_in_all,fan,签到所有订单,Batch Check-in All,签到所有订单,Batch Check-in All
+fan.check_in_done,fan,今日已全部签到,Checked-in for today,今日已全部签到,Checked-in for today
+fan.current_tier,fan,当前等级,Current Tier,当前等级,Current Tier
+fan.days_left_prefix,fan,剩,Left,剩,Left
+fan.days_left_suffix,fan,天,days,天,days
+fan.earnings_history,fan,累计收益历史,Total Earnings History,累计收益历史,Total Earnings History
+fan.estimated_rebate,fan,预计返还,Est. Rebate,预计返还,Est. Rebate
+fan.fan_rate,fan,粉丝消费奖励比例,Fan Rate,粉丝消费奖励比例,Fan Rate
+fan.fan_reward,fan,粉丝消费奖励,Fan Reward,粉丝消费奖励,Fan Reward
+fan.fastest_prefix,fan,最近,Fastest,最近,Fastest
+fan.fastest_suffix,fan,天后签满,days to complete,天后签满,days to complete
+fan.influencer_label,fan,达人申请,Influencer,达人申请,Influencer
+fan.invite_rule_note,fan,* 拼团免单结算需等待 3 位受邀人签收订单并确认无退货后自动返还。,* Reward settlement requires 3 invitees to confirm receipt and pass the return period.,* 拼团免单结算需等待 3 位受邀人签收订单并确认无退货后自动返还。,* Reward settlement requires 3 invitees to confirm receipt and pass the return period.
+fan.leaderboard_label,fan,排行榜,Leaderboard,排行榜,Leaderboard
+fan.milestone_reward,fan,本期完签奖励:,Milestone Reward:,本期完签奖励:,Milestone Reward:
+fan.negotiable,fan,双方协商,Negotiable,双方协商,Negotiable
+fan.phase,fan,期数:,Phase:,期数:,Phase:
+fan.progress_title,fan,本期签到进度,Current Phase Progress,本期签到进度,Current Phase Progress
+fan.rank_prefix,fan,当前排名 #,Rank #,当前排名 #,Rank #
+fan.records,fan,条记录,records,条记录,records
+fan.referral_copied,fan,推荐码已复制!,Referral Code Copied!,推荐码已复制!,Referral Code Copied!
+fan.referral_rate,fan,分销奖励比例,Referral Rate,分销奖励比例,Referral Rate
+fan.referral_reward,fan,商品分销奖励,Referral Reward,商品分销奖励,Referral Reward
+fan.reward_rates,fan,我的奖励比例,My Reward Rates,我的奖励比例,My Reward Rates
+fan.rule_details,fan,规则详情,Rule Details,规则详情,Rule Details
+fan.rule_doc,fan,规则说明文档,Rule Document,规则说明文档,Rule Document
+fan.syncing_suffix,fan,个订单同步中,orders syncing,个订单同步中,orders syncing
+fan.tier_name,fan,等级,Tier,等级,Tier
+fan.view_details,fan,查看各订单签到明细,View order details,查看各订单签到明细,View order details
+fan.view_rules,fan,规则与比例,Rules & Ratios,规则与比例,Rules & Ratios
+fancenter.leather_bag,fancenter,Leather Bag,Leather Bag,Leather Bag,Leather Bag
+fancenter.mechanical_watch,fancenter,Mechanical Watch,Mechanical Watch,Mechanical Watch,Mechanical Watch
+fancenter.wireless_earbuds,fancenter,Wireless Earbuds,Wireless Earbuds,Wireless Earbuds,Wireless Earbuds
+feed.comment_placeholder,feed,添加评论...,A comment...,添加评论...,A comment...
+feed.crop_1_1,feed,裁剪 1:1,Cutting 1:1,裁剪 1:1,Cutting 1:1
+feed.my_feeds,feed,我的动态,My activity,我的动态,My activity
+feed.post_action,feed,发布,Go,发布,Go
+feed.post_placeholder,feed,说点什么吧...,Say something...,说点什么吧...,Say something...
+feed.post_title,feed,发布动态,Posting updates,发布动态,Posting updates
+feed.record_video,feed,录视频,Video,录视频,Video
+feed.reply,feed,回复,Reply,回复,Reply
+feed.sync_shopify,feed,同步至 Shopify...,Link to Shopify...,同步至 Shopify...,Link to Shopify...
+feed.upload,feed,上传,Upload,上传,Upload
+feed.upload_photo,feed,拍照,Photograph,拍照,Photograph
+feed.write_reply,feed,写下你的回复...,Write your reply...,写下你的回复...,Write your reply...
+groupbuy.earned_rewards,groupbuy,累计获得奖励,Earned Rewards,累计获得奖励,Earned Rewards
+groupbuy.invitation_timeline,groupbuy,邀请时间轴,Invitation Timeline,邀请时间轴,Invitation Timeline
+groupbuy.rules_safety,groupbuy,规则与安全,Rules & Safety,规则与安全,Rules & Safety
+groupbuydetail.available_slot,groupbuydetail,名额,Available Slot,名额,Available Slot
+groupbuydetail.david_wilson,groupbuydetail,David Wilson,David Wilson,David Wilson,David Wilson
+groupbuydetail.elena_rodriguez,groupbuydetail,Elena Rodriguez,Elena Rodriguez,Elena Rodriguez,Elena Rodriguez
+groupbuydetail.empty,groupbuydetail,empty,empty,empty,empty
+groupbuydetail.mike_johnson,groupbuydetail,Mike Johnson,Mike Johnson,Mike Johnson,Mike Johnson
+groupbuydetail.pending,groupbuydetail,pending,pending,pending,pending
+groupbuydetail.sarah_chen,groupbuydetail,Sarah Chen,Sarah Chen,Sarah Chen,Sarah Chen
+groupbuydetail.settled,groupbuydetail,settled,settled,settled,settled
+groupbuydetail.verified,groupbuydetail,Verified,Verified,Verified,Verified
+groupbuydetail.waiting_for_delivery,groupbuydetail,派送中,Waiting for Delivery,派送中,Waiting for Delivery
+groupbuydetail.waiting_for_join,groupbuydetail,等待加入...,Waiting for join...,等待加入...,Waiting for join...
+influencer.apply_desc,influencer,加入我们的全球创作生态，分享好物，赚取丰厚回报,Join our global ecosystem， share great finds， and earn rewards.,加入我们的全球创作生态，分享好物，赚取丰厚回报,Join our global ecosystem， share great finds， and earn rewards.
+influencer.apply_title,influencer,申请成为达人,Apply for Influencer,申请成为达人,Apply for Influencer
+influencer.back_to_center,influencer,返回中心,Back to Center,返回中心,Back to Center
+influencer.followers_label,influencer,粉丝数量 / 社群规模,Followers / Community Size,粉丝数量 / 社群规模,Followers / Community Size
+influencer.followers_placeholder,influencer,例如: 50K+ 或 5000人活跃群组,e.g. 50K+ or 5000 active members,例如: 50K+ 或 5000人活跃群组,e.g. 50K+ or 5000 active members
+influencer.intro_label,influencer,简单的自我介绍 / 案例链接,Introduction / Links,简单的自我介绍 / 案例链接,Introduction / Links
+influencer.intro_placeholder,influencer,分享一下你的推广经验...,Share your experience...,分享一下你的推广经验...,Share your experience...
+influencer.label,influencer,达人入住,Influencer,达人入住,Influencer
+influencer.main_platform,influencer,主要推广平台,Primary Platform,主要推广平台,Primary Platform
+influencer.niche_beauty,influencer,美妆护肤,Beauty,美妆护肤,Beauty
+influencer.niche_fashion,influencer,服饰配件,Fashion,服饰配件,Fashion
+influencer.niche_home,influencer,家居生活,Home,家居生活,Home
+influencer.niche_label,influencer,擅长领域 (选填),Niche (Optional),擅长领域 (选填),Niche (Optional)
+influencer.niche_other,influencer,其他 +,Other +,其他 +,Other +
+influencer.niche_pets,influencer,宠物用品,Pets,宠物用品,Pets
+influencer.niche_sports,influencer,户外运动,Sports,户外运动,Sports
+influencer.niche_tech,influencer,数码科技,Tech,数码科技,Tech
+influencer.other_niche_placeholder,influencer,请输入你擅长的其他领域,Enter niche...,请输入你擅长的其他领域,Enter niche...
+influencer.other_platform_placeholder,influencer,请输入你擅长的其他平台名称,Enter platform name...,请输入你擅长的其他平台名称,Enter platform name...
+influencer.perk_badge,influencer,专属标识,Official Badge,专属标识,Official Badge
+influencer.perk_badge_desc,influencer,展示“Verified Influencer”官方认证,"Display ""Verified Influencer"" official badge",展示“Verified Influencer”官方认证,"Display ""Verified Influencer"" official badge"
+influencer.perk_commission,influencer,专属高佣,Exclusive Commission,专属高佣,Exclusive Commission
+influencer.perk_commission_desc,influencer,享受 5% - 20% 的商品分销奖励,Enjoy 5% - 20% referral rewards on products,享受 5% - 20% 的商品分销奖励,Enjoy 5% - 20% referral rewards on products
+influencer.perk_negotiation,influencer,谈判商议,Negotiation Power,谈判商议,Negotiation Power
+influencer.perk_negotiation_desc,influencer,可直接获得阶梯奖励,Directly negotiate tiered rewards with merchants,可直接获得阶梯奖励,Directly negotiate tiered rewards with merchants
+influencer.perk_traffic,influencer,流量扶持,Traffic Support,流量扶持,Traffic Support
+influencer.perk_traffic_desc,influencer,平台优质内容优先推荐，快速涨粉,Priority recommendation for quality content,平台优质内容优先推荐，快速涨粉,Priority recommendation for quality content
+influencer.review_tip_desc,influencer,你可以主动 @AI管家 并发送你的申请编号，或者直接向管家展示你的推广案例，可以加快审核进度。,You can @AI_Butler with your ID or show cases to speed up the process.,你可以主动 @AI管家 并发送你的申请编号，或者直接向管家展示你的推广案例，可以加快审核进度。,You can @AI_Butler with your ID or show cases to speed up the process.
+influencer.review_tip_title,influencer,审核建议,Review Tip,审核建议,Review Tip
+influencer.secure_payments,influencer,支付安全保障,Secure Payments,支付安全保障,Secure Payments
+influencer.start_apply,influencer,立即开启申请,Start Application,立即开启申请,Start Application
+influencer.submit_apply,influencer,提交申请,Submit Application,提交申请,Submit Application
+influencer.submitted_desc,influencer,我们的运营团队将在 24-48小时 内审核你的申请。通过后你将收到 AI 管家的通知，并解锁专属达人面板。,Our team will review your application within 24-48h. You will be notified by AI Butler.,我们的运营团队将在 24-48小时 内审核你的申请。通过后你将收到 AI 管家的通知，并解锁专属达人面板。,Our team will review your application within 24-48h. You will be notified by AI Butler.
+influencer.submitted_title,influencer,申请已提交！,Submitted!,申请已提交！,Submitted!
+influencer.verified_creator,influencer,已验证创作者,Verified Creator,已验证创作者,Verified Creator
+keyattributes.0_5w,keyattributes,0-5W,0-5W,0-5W,0-5W
+keyattributes.1000_2000mah_1200mah,keyattributes,1000-2000mah， 1200mAh,1000-2000mah， 1200mAh,1000-2000mah， 1200mAh,1000-2000mah， 1200mAh
+keyattributes.16_16_10cm,keyattributes,16*16*10cm,16*16*10cm,16*16*10cm,16*16*10cm
+keyattributes.airplay_dlna_dolby_digita_ezca,keyattributes,AirPlay， DLNA， Dolby Digita， EZCast， Miracast， Phone Function， Video Call， Wireless Charger for Mobile Phone,AirPlay， DLNA， Dolby Digita， EZCast， Miracast， Phone Function， Video Call， Wireless Charger for Mobile Phone,AirPlay， DLNA， Dolby Digita， EZCast， Miracast， Phone Function， Video Call， Wireless Charger for Mobile Phone,AirPlay， DLNA， Dolby Digita， EZCast， Miracast， Phone Function， Video Call， Wireless Charger for Mobile Phone
+keyattributes.audio_crossover,keyattributes,Audio Crossover,Audio Crossover,Audio Crossover,Audio Crossover
+keyattributes.bamboo,keyattributes,Bamboo,Bamboo,Bamboo,Bamboo
+keyattributes.battery_capacity,keyattributes,Battery Capacity,Battery Capacity,Battery Capacity,Battery Capacity
+keyattributes.built_in_microphone,keyattributes,Built-in Microphone,Built-in Microphone,Built-in Microphone,Built-in Microphone
+keyattributes.channels,keyattributes,Channels,Channels,Channels,Channels
+keyattributes.computer_home_theatre_karaoke,keyattributes,Computer， HOME THEATRE， Karaoke Player， Outdoor， Party， Portable Audio Player， Stage， mobile phone,Computer， HOME THEATRE， Karaoke Player， Outdoor， Party， Portable Audio Player， Stage， mobile phone,Computer， HOME THEATRE， Karaoke Player， Outdoor， Party， Portable Audio Player， Stage， mobile phone,Computer， HOME THEATRE， Karaoke Player， Outdoor， Party， Portable Audio Player， Stage， mobile phone
+keyattributes.feature,keyattributes,Feature,Feature,Feature,Feature
+keyattributes.material,keyattributes,Material,Material,Material,Material
+keyattributes.no,keyattributes,No,No,No,No
+keyattributes.number_of_loudspeaker_enclosur,keyattributes,Number Of Loudspeaker Enclosure,Number Of Loudspeaker Enclosure,Number Of Loudspeaker Enclosure,Number Of Loudspeaker Enclosure
+keyattributes.output_power,keyattributes,Output Power,Output Power,Output Power,Output Power
+keyattributes.portable_bt_speaker,keyattributes,Portable BT Speaker,Portable BT Speaker,Portable BT Speaker,Portable BT Speaker
+keyattributes.product_name,keyattributes,Product Name,Product Name,Product Name,Product Name
+keyattributes.remote_control,keyattributes,Remote Control,Remote Control,Remote Control,Remote Control
+keyattributes.size,keyattributes,Size,Size,Size,Size
+keyattributes.tweeter_size,keyattributes,Tweeter Size,Tweeter Size,Tweeter Size,Tweeter Size
+keyattributes.two_way,keyattributes,Two-way,Two-way,Two-way,Two-way
+keyattributes.use,keyattributes,Use,Use,Use,Use
+keyattributes.voice_control,keyattributes,Voice Control,Voice Control,Voice Control,Voice Control
+keyattributes.yes,keyattributes,Yes,Yes,Yes,Yes
+keyattributesdrawer.1_1,keyattributesdrawer,"1.1""","1.1""","1.1""","1.1"""
+keyattributesdrawer.2,keyattributesdrawer,2,2,2,2
+leaderboard.alex_m,leaderboard,Alex M.,Alex M.,Alex M.,Alex M.
+leaderboard.beautybyjess,leaderboard,BeautyByJess,BeautyByJess,BeautyByJess,BeautyByJess
+leaderboard.david_w,leaderboard,David W.,David W.,David W.,David W.
+leaderboard.emily_r,leaderboard,Emily R.,Emily R.,Emily R.,Emily R.
+leaderboard.global_ranking,leaderboard,Global Ranking,Global Ranking,Global Ranking,Global Ranking
+leaderboard.global_users,leaderboard,Global Users,Global Users,Global Users,Global Users
+leaderboard.homedecordaily,leaderboard,HomeDecorDaily,HomeDecorDaily,HomeDecorDaily,HomeDecorDaily
+leaderboard.load_more_rankings,leaderboard,Load More Rankings,Load More Rankings,Load More Rankings,Load More Rankings
+leaderboard.michael_b,leaderboard,Michael B.,Michael B.,Michael B.,Michael B.
+leaderboard.my_rank,leaderboard,My Rank,My Rank,My Rank,My Rank
+leaderboard.sarah_k,leaderboard,Sarah K.,Sarah K.,Sarah K.,Sarah K.
+leaderboard.techinsider,leaderboard,TechInsider,TechInsider,TechInsider,TechInsider
+leaderboard.top_earners,leaderboard,Top Earners,Top Earners,Top Earners,Top Earners
+leaderboard.top_influencers,leaderboard,Top Influencers,Top Influencers,Top Influencers,Top Influencers
+lounge.0buck_must_buy_list,lounge,# 0Buck Must-Buy List,# 0Buck Must-Buy List,# 0Buck Must-Buy List,# 0Buck Must-Buy List
+lounge.add_friend,lounge,添加好友,Add Friends,添加好友,Add Friends
+lounge.ai_butler,lounge,AI 管家,AI Butler,AI 管家,AI Butler
+lounge.alex_design,lounge,Alex Design,Alex Design,Alex Design,Alex Design
+lounge.contact_note_old_friend,lounge,老友,Old friend,老友,Old friend
+lounge.contact_note_recent_chat,lounge,最近聊天,Recent chat,最近聊天,Recent chat
+lounge.cta_join_official_ads_group,lounge,进入官方广告群,Join official ads group,进入官方广告群,Join official ads group
+lounge.cta_join_official_feed_group,lounge,进入官方动态群,Join official feed group,进入官方动态群,Join official feed group
+lounge.cta_join_official_group,lounge,进入官方群讨论,Join official group discussion,进入官方群讨论,Join official group discussion
+lounge.digital_enthusiasts_lounge,lounge,沙龙,Lounge,沙龙,Lounge
+lounge.discovery.activity.creator_selection_live,lounge,达人选品直播,Creator selection live,达人选品直播,Creator selection live
+lounge.discovery.activity.creator_selection_live_desc,lounge,直播通知与互动问题进入官方群交流,Join official groups for live notices and Q and A.,直播通知与互动问题进入官方群交流,Join official groups for live notices and Q and A.
+lounge.discovery.activity.official_promo_daily,lounge,官方推介日报,Official promo daily,官方推介日报,Official promo daily
+lounge.discovery.activity.official_promo_daily_desc,lounge,推介内容统一在官方推介群展开,Promo content is coordinated in the official promo group.,推介内容统一在官方推介群展开,Promo content is coordinated in the official promo group.
+lounge.discovery.activity.weekly_groupbuy_night,lounge,本周沙龙拼团夜,Weekly lounge group-buy night,本周沙龙拼团夜,Weekly lounge group-buy night
+lounge.discovery.activity.weekly_groupbuy_night_desc,lounge,活动都在官方群内发布与讨论,All event announcements and discussions are in official groups.,活动都在官方群内发布与讨论,All event announcements and discussions are in official groups.
+lounge.discovery.ads.brand_collab_slots,lounge,品牌联名资源位,Brand collaboration slots,品牌联名资源位,Brand collaboration slots
+lounge.discovery.ads.brand_collab_slots_desc,lounge,品牌联名曝光资源位排期与合作说明,Brand collaboration exposure slots schedule and partnership notes.,品牌联名曝光资源位排期与合作说明,Brand collaboration exposure slots schedule and partnership notes.
+lounge.discovery.ads.creator_whitelist,lounge,达人投放白名单,Creator ad whitelist,达人投放白名单,Creator ad whitelist
+lounge.discovery.ads.creator_whitelist_desc,lounge,高转化达人名单与投放建议同步,High-conversion creator list and placement suggestions synced.,高转化达人名单与投放建议同步,High-conversion creator list and placement suggestions synced.
+lounge.discovery.feed.today_highlights,lounge,今日动态精选,Today highlights,今日动态精选,Today highlights
+lounge.discovery.feed.today_highlights_desc,lounge,官方精选动态与高质量讨论入口,Official highlights and high-quality discussion entry.,官方精选动态与高质量讨论入口,Official highlights and high-quality discussion entry.
+lounge.discovery.feed.topic_trend_board,lounge,话题趋势看板,Topic trend board,话题趋势看板,Topic trend board
+lounge.discovery.feed.topic_trend_board_desc,lounge,全站动态热词趋势与互动建议,Site-wide hot topics trends and engagement suggestions.,全站动态热词趋势与互动建议,Site-wide hot topics trends and engagement suggestions.
+lounge.find_new_friends,lounge,发现新好友,Discover new friends,发现新好友,Discover new friends
+lounge.find_new_friends_subtitle,lounge,找人加好友扩展通讯录,Find people add friends and grow contacts,找人加好友扩展通讯录,Find people add friends and grow contacts
+lounge.friend_mgmt,lounge,好友通讯录,Friends Contacts,好友通讯录,Friends Contacts
+lounge.geek_hardware_group,lounge,Geek Hardware Group,Geek Hardware Group,Geek Hardware Group,Geek Hardware Group
+lounge.more_actions,lounge,更多操作,More,更多操作,More
+lounge.msg_camping_gear,lounge,露营装备上新，来看看吧。,New camping gear is in—take a look?,露营装备上新，来看看吧。,New camping gear is in—take a look?
+lounge.msg_dumbo_headphones,lounge,Dumbo 头戴耳机开箱：降噪效果很强。,Dumbo headphones unboxing: strong noise canceling.,Dumbo 头戴耳机开箱：降噪效果很强。,Dumbo headphones unboxing: strong noise canceling.
+lounge.msg_official_content_update,lounge,官方内容更新,Official updates,官方内容更新,Official updates
+lounge.msg_package_delivered,lounge,您的包裹已签收完成,Your package has been delivered.,您的包裹已签收完成,Your package has been delivered.
+lounge.msg_phase_reward,lounge,签到返现进度已进入下一阶段,Your cashback check-in progress has moved to the next stage.,签到返现进度已进入下一阶段,Your cashback check-in progress has moved to the next stage.
+lounge.new_friends_subtitle,lounge,同意或拒绝新好友申请,Accept or decline new friend requests,同意或拒绝新好友申请,Accept or decline new friend requests
+lounge.official,lounge,官方播报,Official broadcast,官方播报,Official broadcast
+lounge.official_activity_group,lounge,官方活动群,Official Activity Group,官方活动群,Official Activity Group
+lounge.official_ads_group,lounge,官方广告群,Official Ads Group,官方广告群,Official Ads Group
+lounge.official_feed_group,lounge,官方动态群,Official Feed Group,官方动态群,Official Feed Group
+lounge.official_label,lounge,官方,OFFICIAL,官方,OFFICIAL
+lounge.official_promo_group,lounge,官方推介群,Official Promo Group,官方推介群,Official Promo Group
+lounge.order_helper,lounge,物流助手,Logistics Assistant,物流助手,Logistics Assistant
+lounge.restore_hidden_groups,lounge,恢复隐藏群,Restore hidden groups,恢复隐藏群,Restore hidden groups
+lounge.scan,lounge,扫一扫,Scan,扫一扫,Scan
+lounge.search_placeholder,lounge,搜索 ID、Email、群组...,"Search by User ID, Email, Group...",搜索 ID、Email、群组...,"Search by User ID, Email, Group..."
+lounge.search_results,lounge,搜索结果,Search results,搜索结果,Search results
+lounge.section_activity,lounge,活动,Activity,活动,Activity
+lounge.section_ads,lounge,广告,Ads,广告,Ads
+lounge.section_feed,lounge,动态,Feed,动态,Feed
+lounge.section_official_groups,lounge,官方群,Official Groups,官方群,Official Groups
+lounge.section_personal_chats,lounge,个人会话,Personal Chats,个人会话,Personal Chats
+lounge.start_group,lounge,发起群聊,Start a group,发起群聊,Start a group
+lounge.status.hot,lounge,热门,Hot,热门,Hot
+lounge.status.live,lounge,进行中,Live,进行中,Live
+lounge.status.open,lounge,开放中,Open,开放中,Open
+lounge.status.rolling_update,lounge,滚动更新,Rolling update,滚动更新,Rolling update
+lounge.status.starting_soon,lounge,即将开始,Starting soon,即将开始,Starting soon
+lounge.status.trending,lounge,热议,Trending,热议,Trending
+lounge.status.updating,lounge,更新中,Updating,更新中,Updating
+lounge.tab_chat,lounge,聊天,Chat,聊天,Chat
+lounge.tab_contacts,lounge,通讯录,Contacts,通讯录,Contacts
+lounge.tab_discover,lounge,发现,Discover,发现,Discover
+lounge.tech_expert,lounge,Tech_Expert,Tech_Expert,Tech_Expert,Tech_Expert
+lounge.time.daily,lounge,每日,Daily,每日,Daily
+lounge.time.friday_1900,lounge,周五 19:00,Friday 19:00,周五 19:00,Friday 19:00
+lounge.time.hourly,lounge,每小时,Hourly,每小时,Hourly
+lounge.time.this_week,lounge,本周,This week,本周,This week
+lounge.time.today,lounge,今日,Today,今日,Today
+lounge.time.tonight_2030,lounge,今晚 20:30,Tonight 20:30,今晚 20:30,Tonight 20:30
+loungedrawer.official,loungedrawer,OFFICIAL,OFFICIAL,OFFICIAL,OFFICIAL
+magicpocketmenu.24_7_ai_human,magicpocketmenu,24/7 AI + Human,24/7 AI + Human,24/7 AI + Human,24/7 AI + Human
+me.coupons_benefits,me,卡券与权益,Coupons & Benefits,卡券与权益,Coupons & Benefits
+me.dumbo_user,me,User,User,User,User
+me.fans_cashback,me,粉丝与签到,Fans & CheckIn,粉丝与签到,Fans & CheckIn
+me.kol,me,KOL,KOL,KOL,KOL
+me.my_orders,me,我的订单,Orders,我的订单,Orders
+me.new,me,New,New,New,New
+me.refund_after_sales,me,退款/售后,Refund/Service,退款/售后,Refund/Service
+me.shipping_address,me,收货地址,Address,收货地址,Address
+me.to_pay,me,待付款,To Pay,待付款,To Pay
+me.to_receive,me,待收货,To Receive,待收货,To Receive
+me.to_ship,me,待发货,To Ship,待发货,To Ship
+me.user_avatar,me,User Avatar,User Avatar,User Avatar,User Avatar
+me.wallet_points,me,钱包与积分,Wallet & Points,钱包与积分,Wallet & Points
+myfeeds.check_out_the_unboxing_of_my_n,myfeeds,Check out the unboxing of my new smart speaker. The sound quality is shocking! 🔊📽️,Check out the unboxing of my new smart speaker. The sound quality is shocking! 🔊📽️,Check out the unboxing of my new smart speaker. The sound quality is shocking! 🔊📽️,Check out the unboxing of my new smart speaker. The sound quality is shocking! 🔊📽️
+myfeeds.feed,myfeeds,feed,feed,feed,feed
+myfeeds.finally_got_my_iphone_15_pro_f,myfeeds,Finally got my iPhone 15 Pro from 0Buck! This titanium texture is incredible， and with 100% cashback， it'，,Finally got my iPhone 15 Pro from 0Buck! This titanium texture is incredible， and with 100% cashback， it'，,Finally got my iPhone 15 Pro from 0Buck! This titanium texture is incredible， and with 100% cashback， it'，,Finally got my iPhone 15 Pro from 0Buck! This titanium texture is incredible， and with 100% cashback， it'，
+myfeeds.new_mechanical_keyboard_arrive,myfeeds,New mechanical keyboard arrived. The typing feel is unmatched. 0Buck selection is top-notch. ⌨️✨,New mechanical keyboard arrived. The typing feel is unmatched. 0Buck selection is top-notch. ⌨️✨,New mechanical keyboard arrived. The typing feel is unmatched. 0Buck selection is top-notch. ⌨️✨,New mechanical keyboard arrived. The typing feel is unmatched. 0Buck selection is top-notch. ⌨️✨
+myfeeds.preview,myfeeds,preview,preview,preview,preview
+myfeeds.video_cover,myfeeds,Video Cover,Video Cover,Video Cover,Video Cover
+myfeedsdrawer.finally_got_my_iphone_15_pro_f,myfeedsdrawer,"Finally got my iPhone 15 Pro from 0Buck! This titanium texture is incredible， and with 100% cashback， it\`,nickname:","Finally got my iPhone 15 Pro from 0Buck! This titanium texture is incredible， and with 100% cashback， it\`,nickname:","Finally got my iPhone 15 Pro from 0Buck! This titanium texture is incredible， and with 100% cashback， it\`,nickname:","Finally got my iPhone 15 Pro from 0Buck! This titanium texture is incredible， and with 100% cashback， it\`,nickname:"
+notification.0buck_geek_week,notification,0Buck Geek Week,0Buck Geek Week,0Buck Geek Week,0Buck Geek Week
+notification.85_funded_production_starting,notification,85% funded， production starting soon,85% funded， production starting soon,85% funded， production starting soon,85% funded， production starting soon
+notification.accept,notification,接受,Accept,接受,Accept
+notification.accepted,notification,已接受好友申请,Accepted,已接受好友申请,Accepted
+notification.comment,notification,新增评论,New comments,新增评论,New comments
+notification.content,notification,邀请内容：,Invitation details:,邀请内容：,Invitation details:
+notification.customer_reply,notification,客服支持,Support,客服支持,Support
+notification.dear_user_the_card_can_be_used,notification,Dear user， the card can be used within 5 days...,Dear user， the card can be used within 5 days...,Dear user， the card can be used within 5 days...,Dear user， the card can be used within 5 days...
+notification.ergonomic_aluminum_laptop_stan,notification,Ergonomic Aluminum Laptop Stand,Ergonomic Aluminum Laptop Stand,Ergonomic Aluminum Laptop Stand,Ergonomic Aluminum Laptop Stand
+notification.event_desc,notification,点击查看详情，抢先预约！,Click to view details and book now!,点击查看详情，抢先预约！,Click to view details and book now!
+notification.friend_request,notification,好友申请,Friend Request,好友申请,Friend Request
+notification.hey_i_am_your_fan_i_love_your,notification,Hey， I am your fan， I love your geek finds! Hope to connect.,Hey， I am your fan， I love your geek finds! Hope to connect.,Hey， I am your fan， I love your geek finds! Hope to connect.,Hey， I am your fan， I love your geek finds! Hope to connect.
+notification.ignore,notification,忽略,Neglect,忽略,Neglect
+notification.ignored,notification,已忽略,Ignored,已忽略,Ignored
+notification.inviter,notification,邀请人：,Inviter:,邀请人：,Inviter:
+notification.love_this_titanium_design,notification,Love this titanium design!,Love this titanium design!,Love this titanium design!,Love this titanium design!
+notification.low_stock_alert,notification,Low stock alert,Low stock alert,Low stock alert,Low stock alert
+notification.minimalist_titanium_mechanical,notification,Minimalist Titanium Mechanical Watch,Minimalist Titanium Mechanical Watch,Minimalist Titanium Mechanical Watch,Minimalist Titanium Mechanical Watch
+notification.my_new_titanium_watch_collecti,notification,My new titanium watch collection...,My new titanium watch collection...,My new titanium watch collection...,My new titanium watch collection...
+notification.ord_20260409_77x,notification,ORD-20260409-77X,ORD-20260409-77X,ORD-20260409-77X,ORD-20260409-77X
+notification.order_status,notification,订单状态变更,Order status change,订单状态变更,Order status change
+notification.payment_success,notification,支付成功通知,Payment successful,支付成功通知,Payment successful
+notification.platform_event,notification,限时活动,Limited-time event,限时活动,Limited-time event
+notification.quick_reply,notification,快捷回复,Reply,快捷回复,Reply
+notification.replied,notification,已快速回复,Reply received,已快速回复,Reply received
+notification.reply_placeholder,notification,输入回复内容...,Enter your reply...,输入回复内容...,Enter your reply...
+notification.restock,notification,到货通知,Arrival Notice,到货通知,Arrival Notice
+notification.sitewide_100_back_extra_points,notification,购物签到全返+赠送积分,Shopping check-in for full refund + bonus points,购物签到全返+赠送积分,Shopping check-in for full refund + bonus points
+notification.tech_enthusiast_99,notification,Tech_Enthusiast_99,Tech_Enthusiast_99,Tech_Enthusiast_99,Tech_Enthusiast_99
+notification.usage_of_cashback_card,notification,Usage of Cashback Card,Usage of Cashback Card,Usage of Cashback Card,Usage of Cashback Card
+notification.wishlist,notification,愿望清单更新,Wish list update,愿望清单更新,Wish list update
+notification.yt9988776655,notification,YT9988776655,YT9988776655,YT9988776655,YT9988776655
+notification.yunexpress,notification,YunExpress,YunExpress,YunExpress,YunExpress
+notificationdrawer.29_99,notificationdrawer,$29.99,$29.99,$29.99,$29.99
+notificationdrawer.accepted,notificationdrawer,accepted,accepted,accepted,accepted
+order.after_sales,order,售后服务,After-sales,售后服务,After-sales
+order.available_slot,order,Available Slot,Available Slot,Available Slot,Available Slot
+order.completed,order,已签收,Delivered,已签收,Delivered
+order.confirm_rebate_note,order,确认收货后开启返现,Confirm receipt to start 100% BACK early!,确认收货后开启返现,Confirm receipt to start 100% BACK early!
+order.confirm_receipt,order,确认收货,Confirm Receipt,确认收货,Confirm Receipt
+order.copy_item_link,order,复制商品链接,Copy Item Link,复制商品链接,Copy Item Link
+order.discounts,order,折扣,Discounts,折扣,Discounts
+order.earned,order,已赚,EARNED,已赚,EARNED
+order.earned_rewards,order,Earned Rewards,Earned Rewards,Earned Rewards,Earned Rewards
+order.expected_arrival,order,预计送达时间,Expected Arrival,预计送达时间,Expected Arrival
+order.expired_status,order,已失效,EXPIRED,已失效,EXPIRED
+order.forfeited,order,已作废,FORFEITED,已作废,FORFEITED
+order.free_earned,order,件已免单,FREE EARNED,件已免单,FREE EARNED
+order.free_shipping,order,免运费,FREE,免运费,FREE
+order.friends_joined,order,Friends Joined,Friends Joined,Friends Joined,Friends Joined
+order.id_prefix,order,订单 #,Order #,订单 #,Order #
+order.invitation_timeline,order,Invitation Timeline,Invitation Timeline,Invitation Timeline,Invitation Timeline
+order.invite_3_get_1_free,order,每邀 3 人，再免 1 件,Invite 3， Get 1 Free,每邀 3 人，再免 1 件,Invite 3， Get 1 Free
+order.invites_label,order,已邀:,INVITES:,已邀:,INVITES:
+order.items_unit,order,件,ITEMS,件,ITEMS
+order.next_reward_at,order,下期奖励:,Next Reward at,下期奖励:,Next Reward at
+order.next_settlement,order,下期结算:,Next Settlement:,下期结算:,Next Settlement:
+order.order_items,order,订单商品,Order Items,订单商品,Order Items
+order.order_number,order,订单编号,Order Number,订单编号,Order Number
+order.order_time,order,下单时间,Order Time,下单时间,Order Time
+order.package_in_transit,order,运输中,Package in Transit,运输中,Package in Transit
+order.payment_method,order,支付方式,Payment Method,支付方式,Payment Method
+order.payment_summary,order,付款汇总,Payment Summary,付款汇总,Payment Summary
+order.pending_settlement,order,待结算,Pending,待结算,Pending
+order.pending_verification,order,待结算,Pending,待结算,Pending
+order.product_share_to_free,order,拼团免单模式,Product Share-to-Free,拼团免单模式,Product Share-to-Free
+order.qty_prefix,order,数量:,Qty:,数量:,Qty:
+order.rebate_deactivated,order,未参与购物返现。,100% Rebate deactivated for this item.,未参与购物返现。,100% Rebate deactivated for this item.
+order.rebate_phase_format,order,第 {current} / {total} 期,Phase {current} / {total},第 {current} / {total} 期,Phase {current} / {total}
+order.rebate_radar,order,返现雷达,100% Rebate Radar,返现雷达,100% Rebate Radar
+order.rule_1,order,Every 3 successful invitations = 1 item full refund.,Every 3 successful invitations = 1 item full refund.,Every 3 successful invitations = 1 item full refund.,Every 3 successful invitations = 1 item full refund.
+order.rule_2,order,Refund is issued only after all 3 invitees have signed their orders and passed the 7-day return period.,Refund is issued only after all 3 invitees have signed their orders and passed the 7-day return period.,Refund is issued only after all 3 invitees have signed their orders and passed the 7-day return period.,Refund is issued only after all 3 invitees have signed their orders and passed the 7-day return period.
+order.rule_3,order,Group Buy is mutually exclusive with 20-Phase Rebate.,Group Buy is mutually exclusive with 20-Phase Rebate.,Group Buy is mutually exclusive with 20-Phase Rebate.,Group Buy is mutually exclusive with 20-Phase Rebate.
+order.rule_4,order,Any fraud or self-buying will lead to permanent ban.,Any fraud or self-buying will lead to permanent ban.,Any fraud or self-buying will lead to permanent ban.,Any fraud or self-buying will lead to permanent ban.
+order.rules_safety,order,Rules & Safety,Rules & Safety,Rules & Safety,Rules & Safety
+order.save,order,节省,Save,节省,Save
+order.settled,order,已结算,Settled,已结算,Settled
+order.settled_refunded,order,已退款,Refunded,已退款,Refunded
+order.share_to_free_expired,order,拼团免单已过期,Share-to-Free EXPIRED,拼团免单已过期,Share-to-Free EXPIRED
+order.shipped,order,运输中,In Transit,运输中,In Transit
+order.shipping_address,order,收货地址,Shipping Address,收货地址,Shipping Address
+order.shipping_cost,order,运费,Shipping,运费,Shipping
+order.subtotal,order,商品小计,Subtotal,商品小计,Subtotal
+order.tab_all,order,全部,All,全部,All
+order.tab_group_buys,order,拼团免单,Group Buys,拼团免单,Group Buys
+order.tab_rebates,order,签到返现,Active Rebates,签到返现,Active Rebates
+order.to_pay,order,待付款,To Pay,待付款,To Pay
+order.to_ship,order,待发货,To Ship,待发货,To Ship
+order.total_amount,order,总金额,Total Amount,总金额,Total Amount
+order.track_on_map,order,地图轨迹,Track on Map,地图轨迹,Track on Map
+order.track_tooltip,order,点击查看物流详情,Track your order,点击查看物流详情,Track your order
+order.verified,order,Verified,Verified,Verified,Verified
+order.waiting_for_delivery,order,Waiting for Delivery,Waiting for Delivery,Waiting for Delivery,Waiting for Delivery
+order.waiting_for_join,order,Waiting for join...,Waiting for join...,Waiting for join...,Waiting for join...
+ordercenter.active,ordercenter,active,active,active,active
+ordercenter.artisan_crafted_wireless_earbu,ordercenter,Artisan Crafted Wireless Earbuds,Artisan Crafted Wireless Earbuds,Artisan Crafted Wireless Earbuds,Artisan Crafted Wireless Earbuds
+ordercenter.completed,ordercenter,completed,completed,completed,completed
+ordercenter.delivered,ordercenter,delivered,delivered,delivered,delivered
+ordercenter.forfeited,ordercenter,forfeited,forfeited,forfeited,forfeited
+ordercenter.in_transit,ordercenter,in_transit,in_transit,in_transit,in_transit
+ordercenter.minimalist_titanium_watch,ordercenter,Minimalist Titanium Watch,Minimalist Titanium Watch,Minimalist Titanium Watch,Minimalist Titanium Watch
+ordercenter.out_for_delivery,ordercenter,Out for delivery,Out for delivery,Out for delivery,Out for delivery
+ordercenter.premium_leather_messenger_bag,ordercenter,Premium Leather Messenger Bag,Premium Leather Messenger Bag,Premium Leather Messenger Bag,Premium Leather Messenger Bag
+orderdetail.ai_butler,orderdetail,AI Butler,AI Butler,AI Butler,AI Butler
+orderdetail.long_zhang,orderdetail,Long Zhang,Long Zhang,Long Zhang,Long Zhang
+ordertracking.ms_lan,ordertracking,Ms. Lan,Ms. Lan,Ms. Lan,Ms. Lan
+ordertracking.order_placed,ordertracking,Order placed,Order placed,Order placed,Order placed
+ordertracking.package_is_waiting_for_pickup,ordertracking,Package is waiting for pickup,Package is waiting for pickup,Package is waiting for pickup,Package is waiting for pickup
+ordertracking.plus_size_women,ordertracking,Plus size women'，,Plus size women'，,Plus size women'，,Plus size women'，
+ordertracking.printing_completed,ordertracking,Printing completed,Printing completed,Printing completed,Printing completed
+ordertracking.warehouse_order_received,ordertracking,Warehouse order received,Warehouse order received,Warehouse order received,Warehouse order received
+ordertracking.your_package_left_jiangsu_nanj,ordertracking,Your package left [Jiangsu Nanjing Jiangning District Zhengfang New City] and has been sent to [Nanjing Transit Center],Your package left [Jiangsu Nanjing Jiangning District Zhengfang New City] and has been sent to [Nanjing Transit Center],Your package left [Jiangsu Nanjing Jiangning District Zhengfang New City] and has been sent to [Nanjing Transit Center],Your package left [Jiangsu Nanjing Jiangning District Zhengfang New City] and has been sent to [Nanjing Transit Center]
+ordertracking.your_package_left_nanjing_tran,ordertracking,Your package left [Nanjing Transit Center] and has been sent to [Chengdu Transit Center]. Estimated to arrive in [Chengdu] on [April 10]. Due to the long distance， the status will be updated on the evening of [10th]. Please rest assured!,Your package left [Nanjing Transit Center] and has been sent to [Chengdu Transit Center]. Estimated to arrive in [Chengdu] on [April 10]. Due to the long distance， the status will be updated on the evening of [10th]. Please rest assured!,Your package left [Nanjing Transit Center] and has been sent to [Chengdu Transit Center]. Estimated to arrive in [Chengdu] on [April 10]. Due to the long distance， the status will be updated on the evening of [10th]. Please rest assured!,Your package left [Nanjing Transit Center] and has been sent to [Chengdu Transit Center]. Estimated to arrive in [Chengdu] on [April 10]. Due to the long distance， the status will be updated on the evening of [10th]. Please rest assured!
+ordertracking.yt,ordertracking,YT,YT,YT,YT
+ordertrackingdrawer.plus_size_women,ordertrackingdrawer,"Plus size women\`,""perk.ai_pts_desc"":","Plus size women\`,""perk.ai_pts_desc"":","Plus size women\`,""perk.ai_pts_desc"":","Plus size women\`,""perk.ai_pts_desc"":"
+perk.go_top_up,perk,去充值,Go to recharge,去充值,Go to recharge
+perk.kol_desc,perk,达人专属，解锁更高分销奖励比例。,"Exclusive to top performers, unlocking higher distribution reward rates.",达人专属，解锁更高分销奖励比例。,"Exclusive to top performers, unlocking higher distribution reward rates."
+perk.renewal_desc,perk,断签可续，仅限当期使用 1 次。,"A missed permit can be renewed, but can only be used once within the current period.",断签可续，仅限当期使用 1 次。,"A missed permit can be renewed, but can only be used once within the current period."
+personalinfo.avatar,personalinfo,Avatar,Avatar,Avatar,Avatar
+pocket.camera,pocket,拍摄,screen,拍摄,screen
+pocket.camera_desc,pocket,照片搜物,Photo search,照片搜物,Photo search
+pocket.card,pocket,名片,Business card,名片,Business card
+pocket.card_desc,pocket,邀请粉丝注册,Invite fans to register,邀请粉丝注册,Invite fans to register
+pocket.favorites,pocket,收藏,keep,收藏,keep
+pocket.favorites_desc,pocket,商品/商家/帖子,Product/Seller/Post,商品/商家/帖子,Product/Seller/Post
+pocket.gift,pocket,礼物,Gift,礼物,Gift
+pocket.gift_desc,pocket,分享分销商品,Distributed goods,分享分销商品,Distributed goods
+pocket.homepage,pocket,个人主页,Homepage,个人主页,Homepage
+pocket.photos,pocket,照片,photo,照片,photo
+pocket.photos_desc,pocket,以图搜物,Searching for items using images,以图搜物,Searching for items using images
+pocket.support,pocket,客服,Customer Service,客服,Customer Service
+pocket.tickets,pocket,卡券,coupons,卡券,coupons
+pocket.voice,pocket,语音输入,Voice input,语音输入,Voice input
+pocket.voice_desc,pocket,语音搜物,Voice search,语音搜物,Voice search
+points.balance_title,points,积分总余额,Total Points Balance,积分总余额,Total Points Balance
+points.cat_ai_reward,points,AI 算力共享,AI Compute Reward,AI 算力共享,AI Compute Reward
+points.cat_community,points,社区活跃奖励,Community Activity,社区活跃奖励,Community Activity
+points.cat_exchange,points,积分兑换支出,Points Exchange,积分兑换支出,Points Exchange
+points.cat_fan_shopping,points,粉丝购物积分奖励,Fan Shopping Reward,粉丝购物积分奖励,Fan Shopping Reward
+points.cat_referral,points,分销积分奖励,Direct Referral Reward,分销积分奖励,Direct Referral Reward
+points.cat_shopping,points,自购物积分奖励,Shopping Reward,自购物积分奖励,Shopping Reward
+points.cat_signin,points,每日签到,Daily Check-in,每日签到,Daily Check-in
+points.desc_ai_reward,points,调用自定义模型 {count} 次,Called custom model {count} times,调用自定义模型 {count} 次,Called custom model {count} times
+points.desc_community,points,发表商品评价 & 评论,Posted product review & comment,发表商品评价 & 评论,Posted product review & comment
+points.desc_exchange_card,points,兑换 1 张续签卡,Exchanged 1 Renewal Card,兑换 1 张续签卡,Exchanged 1 Renewal Card
+points.desc_exchange_shipping,points,兑换 物流加速券,Exchanged Shipping Voucher,兑换 物流加速券,Exchanged Shipping Voucher
+points.desc_fan_order,points,粉丝 @{name} 完成订单,Fan @{name} completed order,粉丝 @{name} 完成订单,Fan @{name} completed order
+points.desc_referral,points,成功分享 机械腕表,Successfully shared Artisan Watch,成功分享 机械腕表,Successfully shared Artisan Watch
+points.desc_shopping,points,完成订单 {orderId},Completed order {orderId},完成订单 {orderId},Completed order {orderId}
+points.desc_signin,points,连续签到第 {day} 天奖励,Daily check-in day {day} reward,连续签到第 {day} 天奖励,Daily check-in day {day} reward
+points.exchange_action,points,兑换,Exchange,兑换,Exchange
+points.exchange_center,points,积分兑换中心,Points Exchange,积分兑换中心,Points Exchange
+points.exchange_desc,points,积分可通过每日签到、分享商品、社区活跃等行为获取。积分不可转让或提现。,Points can be earned through daily check-in， sharing， and community activities. Points are non-transferable.,积分可通过每日签到、分享商品、社区活跃等行为获取。积分不可转让或提现。,Points can be earned through daily check-in， sharing， and community activities. Points are non-transferable.
+points.recent_detail,points,近期明细,Recent History,近期明细,Recent History
+points.tab_all,points,全部记录,All,全部记录,All
+points.tab_earn,points,获取,Earn,获取,Earn
+points.tab_spend,points,消耗,Spend,消耗,Spend
+pointshistory.pts,pointshistory,PTS,PTS,PTS,PTS
+prime.hand_poured_soy_wax_aromathera,prime,Hand-poured Soy Wax Aromatherapy Candle,Hand-poured Soy Wax Aromatherapy Candle,Hand-poured Soy Wax Aromatherapy Candle,Hand-poured Soy Wax Aromatherapy Candle
+prime.search_verified_artisan_goods,prime,Search verified artisan goods...,Search verified artisan goods...,Search verified artisan goods...,Search verified artisan goods...
+product.add_to_cart,product,加入购物车,Add to Cart,加入购物车,Add to Cart
+product.add_to_wishlist,product,加入心愿单,Add to Wishlist,加入心愿单,Add to Wishlist
+product.buy_now,product,立即购买,Buy Now,立即购买,Buy Now
+product.campaign_rules,product,活动规则,Campaign Rules,活动规则,Campaign Rules
+product.campaign_rules_title,product,活动规则,Campaign Rules,活动规则,Campaign Rules
+product.community_demand_radar,product,社区需求雷达,Community Demand Radar,社区需求雷达,Community Demand Radar
+product.crowdfunding_in_progress,product,众筹进行中,Crowdfunding in Progress,众筹进行中,Crowdfunding in Progress
+product.current_participants,product,当前参与人数:,Current:,当前参与人数:,Current:
+product.customization,product,定制选项,Customization,定制选项,Customization
+product.customization_title,product,定制选项,Customization options,定制选项,Customization options
+product.designers_note,product,设计师寄语,Designer'，,设计师寄语,Designer'，
+product.discovery_mode,product,探索模式,Discovery Mode,探索模式,Discovery Mode
+product.est_delivery,product,预计送达,Est. Delivery,预计送达,Est. Delivery
+product.est_delivery_title,product,预计送达,Est. Delivery,预计送达,Est. Delivery
+product.fast_delivery,product,发货极快,Fast delivery,发货极快,Fast delivery
+product.full_back,product,100% 全额返,100% BACK,100% 全额返,100% BACK
+product.goal_reached,product,已达成目标,Goal Reached,已达成目标,Goal Reached
+product.in_wishlist,product,已加入心愿单,In Wishlist,已加入心愿单,In Wishlist
+product.insight_design,product,见解与设计,The Insight & Design,见解与设计,The Insight & Design
+product.item_quality,product,产品质量,Product Quality,产品质量,Product Quality
+product.key_attributes,product,核心参数,Key Attributes,核心参数,Key Attributes
+product.key_attributes_title,product,核心参数,Key Attributes,核心参数,Key Attributes
+product.know_your_supplier,product,了解您的供应商,Know your supplier,了解您的供应商,Know your supplier
+product.lock_in_phase,product,锁单阶段,Lock-in Phase,锁单阶段,Lock-in Phase
+product.lock_in_phase_title,product,锁单阶段,Lock-in Phase,锁单阶段,Lock-in Phase
+product.manufacturer,product,生产厂家,Manufacturer,生产厂家,Manufacturer
+product.market_interest,product,市场关注度,Market Interest,市场关注度,Market Interest
+product.market_rules,product,市场规则,Market Rules,市场规则,Market Rules
+product.more_pictures,product,更多图片,More Pictures,更多图片,More Pictures
+product.more_pictures_title,product,更多图片,More pictures,更多图片,More pictures
+product.off_tag,product,折,OFF,折,OFF
+product.on_time_shipment,product,发货时效,On-time shipment,发货时效,On-time shipment
+product.participate_presale,product,参与预售,Participate Pre-order,参与预售,Participate Pre-order
+product.phases_rewards,product,期签到奖励,Phases Rewards,期签到奖励,Phases Rewards
+product.presale_in_progress,product,预售进行中,Pre-order in Progress,预售进行中,Pre-order in Progress
+product.price_dropping,product,价格已下调:,Price Dropped:,价格已下调:,Price Dropped:
+product.price_protection,product,价格保护,Price Protection,价格保护,Price Protection
+product.price_protection_title,product,价格保护,Price Protection,价格保护,Price Protection
+product.product_attributes,product,商品参数,Product Attributes,商品参数,Product Attributes
+product.production_logistics,product,生产与物流,Production & Logistics,生产与物流,Production & Logistics
+product.production_logistics_title,product,生产与物流,Production & Logistics,生产与物流,Production & Logistics
+product.quantity,product,购买数量,Quantity,购买数量,Quantity
+product.quantity_title,product,购买数量,Quantity,购买数量,Quantity
+product.quick_service,product,服务快捷,Quick service,服务快捷,Quick service
+product.rating_reviews,product,评分与评价,Ratings & Reviews,评分与评价,Ratings & Reviews
+product.refund_note,product,* 锁单前可随时申请全额退款。锁单后差价将退回平台钱包。,* Refundable at any time before lock-in. Price differences will be credited to platform wallet.,* 锁单前可随时申请全额退款。锁单后差价将退回平台钱包。,* Refundable at any time before lock-in. Price differences will be credited to platform wallet.
+product.refund_policy,product,退款政策,Refund Policy,退款政策,Refund Policy
+product.refund_policy_title,product,退款政策,Refund Policy,退款政策,Refund Policy
+product.reviews,product,用户评价,Reviews,用户评价,Reviews
+product.reviews_count,product,({count} 条评价),({count} reviews),({count} 条评价),({count} reviews)
+product.reviews_title,product,用户评价,Reviews,用户评价,Reviews
+product.service_quality,product,服务质量,Service Quality,服务质量,Service Quality
+product.shipment_speed,product,发货速度,Shipment Speed,发货速度,Shipment Speed
+product.shipping,product,物流运费,Shipping,物流运费,Shipping
+product.shipping_title,product,物流运费,Shipping,物流运费,Shipping
+product.standard_delivery,product,标准物流,Standard Delivery,标准物流,Standard Delivery
+product.store_reviews,product,店铺评价,Store reviews,店铺评价,Store reviews
+product.supplier_info,product,商家详情,Supplier Info,商家详情,Supplier Info
+product.supplier_service,product,商家服务,Supplier service,商家服务,Supplier service
+product.support_crowdfunding,product,支持众筹,Support Crowdfunding,支持众筹,Support Crowdfunding
+product.target_participants,product,目标人数:,Target:,目标人数:,Target:
+product.time_remaining,product,剩余时间:,Time Left:,剩余时间:,Time Left:
+product.trending,product,趋势,Trending,趋势,Trending
+product.variations,product,规格选择,Variations,规格选择,Variations
+product.variations_title,product,规格选择,Variations,规格选择,Variations
+product.verified_concept,product,已验证概念,Verified Concept,已验证概念,Verified Concept
+product.verified_supplier,product,已核实商家,Verified Supplier,已核实商家,Verified Supplier
+productdetail.1h,productdetail,≤1h,≤1h,≤1h,≤1h
+productdetail.50_orders,productdetail,50 orders,50 orders,50 orders,50 orders
+productdetail.arctic_white,productdetail,Arctic White,Arctic White,Arctic White,Arctic White
+productdetail.avg_response,productdetail,Avg. response,Avg. response,Avg. response,Avg. response
+productdetail.bg_es_uk_mx_se_us,productdetail,BG ES UK MX SE US,BG ES UK MX SE US,BG ES UK MX SE US,BG ES UK MX SE US
+productdetail.cyber_teal,productdetail,Cyber Teal,Cyber Teal,Cyber Teal,Cyber Teal
+productdetail.featured,productdetail,Featured,Featured,Featured,Featured
+productdetail.feb_2_2026,productdetail,Feb 2， 2026,Feb 2， 2026,Feb 2， 2026,Feb 2， 2026
+productdetail.guangdong_cn,productdetail,Guangdong， CN 🇨🇳,Guangdong， CN 🇨🇳,Guangdong， CN 🇨🇳,Guangdong， CN 🇨🇳
+productdetail.if_the_final_price_is_lower_th,productdetail,If the final price is lower than what you paid， the difference will be automatically refunded to your platform wallet upon locking.,If the final price is lower than what you paid， the difference will be automatically refunded to your platform wallet upon locking.,If the final price is lower than what you paid， the difference will be automatically refunded to your platform wallet upon locking.,If the final price is lower than what you paid， the difference will be automatically refunded to your platform wallet upon locking.
+productdetail.natural_bamboo,productdetail,Natural Bamboo,Natural Bamboo,Natural Bamboo,Natural Bamboo
+productdetail.obsidian_black,productdetail,Obsidian Black,Obsidian Black,Obsidian Black,Obsidian Black
+productdetail.on_time_delivery,productdetail,On-time delivery,On-time delivery,On-time delivery,On-time delivery
+productdetail.once_locked_the_order_goes_dir,productdetail,Once locked， the order goes directly to the artisan. Shipping typically starts 7-14 days after campaign ends.,Once locked， the order goes directly to the artisan. Shipping typically starts 7-14 days after campaign ends.,Once locked， the order goes directly to the artisan. Shipping typically starts 7-14 days after campaign ends.,Once locked， the order goes directly to the artisan. Shipping typically starts 7-14 days after campaign ends.
+productdetail.ratings_reviews,productdetail,Ratings & reviews,Ratings & reviews,Ratings & reviews,Ratings & reviews
+productdetail.reorder_rate,productdetail,Reorder rate,Reorder rate,Reorder rate,Reorder rate
+productdetail.shenzhen_yokosi_photoelectric,productdetail,Shenzhen Yokosi Photoelectric Co.， Ltd.,Shenzhen Yokosi Photoelectric Co.， Ltd.,Shenzhen Yokosi Photoelectric Co.， Ltd.,Shenzhen Yokosi Photoelectric Co.， Ltd.
+productdetail.us_51_000,productdetail,US $51，000+,US $51，000+,US $51，000+,US $51，000+
+productdetail.we_need_to_reach_the_target_nu,productdetail,We need to reach the target number of participants to unlock this exclusive price. More people means lower prices for everyone!,We need to reach the target number of participants to unlock this exclusive price. More people means lower prices for everyone!,We need to reach the target number of participants to unlock this exclusive price. More people means lower prices for everyone!,We need to reach the target number of participants to unlock this exclusive price. More people means lower prices for everyone!
+productdetail.you_can_request_a_full_refund,productdetail,You can request a full refund at any time before the campaign is locked. If the target is not met， 100% will be automatically refunded.,You can request a full refund at any time before the campaign is locked. If the target is not met， 100% will be automatically refunded.,You can request a full refund at any time before the campaign is locked. If the target is not met， 100% will be automatically refunded.,You can request a full refund at any time before the campaign is locked. If the target is not met， 100% will be automatically refunded.
+productdetaildrawer.93_0,productdetaildrawer,93.0%,93.0%,93.0%,93.0%
+productgridcard.hot,productgridcard,HOT,HOT,HOT,HOT
+profile.add_friend,profile,加好友,Add Friend,加好友,Add Friend
+profile.basic_info,profile,基础信息,Basic Info,基础信息,Basic Info
+profile.change_avatar,profile,点击更换头像,Tap to change avatar,点击更换头像,Tap to change avatar
+profile.fans,profile,粉丝,Fans,粉丝,Fans
+profile.following,profile,关注,Following,关注,Following
+profile.homepage,profile,TA的个人主页,Their Homepage,TA的个人主页,Their Homepage
+profile.intro,profile,个人简介,About Me,个人简介,About Me
+profile.join_date,profile,加入时间,Joined,加入时间,Joined
+profile.moments,profile,动态,Moments,动态,Moments
+profile.moments_title,profile,的动态,'，,的动态,'，
+profile.nickname_placeholder,profile,请输入昵称,Enter nickname,请输入昵称,Enter nickname
+profile.region,profile,地区,Region,地区,Region
+profile.request_sent,profile,已申请,Requested,已申请,Requested
+profile.send_message,profile,私信,Message,私信,Message
+profile.title_suffix,profile,详情,Details,详情,Details
+reviews.fast_delivery_time_and_after_s,reviews,Fast delivery time and after-sales service have given me great confidence and guarantee,Fast delivery time and after-sales service have given me great confidence and guarantee,Fast delivery time and after-sales service have given me great confidence and guarantee,Fast delivery time and after-sales service have given me great confidence and guarantee
+reviews.i_recently_purchased_five_pair,reviews,I recently purchased five pairs of AI glasses—and they'，,I recently purchased five pairs of AI glasses—and they'，,I recently purchased five pairs of AI glasses—and they'，,I recently purchased five pairs of AI glasses—and they'，
+reviews.product_quality,reviews,Product quality,Product quality,Product quality,Product quality
+reviews.this_kbao_ai_pet_is_so_adorabl,reviews,This Kbao ai pet is so adorable! It is super cute and has AI so it now is my desk companion. The voice sounds amazing and her English is perfect. So happy with my cuddly little assistant.,This Kbao ai pet is so adorable! It is super cute and has AI so it now is my desk companion. The voice sounds amazing and her English is perfect. So happy with my cuddly little assistant.,This Kbao ai pet is so adorable! It is super cute and has AI so it now is my desk companion. The voice sounds amazing and her English is perfect. So happy with my cuddly little assistant.,This Kbao ai pet is so adorable! It is super cute and has AI so it now is my desk companion. The voice sounds amazing and her English is perfect. So happy with my cuddly little assistant.
+reviewsdrawer.i_recently_purchased_five_pair,reviewsdrawer,"I recently purchased five pairs of AI glasses—and they\`,""reward.all_details"":","I recently purchased five pairs of AI glasses—and they\`,""reward.all_details"":","I recently purchased five pairs of AI glasses—and they\`,""reward.all_details"":","I recently purchased five pairs of AI glasses—and they\`,""reward.all_details"":"
+reward.cashback,reward,里程碑返现,Milestone Rebate,里程碑返现,Milestone Rebate
+reward.cat_cashback,reward,签到返现,Cashback,签到返现,Cashback
+reward.cat_fan,reward,粉丝奖励,Fan Reward,粉丝奖励,Fan Reward
+reward.cat_overflow,reward,溢出退款,Refund,溢出退款,Refund
+reward.cat_payment,reward,余额支付,Payment,余额支付,Payment
+reward.cat_referral,reward,分销奖励,Referral,分销奖励,Referral
+reward.cat_refund,reward,订单退款,Refund,订单退款,Refund
+reward.cat_withdraw,reward,提现,Withdraw,提现,Withdraw
+reward.fan,reward,推广收益,Affiliate Earnings,推广收益,Affiliate Earnings
+reward.fan_order,reward,来自粉丝 @{name} 的订单,Order from @{name},来自粉丝 @{name} 的订单,Order from @{name}
+reward.milestone_rebate,reward,第 {phase} 期签到返现,Phase {phase} Rebate,第 {phase} 期签到返现,Phase {phase} Rebate
+reward.order_met,reward,订单 {orderId} 达标,Order {orderId} Met,订单 {orderId} 达标,Order {orderId} Met
+reward.overflow_desc,reward,项目 {id} 差价退回,C2W {id} Overflow Refund,项目 {id} 差价退回,C2W {id} Overflow Refund
+reward.payment_desc,reward,支付订单 {orderId},Paid Order {orderId},支付订单 {orderId},Paid Order {orderId}
+reward.recent_transactions,reward,最近交易明细,Recent Transactions,最近交易明细,Recent Transactions
+reward.referral,reward,引荐奖励,Referral Rewards,引荐奖励,Referral Rewards
+reward.referral_desc,reward,推荐购买 {product},Referral: {product},推荐购买 {product},Referral: {product}
+reward.refund_desc,reward,订单 {orderId} 退货退款,Refund Order {orderId},订单 {orderId} 退货退款,Refund Order {orderId}
+reward.status_available,reward,可提现,Available,可提现,Available
+reward.status_completed,reward,已完成,Completed,已完成,Completed
+reward.status_processing,reward,处理中,Processing,处理中,Processing
+reward.total_lifetime,reward,累计总收益,Total Lifetime Earnings,累计总收益,Total Lifetime Earnings
+reward.withdraw_desc,reward,手续费 {fee},Fee {fee},手续费 {fee},Fee {fee}
+rules.admin_managed,rules,由管理员审核通过后手动设置,Manually assigned by administrator,由管理员审核通过后手动设置,Manually assigned by administrator
+rules.bronze_desc,rules,新注册用户的初始等级。,Standard tier for new users.,新注册用户的初始等级。,Standard tier for new users.
+rules.bronze_req,rules,新用户默认,Default for new users,新用户默认,Default for new users
+rules.current_status,rules,当前等级,Current Tier,当前等级,Current Tier
+rules.gold_desc,rules,核心社区贡献者。,Core community contributors.,核心社区贡献者。,Core community contributors.
+rules.gold_req,rules,订单金额>$5000 或 10位粉丝,Order amount >$5000 OR 10 Fans,订单金额>$5000 或 10位粉丝,Order amount >$5000 OR 10 Fans
+rules.influencer_desc,rules,"""入住 0buck 让你的粉丝疯狂变现，我们提供优厚的分销比例（从 3%-20%）""","""Influencers are platform partners. Reward ratios are negotiated based on traffic and performance.""","""入住 0buck 让你的粉丝疯狂变现，我们提供优厚的分销比例（从 3%-20%）""","""Influencers are platform partners. Reward ratios are negotiated based on traffic and performance."""
+rules.main_desc,rules,"""您的奖励比例由当前会员等级决定。达人（Influencer）奖励比例根据双方协商制定。""","""Your reward ratio is determined by your current membership tier. Influencer reward ratios are negotiated based on platform consultation.""","""您的奖励比例由当前会员等级决定。达人（Influencer）奖励比例根据双方协商制定。""","""Your reward ratio is determined by your current membership tier. Influencer reward ratios are negotiated based on platform consultation."""
+rules.negotiated_rate,rules,专属协议比例,Negotiated Rate,专属协议比例,Negotiated Rate
+rules.platinum_desc,rules,顶级合作伙伴，享受最高普通奖励。,Top tier partners with maximum rewards.,顶级合作伙伴，享受最高普通奖励。,Top tier partners with maximum rewards.
+rules.platinum_req,rules,订单金额>$10000 或 50位粉丝,Order amount >$10000 OR 50 Fans,订单金额>$10000 或 50位粉丝,Order amount >$10000 OR 50 Fans
+rules.settlement_period,rules,订单有效完成后,7 days after order completion,订单有效完成后,7 days after order completion
+rules.silver_desc,rules,活跃用户，有一定的推荐记录。,Active users with referral history.,活跃用户，有一定的推荐记录。,Active users with referral history.
+rules.silver_req,rules,订单金额>$500 或 3位粉丝,Order amount >$500 OR 3 Fans,订单金额>$500 或 3位粉丝,Order amount >$500 OR 3 Fans
+rules.subtitle,rules,奖励与结算指南,Tier & Reward Guide,奖励与结算指南,Tier & Reward Guide
+rules.title,rules,会员等级规则,Membership Rules,会员等级规则,Membership Rules
+rules.upgrade_desc,rules,达到以下任一条件即可自动升级，解锁更高奖励比例。,Reach any of the following milestones to automatically upgrade and unlock higher rewards.,达到以下任一条件即可自动升级，解锁更高奖励比例。,Reach any of the following milestones to automatically upgrade and unlock higher rewards.
+rules.upgrade_title,rules,晋升要求,How to Upgrade,晋升要求,How to Upgrade
+security.2fa,security,谷歌二次验证 (2FA),Google 2FA,谷歌二次验证 (2FA),Google 2FA
+security.2fa_desc,security,登录、提现需输入动态口令,Dynamic code required for login and large withdrawals,登录、提现需输入动态口令,Dynamic code required for login and large withdrawals
+security.backup_email_binding,security,备选邮箱绑定,Backup Email Binding,备选邮箱绑定,Backup Email Binding
+security.backup_email_desc,security,用于找回账号与安全验证,For account recovery and security verification,用于找回账号与安全验证,For account recovery and security verification
+security.basic_security,security,基础安全,Basic Security,基础安全,Basic Security
+security.binding_verification,security,绑定与验证,Binding & Verification,绑定与验证,Binding & Verification
+security.bound,security,已绑定,Bound,已绑定,Bound
+security.change_login_password,security,修改登录密码,Change Login Password,修改登录密码,Change Login Password
+security.change_pay_password,security,修改支付密码,Change Pay Password,修改支付密码,Change Pay Password
+security.confirm_password_placeholder,security,请再次输入新密码,Please re-enter new password,请再次输入新密码,Please re-enter new password
+security.email_bind_current_verify,security,验证当前安全性,Security Verification,验证当前安全性,Security Verification
+security.email_bind_new_input,security,输入新邮箱地址,Enter New Email,输入新邮箱地址,Enter New Email
+security.email_bind_new_title,security,改绑邮箱,Change Email,改绑邮箱,Change Email
+security.email_bind_new_verify,security,验证新邮箱,Verify New Email,验证新邮箱,Verify New Email
+security.email_bind_success,security,邮箱改绑成功,Email changed successfully,邮箱改绑成功,Email changed successfully
+security.email_binding,security,邮箱绑定,Email Binding,邮箱绑定,Email Binding
+security.facebook,security,Facebook,Facebook,Facebook,Facebook
+security.github,security,GitHub,GitHub,GitHub,GitHub
+security.go_bind,security,去绑定,Bind,去绑定,Bind
+security.google_2fa_bind_desc,security,请使用 Google Authenticator 扫描下方二维码或手动输入密钥,Please use Google Authenticator to scan the QR code or enter the secret manually,请使用 Google Authenticator 扫描下方二维码或手动输入密钥,Please use Google Authenticator to scan the QR code or enter the secret manually
+security.google_2fa_change_btn,security,修改密钥,Change Secret,修改密钥,Change Secret
+security.google_2fa_copy_secret,security,复制密钥,Copy Secret,复制密钥,Copy Secret
+security.google_2fa_disable_btn,security,解绑 2FA,Disable 2FA,解绑 2FA,Disable 2FA
+security.google_2fa_enable_btn,security,确认开启,Enable 2FA,确认开启,Enable 2FA
+security.google_2fa_qr_tip,security,无法扫描？点击复制密钥,Cannot scan? Click to copy secret,无法扫描？点击复制密钥,Cannot scan? Click to copy secret
+security.google_2fa_status_disabled,security,未启用,Disabled,未启用,Disabled
+security.google_2fa_status_enabled,security,已启用,Enabled,已启用,Enabled
+security.google_2fa_title,security,谷歌二次验证,Google 2FA,谷歌二次验证,Google 2FA
+security.google_2fa_verify_desc,security,请输入 6 位动态验证码进行验证,Enter 6-digit OTP to verify,请输入 6 位动态验证码进行验证,Enter 6-digit OTP to verify
+security.high_recovery,security,高阶找回策略,High-level Recovery,高阶找回策略,High-level Recovery
+security.login_password,security,登录密码,Login Password,登录密码,Login Password
+security.mfa_recovery_desc,security,开启后，必须至少同时提供 2 种验证方式（如邮箱 + 社交账号，或email + 社交账号）才能找回密码,Once enabled， at least 2 verification methods (e.g. Email + Social) are required to recover password.,开启后，必须至少同时提供 2 种验证方式（如邮箱 + 社交账号，或email + 社交账号）才能找回密码,Once enabled， at least 2 verification methods (e.g. Email + Social) are required to recover password.
+security.mfa_recovery_title,security,强制多重因子找回,Force Multi-Factor Recovery,强制多重因子找回,Force Multi-Factor Recovery
+security.new_password_placeholder,security,请输入新密码,Enter new password,请输入新密码,Enter new password
+security.not_enabled,security,未开启,Disabled,未开启,Disabled
+security.not_set,security,未设置,Not Set,未设置,Not Set
+security.password_desc,security,建议定期修改以保护账号,Regular changes recommended,建议定期修改以保护账号,Regular changes recommended
+security.password_req_desc,security,"""密码长度需在 8-20 位之间，包含字母、数字和符号。""","""Password length must be between 8-20 characters, including letters, numbers, and symbols.""","""密码长度需在 8-20 位之间，包含字母、数字和符号。""","""Password length must be between 8-20 characters, including letters, numbers, and symbols."""
+security.pay_password,security,支付密码,Payment Password,支付密码,Payment Password
+security.pay_password_desc,security,用于余额支付与提现审核,Used for balance payments and withdrawals,用于余额支付与提现审核,Used for balance payments and withdrawals
+security.redirecting,security,正在跳转...,Redirecting...,正在跳转...,Redirecting...
+security.social_bind_title,security,第三方社交绑定,Social Accounts,第三方社交绑定,Social Accounts
+security.status_desc,security,建议开启双重验证提升资产安全,Recommended to enable 2FA for better asset security,建议开启双重验证提升资产安全,Recommended to enable 2FA for better asset security
+security.status_good,security,账号安全评分: 75分,Security Score: 75,账号安全评分: 75分,Security Score: 75
+security.twitter,security,Twitter,Twitter,Twitter,Twitter
+security.update_action,security,确认修改,Confirm Update,确认修改,Confirm Update
+security.update_success,security,密码修改成功,Password updated successfully,密码修改成功,Password updated successfully
+security.verify_backup_email_bind,security,备选邮箱绑定验证,Backup Email Verification,备选邮箱绑定验证,Backup Email Verification
+security.verify_email_bind,security,邮箱绑定验证,Email Binding Verification,邮箱绑定验证,Email Binding Verification
+security.verify_login_password,security,修改登录密码验证,Change Login Password Verification,修改登录密码验证,Change Login Password Verification
+security.verify_pay_password,security,修改支付密码验证,Change Pay Password Verification,修改支付密码验证,Change Pay Password Verification
+security.verify_phone_bind,security,手机绑定验证,Phone Binding Verification,手机绑定验证,Phone Binding Verification
+security.verify_success,security,验证成功,Verification successful,验证成功,Verification successful
+security.verify_with_email,security,通过旧邮箱验证码验证,Verify with current email OTP,通过旧邮箱验证码验证,Verify with current email OTP
+security.verify_with_google,security,通过谷歌验证码验证,Verify with Google Authenticator,通过谷歌验证码验证,Verify with Google Authenticator
+service.0buck_artisan_verification,service,0Buck Artisan Verification,0Buck Artisan Verification,0Buck Artisan Verification,0Buck Artisan Verification
+service.chat_with_support,service,Chat with Support,Chat with Support,Chat with Support,Chat with Support
+service.check_in_rules_resurgence_card,service,Check-in Rules & Resurgence Cards,Check-in Rules & Resurgence Cards,Check-in Rules & Resurgence Cards,Check-in Rules & Resurgence Cards
+service.email_us,service,Email Us,Email Us,Email Us,Email Us
+service.frequently_asked_questions,service,Frequently Asked Questions,Frequently Asked Questions,Frequently Asked Questions,Frequently Asked Questions
+service.how_100_rebate_works,service,How 100% Rebate Works,How 100% Rebate Works,How 100% Rebate Works,How 100% Rebate Works
+service.need_help,service,需要帮助吗？,Need Help?,需要帮助吗？,Need Help?
+service.our_artisan_support_team_is_he,service,Our Artisan Support Team is here for you 24/7. Just drop a message.,Our Artisan Support Team is here for you 24/7. Just drop a message.,Our Artisan Support Team is here for you 24/7. Just drop a message.,Our Artisan Support Team is here for you 24/7. Just drop a message.
+service.return_refund_policy,service,Return & Refund Policy,Return & Refund Policy,Return & Refund Policy,Return & Refund Policy
+settings.account_security,settings,账户与安全,Account & Security,账户与安全,Account & Security
+settings.ai_persona,settings,管家性格,AI Persona,管家性格,AI Persona
+settings.ai_personalization,settings,AI 助手个性化,AI Personalization,AI 助手个性化,AI Personalization
+settings.ai_rule_note,settings,注：您可以在此设置 策略层与表现层。,Note: You can configure the strategy layer and presentation layer here.,注：您可以在此设置 策略层与表现层。,Note: You can configure the strategy layer and presentation layer here.
+settings.appearance,settings,外观显示,Appearance,外观显示,Appearance
+settings.auto,settings,AUTO,AUTO,AUTO,AUTO
+settings.brl,settings,BRL,BRL,BRL,BRL
+settings.butler,settings,butler,butler,butler,butler
+settings.cache_clearing,settings,正在清理...,Clearing...,正在清理...,Clearing...
+settings.cad,settings,CAD,CAD,CAD,CAD
+settings.casual,settings,casual,casual,casual,casual
+settings.chf,settings,CHF,CHF,CHF,CHF
+settings.clear_cache,settings,清除缓存,Clear Cache,清除缓存,Clear Cache
+settings.clear_confirm_title,settings,确定清除缓存吗？,Clear Cache?,确定清除缓存吗？,Clear Cache?
+settings.clear_memory,settings,清空,Clear,清空,Clear
+settings.cny,settings,CNY,CNY,CNY,CNY
+settings.concise,settings,concise,concise,concise,concise
+settings.creative,settings,creative,creative,creative,creative
+settings.currency,settings,货币设置,Currency,货币设置,Currency
+settings.currency_aud,settings,澳元 (AUD),Australian Dollar (AUD),澳元 (AUD),Australian Dollar (AUD)
+settings.currency_auto,settings,智能识别 (AUTO),Auto Recognition (AUTO),智能识别 (AUTO),Auto Recognition (AUTO)
+settings.currency_brl,settings,雷亚尔 (BRL),Brazilian Real (BRL),雷亚尔 (BRL),Brazilian Real (BRL)
+settings.currency_cad,settings,加元 (CAD),Canadian Dollar (CAD),加元 (CAD),Canadian Dollar (CAD)
+settings.currency_chf,settings,瑞郎 (CHF),Swiss Franc (CHF),瑞郎 (CHF),Swiss Franc (CHF)
+settings.currency_cny,settings,人民币 (CNY),Chinese Yuan (CNY),人民币 (CNY),Chinese Yuan (CNY)
+settings.currency_eur,settings,欧元 (EUR),Euro (EUR),欧元 (EUR),Euro (EUR)
+settings.currency_gbp,settings,英镑 (GBP),Pound Sterling (GBP),英镑 (GBP),Pound Sterling (GBP)
+settings.currency_hkd,settings,港币 (HKD),HK Dollar (HKD),港币 (HKD),HK Dollar (HKD)
+settings.currency_idr,settings,印尼盾 (IDR),Indonesian Rupiah (IDR),印尼盾 (IDR),Indonesian Rupiah (IDR)
+settings.currency_inr,settings,卢比 (INR),Indian Rupee (INR),卢比 (INR),Indian Rupee (INR)
+settings.currency_jpy,settings,日元 (JPY),Japanese Yen (JPY),日元 (JPY),Japanese Yen (JPY)
+settings.currency_krw,settings,韩元 (KRW),South Korean Won (KRW),韩元 (KRW),South Korean Won (KRW)
+settings.currency_myr,settings,林吉特 (MYR),Malaysian Ringgit (MYR),林吉特 (MYR),Malaysian Ringgit (MYR)
+settings.currency_php,settings,比索 (PHP),Philippine Peso (PHP),比索 (PHP),Philippine Peso (PHP)
+settings.currency_rub,settings,卢布 (RUB),Russian Ruble (RUB),卢布 (RUB),Russian Ruble (RUB)
+settings.currency_sgd,settings,新加坡元 (SGD),Singapore Dollar (SGD),新加坡元 (SGD),Singapore Dollar (SGD)
+settings.currency_thb,settings,泰铢 (THB),Thai Baht (THB),泰铢 (THB),Thai Baht (THB)
+settings.currency_twd,settings,新台币 (TWD),New Taiwan Dollar (TWD),新台币 (TWD),New Taiwan Dollar (TWD)
+settings.currency_usd,settings,美元 (USD),US Dollar (USD),美元 (USD),US Dollar (USD)
+settings.currency_vnd,settings,越南盾 (VND),Vietnamese Dong (VND),越南盾 (VND),Vietnamese Dong (VND)
+settings.custom_instr,settings,个性化指令,Custom Instructions,个性化指令,Custom Instructions
+settings.custom_instr_desc,settings,比如称呼、回复格式等,e.g. name preference， reply format， etc.,比如称呼、回复格式等,e.g. name preference， reply format， etc.
+settings.custom_instr_placeholder,settings,例如：请叫我 Boss，回复尽量用列表形式...,e.g. Call me Boss， use list format...,例如：请叫我 Boss，回复尽量用列表形式...,e.g. Call me Boss， use list format...
+settings.dark,settings,dark,dark,dark,dark
+settings.en,settings,en,en,en,en
+settings.eur,settings,EUR,EUR,EUR,EUR
+settings.expert,settings,expert,expert,expert,expert
+settings.friendly,settings,friendly,friendly,friendly,friendly
+settings.gbp,settings,GBP,GBP,GBP,GBP
+settings.hkd,settings,HKD,HKD,HKD,HKD
+settings.idr,settings,IDR,IDR,IDR,IDR
+settings.inr,settings,INR,INR,INR,INR
+settings.jpy,settings,JPY,JPY,JPY,JPY
+settings.krw,settings,KRW,KRW,KRW,KRW
+settings.lang_en,settings,English,English,English,English
+settings.lang_zh,settings,简体中文,Chinese,简体中文,Chinese
+settings.language,settings,语言选择,Language,语言选择,Language
+settings.logout,settings,退出登录,Logout,退出登录,Logout
+settings.loli,settings,loli,loli,loli,loli
+settings.memory_bank_desc,settings,AI 自动提取的长期记忆,Long-term memory automatically extracted by AI,AI 自动提取的长期记忆,Long-term memory automatically extracted by AI
+settings.memory_empty,settings,暂无长期记忆，多与助手聊聊吧。,No long-term memory yet. Chat more with the assistant!,暂无长期记忆，多与助手聊聊吧。,No long-term memory yet. Chat more with the assistant!
+settings.mentor,settings,mentor,mentor,mentor,mentor
+settings.myr,settings,MYR,MYR,MYR,MYR
+settings.nickname,settings,个人资料,Personal Info,个人资料,Personal Info
+settings.notifications,settings,通知推送,Notifications,通知推送,Notifications
+settings.persona_butler,settings,全能管家,Butler,全能管家,Butler
+settings.persona_casual,settings,随性自然,Casual,随性自然,Casual
+settings.persona_concise,settings,简洁明了,Concise,简洁明了,Concise
+settings.persona_creative,settings,创意无限,Creative,创意无限,Creative
+settings.persona_desc,settings,预设性格模板,Preset personality templates,预设性格模板,Preset personality templates
+settings.persona_expert,settings,深挖专家,Expert,深挖专家,Expert
+settings.persona_friendly,settings,热情活泼,Friendly,热情活泼,Friendly
+settings.persona_loli,settings,可爱萝莉,Loli,可爱萝莉,Loli
+settings.persona_mentor,settings,成长导师,Mentor,成长导师,Mentor
+settings.persona_professional,settings,专业严谨,Professional,专业严谨,Professional
+settings.persona_tsundere,settings,傲娇管家,Tsundere,傲娇管家,Tsundere
+settings.php,settings,PHP,PHP,PHP,PHP
+settings.professional,settings,professional,professional,professional,professional
+settings.rub,settings,RUB,RUB,RUB,RUB
+settings.sgd,settings,SGD,SGD,SGD,SGD
+settings.system,settings,system,system,system,system
+settings.system_pref,settings,系统偏好设置,System Preferences,系统偏好设置,System Preferences
+settings.thb,settings,THB,THB,THB,THB
+settings.theme_dark,settings,暗色模式,Dark Mode,暗色模式,Dark Mode
+settings.theme_light,settings,亮色模式,Light Mode,亮色模式,Light Mode
+settings.theme_system,settings,跟随系统,System,跟随系统,System
+settings.tsundere,settings,tsundere,tsundere,tsundere,tsundere
+settings.twd,settings,TWD,TWD,TWD,TWD
+settings.usd,settings,USD,USD,USD,USD
+settings.vnd,settings,VND,VND,VND,VND
+settings.zh,settings,zh,zh,zh,zh
+share.card.group_buy,share,拼团卡,Group-buy Card,拼团卡,Group-buy Card
+share.card.invite,share,专属邀请卡,Exclusive Invite Card,专属邀请卡,Exclusive Invite Card
+share.card.merchant,share,商家卡,Merchant Card,商家卡,Merchant Card
+share.card.product,share,商品卡,Product Card,商品卡,Product Card
+share.card_type_title,share,推广卡片类型,Promotion card type,推广卡片类型,Promotion card type
+share.copy_link,share,复制链接,Copy,复制链接,Copy
+share.generate,share,生成,Generate,生成,Generate
+share.input.merchant_id,share,输入商家ID,Enter merchant ID,输入商家ID,Enter merchant ID
+share.input.paste_full_link,share,粘贴完整分享链接,Paste full sharing link,粘贴完整分享链接,Paste full sharing link
+share.input.product_id,share,输入商品ID,Enter product ID,输入商品ID,Enter product ID
+share.messenger,share,Messenger,Messenger,Messenger,Messenger
+share.more,share,更多,More,更多,More
+share.no_platform_selected,share,未选择平台,No platform selected,未选择平台,No platform selected
+share.paste_link_hint,share,或粘贴完整分享链接生成模板卡,Or paste a full sharing link to generate template cards,或粘贴完整分享链接生成模板卡,Or paste a full sharing link to generate template cards
+share.platform_friends,share,本平台好友,Friends,本平台好友,Friends
+share.platform_groups,share,本平台群聊,Group chat,本平台群聊,Group chat
+share.processing,share,处理中...,Processing...,处理中...,Processing...
+share.referral_tip,share,💡 提示：分享动态后，新用户通过该链接注册将自动绑定为“发布者”的粉丝，发布者可享受粉丝消费奖励。,"💡 Tip: After sharing the post, new users who register through this link will be automatically linked as followers of the ""poster,"" and the poster can enjoy rewards for their followers' spending.",💡 提示：分享动态后，新用户通过该链接注册将自动绑定为“发布者”的粉丝，发布者可享受粉丝消费奖励。,"💡 Tip: After sharing the post, new users who register through this link will be automatically linked as followers of the ""poster,"" and the poster can enjoy rewards for their followers' spending."
+share.reward_dist_rate,share,分销比例,Distribution rate,分销比例,Distribution rate
+share.reward_fan_rate,share,粉丝奖励,Follower reward,粉丝奖励,Follower reward
+share.reward_ref_prefix,share,当前奖励参考：,Current reward reference:,当前奖励参考：,Current reward reference:
+share.reward_user_tier,share,等级,Tier,等级,Tier
+share.reward_user_type,share,身份,User type,身份,User type
+share.save_image,share,保存图片,Save image,保存图片,Save image
+share.select_platform_then_send,share,先点上方平台，再发送所选模板卡,"Select a platform above, then send the selected template card",先点上方平台，再发送所选模板卡,"Select a platform above, then send the selected template card"
+share.send_to_prefix,share,发送到,Send to,发送到,Send to
+share.status.copy_failed_prompt,share,复制失败，请手动复制下面链接：,Copy failed. Please manually copy this link:,复制失败，请手动复制下面链接：,Copy failed. Please manually copy this link:
+share.status.generated_templates_prefix,share,已生成,Generated,已生成,Generated
+share.status.generated_templates_suffix,share,张模板卡，请选择后发送,template cards. Select one and send.,张模板卡，请选择后发送,template cards. Select one and send.
+share.status.link_copied,share,推广链接已复制,Referral link copied,推广链接已复制,Referral link copied
+share.status.link_parse_failed,share,链接解析失败，请使用平台生成的完整分享链接,Link parse failed. Use a complete platform-generated sharing link.,链接解析失败，请使用平台生成的完整分享链接,Link parse failed. Use a complete platform-generated sharing link.
+share.status.link_parsed_prefix,share,链接解析成功，生成,Link parsed successfully. Generated,链接解析成功，生成,Link parsed successfully. Generated
+share.status.link_parsed_suffix,share,张模板卡,template cards,张模板卡,template cards
+share.status.manual_copy_prompt_shown,share,已弹出手动复制框,Manual copy prompt opened,已弹出手动复制框,Manual copy prompt opened
+share.status.network_error_check_backend,share,网络连接失败，请确认后端8000服务在运行。,Network connection failed. Confirm backend 8000 is running.,网络连接失败，请确认后端8000服务在运行。,Network connection failed. Confirm backend 8000 is running.
+share.status.network_error_retry,share,网络连接失败，请确认后端8000服务在运行并刷新后重试。,Network connection failed. Confirm backend 8000 is running and retry.,网络连接失败，请确认后端8000服务在运行并刷新后重试。,Network connection failed. Confirm backend 8000 is running and retry.
+share.status.no_link_to_copy,share,未拿到可复制链接,No link available to copy,未拿到可复制链接,No link available to copy
+share.status.paste_link_first,share,请先粘贴完整分享链接,Please paste the full sharing link first,请先粘贴完整分享链接,Please paste the full sharing link first
+share.status.send_failed_bind_first,share,发送失败，请先绑定对应平台并重试。,Send failed. Please bind the target platform first and retry.,发送失败，请先绑定对应平台并重试。,Send failed. Please bind the target platform first and retry.
+share.status.sent_to_prefix,share,已发送到,Sent to,已发送到,Sent to
+share.status.template_send_failed,share,模板发送失败，请重试,Template send failed. Please retry.,模板发送失败，请重试,Template send failed. Please retry.
+share.telegram,share,Telegram,Telegram,Telegram,Telegram
+share.template_preview,share,模板预览,Template preview,模板预览,Template preview
+share.tip.card.group_buy,share,拼团卡用于订单商品拼团，满足成团规则后返奖。,Group-buy card for order group buying with rewards after group success.,拼团卡用于订单商品拼团，满足成团规则后返奖。,Group-buy card for order group buying with rewards after group success.
+share.tip.card.invite,share,专属邀请卡用于拉新注册并形成粉丝绑定关系。,Exclusive invite card for user acquisition and follower binding.,专属邀请卡用于拉新注册并形成粉丝绑定关系。,Exclusive invite card for user acquisition and follower binding.
+share.tip.card.merchant,share,商家卡用于商家分销，购买后按分销规则返奖。,Merchant card for merchant referral with rewards by distribution rules.,商家卡用于商家分销，购买后按分销规则返奖。,Merchant card for merchant referral with rewards by distribution rules.
+share.tip.card.product,share,商品卡用于单品分销，购买后按分销规则返奖。,Product card for item referral with rewards by distribution rules.,商品卡用于单品分销，购买后按分销规则返奖。,Product card for item referral with rewards by distribution rules.
+share.tip.platform.copy,share,复制完整推广链接，粘贴到任意平台都可追踪。,Copy the full referral link and paste it anywhere with tracking.,复制完整推广链接，粘贴到任意平台都可追踪。,Copy the full referral link and paste it anywhere with tracking.
+share.tip.platform.discord,share,发到 Discord 社区，适合兴趣圈层裂变。,Send to Discord communities for interest-based viral growth.,发到 Discord 社区，适合兴趣圈层裂变。,Send to Discord communities for interest-based viral growth.
+share.tip.platform.feishu,share,发到飞书联系人或群，适合工作协作场景快速扩散。,Send to Feishu contacts or groups for fast workplace collaboration sharing.,发到飞书联系人或群，适合工作协作场景快速扩散。,Send to Feishu contacts or groups for fast workplace collaboration sharing.
+share.tip.platform.telegram,share,发到 Telegram 群组或频道，适合内容传播。,Send to Telegram groups or channels for content distribution.,发到 Telegram 群组或频道，适合内容传播。,Send to Telegram groups or channels for content distribution.
+share.tip.platform.whatsapp,share,发到 WhatsApp 群或私聊，适合海外社群传播。,Send to WhatsApp groups or chats for overseas community distribution.,发到 WhatsApp 群或私聊，适合海外社群传播。,Send to WhatsApp groups or chats for overseas community distribution.
+share.title,share,分享到,share,分享到,share
+share.usage_default,share,选择平台和卡片类型后，系统会生成模板卡，选中即可发送。,"After selecting platform and card type, the system generates template cards for sending.",选择平台和卡片类型后，系统会生成模板卡，选中即可发送。,"After selecting platform and card type, the system generates template cards for sending."
+share.usage_title,share,使用说明（随选择动态变化）,Usage notes (updates by selection),使用说明（随选择动态变化）,Usage notes (updates by selection)
+share.whatsapp,share,WhatsApp,WhatsApp,WhatsApp,WhatsApp
+splash.about,splash,关于,About,关于,About
+splash.ai_butler,splash,AI管家,AI Butler,AI管家,AI Butler
+splash.enter,splash,进入体验,Enter Experience,进入体验,Enter Experience
+splash.evolving,splash,进化为 更懂你的,evolving into More understanding you,进化为 更懂你的,evolving into More understanding you
+splash.signin,splash,登录,Sign In,登录,Sign In
+splash.slogan1,splash,每一次邂逅,Every encounter,每一次邂逅,Every encounter
+splash.slogan2,splash,每一次旅程,"Every journey,",每一次旅程,"Every journey,"
+splash.slogan3,splash,每一次灵光乍现,Every flashofgenius,每一次灵光乍现,Every flashofgenius
+splash.truly_knows,splash,真正懂你所需,Truly knows what you need,真正懂你所需,Truly knows what you need
+splashscreen.buck,splashscreen,Buck,Buck,Buck,Buck
+square.artisan_keyboard,square,Artisan Keyboard,Artisan Keyboard,Artisan Keyboard,Artisan Keyboard
+square.browses,square,浏览,Browse,浏览,Browse
+square.c2w_prefix,square,还差,Still need,还差,Still need
+square.c2w_suffix,square,人即可锁定集采价,person can lock in the purchase price,人即可锁定集采价,person can lock in the purchase price
+square.c2w_tag,square,集采,Group buying,集采,Group buying
+square.c2w_wishlist,square,集采与愿望,Collective procurement and wishes,集采与愿望,Collective procurement and wishes
+square.chatting,square,人在聊,people in,人在聊,people in
+square.comment_1,square,这款帐篷的防水性能怎么样？,How is the waterproof performance of this tent?,这款帐篷的防水性能怎么样？,How is the waterproof performance of this tent?
+square.feed,square,Feed,Feed,Feed,Feed
+square.feed_text_1,square,这套露营装备简直太棒了！颜值极高，最重要的是 0Buck 100% 返现，强烈推荐！🏕️✨ 无论是在山间还是湖边，都能提供最舒适的体验。套装包含帐篷、睡袋、折叠椅和便携炉具，每一件都是经过严格筛选的，品质无忧。现在参与集采还有机会赢取额外积分哦！,This camping gear is absolutely amazing! High aesthetics， and most importantly， 0Buck 100% cashback. Highly recommended! 🏕️✨,这套露营装备简直太棒了！颜值极高，最重要的是 0Buck 100% 返现，强烈推荐！🏕️✨ 无论是在山间还是湖边，都能提供最舒适的体验。套装包含帐篷、睡袋、折叠椅和便携炉具，每一件都是经过严格筛选的，品质无忧。现在参与集采还有机会赢取额外积分哦！,This camping gear is absolutely amazing! High aesthetics， and most importantly， 0Buck 100% cashback. Highly recommended! 🏕️✨
+square.feed_text_2,square,终于收到了！实物比照片还要精致。正在考虑要不要再入一个新出的耳机拼单。🎧🔥 音质纯净，降噪效果超出预期，非常适合在办公室或地铁使用。如果你也在找一款高颜值的无线耳机，千万不要错过这款，我已经安利给好几个朋友了！,Finally received it! The quality is even better than the pictures. Considering whether to join another group buy for the new headphones. 🎧🔥,终于收到了！实物比照片还要精致。正在考虑要不要再入一个新出的耳机拼单。🎧🔥 音质纯净，降噪效果超出预期，非常适合在办公室或地铁使用。如果你也在找一款高颜值的无线耳机，千万不要错过这款，我已经安利给好几个朋友了！,Finally received it! The quality is even better than the pictures. Considering whether to join another group buy for the new headphones. 🎧🔥
+square.feeds,square,社群动态,Community Dynamics,社群动态,Community Dynamics
+square.found_treasure,square,这是我在 0Buck 发现的宝藏好物！,This is a hidden gem I discovered on 0Buck!,这是我在 0Buck 发现的宝藏好物！,This is a hidden gem I discovered on 0Buck!
+square.goal_met,square,已集齐,All collected,已集齐,All collected
+square.goal_target,square,目标,Target,目标,Target
+square.hot_chatting,square,正在热聊...,Chatting...,正在热聊...,Chatting...
+square.hot_topics,square,热门话题,Hot Topics,热门话题,Hot Topics
+square.in_wishlist,square,已在清单,On the list,已在清单,On the list
+square.iphone_15_pro,square,iPhone 15 Pro,iPhone 15 Pro,iPhone 15 Pro,iPhone 15 Pro
+square.launch_production,square,即可启动生产,Production can be started immediately.,即可启动生产,Production can be started immediately.
+square.merchant,square,商家,Merchants,商家,Merchants
+square.mins_ago,square,分钟前,mins ago,分钟前,mins ago
+square.official_activity,square,官方活动,Official events,官方活动,Official events
+square.official_activity_desc,square,最新爆款预告,Latest blockbuster preview,最新爆款预告,Latest blockbuster preview
+square.official_community,square,官方社群,Official Community,官方社群,Official Community
+square.official_community_desc,square,加入大家庭,Join the family,加入大家庭,Join the family
+square.official_rec,square,官方推荐,Official Recommendation,官方推荐,Official Recommendation
+square.participate,square,参与,Join,参与,Join
+square.post_placeholder,square,分享你的精彩时刻...,Show time...,分享你的精彩时刻...,Show time...
+square.post_time_suffix,square,分钟前,minutes ago,分钟前,minutes ago
+square.preview,square,Preview,Preview,Preview,Preview
+square.reply_1,square,亲测防水效果极佳，上周末遇到了大雨，一点都没漏！,Tested it myself， waterproof is excellent. Had heavy rain last weekend and no leaks!,亲测防水效果极佳，上周末遇到了大雨，一点都没漏！,Tested it myself， waterproof is excellent. Had heavy rain last weekend and no leaks!
+square.search_placeholder,square,搜索官方活动、拼单、话题...,"Search for official events, group buying, topics...",搜索官方活动、拼单、话题...,"Search for official events, group buying, topics..."
+square.share_action,square,分享,share,分享,share
+square.sony_wh_1000xm5,square,Sony WH-1000XM5,Sony WH-1000XM5,Sony WH-1000XM5,Sony WH-1000XM5
+square.square_topic_camping,square,square.topic_camping,square.topic_camping,square.topic_camping,square.topic_camping
+square.square_topic_crowdfunding,square,square.topic_crowdfunding,square.topic_crowdfunding,square.topic_crowdfunding,square.topic_crowdfunding
+square.square_topic_must_buy,square,square.topic_must_buy,square.topic_must_buy,square.topic_must_buy,square.topic_must_buy
+square.square_topic_ootd,square,square.topic_ootd,square.topic_ootd,square.topic_ootd,square.topic_ootd
+square.svip_level,square,SVIP,SVIP,SVIP,SVIP
+square.topic_camping,square,露营装备,Camping equipment,露营装备,Camping equipment
+square.topic_crowdfunding,square,众筹精选,Crowdfunding,众筹精选,Crowdfunding
+square.topic_must_buy,square,必买清单,Must-buy list,必买清单,Must-buy list
+square.topic_ootd,square,穿搭挑战,Outfit Challenge,穿搭挑战,Outfit Challenge
+square.topics,square,热门话题,Hot Topics,热门话题,Hot Topics
+square.user,square,user,user,user,user
+square.user_a,square,@User_A,@User_A,@User_A,@User_A
+square.user_b,square,User_B,User_B,User_B,User_B
+square.user_share,square,用户分享,User sharing,用户分享,User sharing
+square.vip_level,square,VIP,VIP,VIP,VIP
+square.want,square,想要,want,想要,want
+square.wishlist_prefix,square,已有,get,已有,get
+square.wishlist_suffix,square,位粉丝想要,fans want,位粉丝想要,fans want
+square.wishlist_tag,square,愿望清单,Wish List,愿望清单,Wish List
+squarelist.post,squarelist,Post,Post,Post,Post
+squarelist.product,squarelist,Product,Product,Product,Product
+supplier.ai_insights,supplier,AI 洞察,AI Insights,AI 洞察,AI Insights
+supplier.all_products,supplier,全部商品,All Products,全部商品,All Products
+supplier.basic_info,supplier,基本信息,Basic Info,基本信息,Basic Info
+supplier.capability_title,supplier,设计与生产能力,Design & Production Capability,设计与生产能力,Design & Production Capability
+supplier.certifications_patents,supplier,资质与专利,Certifications & Patents,资质与专利,Certifications & Patents
+supplier.chat_now,supplier,立即对话,Chat now,立即对话,Chat now
+supplier.company_profile,supplier,公司简介,Company Profile,公司简介,Company Profile
+supplier.design_capability,supplier,设计能力,Design Capability,设计能力,Design Capability
+supplier.load_more,supplier,加载更多商品,Load More Products,加载更多商品,Load More Products
+supplier.matching_products,supplier,匹配商品,Matching Products,匹配商品,Matching Products
+supplier.min_order_prefix,supplier,最小起订量:,Min. order:,最小起订量:,Min. order:
+supplier.performance_metrics,supplier,表现指标,Performance Metrics,表现指标,Performance Metrics
+supplier.product_gallery,supplier,商品橱窗,Product Gallery,商品橱窗,Product Gallery
+supplier.production_capability,supplier,生产能力,Production Capability,生产能力,Production Capability
+supplier.rating_label,supplier,评分:,Rating:,评分:,Rating:
+supplier.send_inquiry,supplier,立刻了解,SLearn now,立刻了解,SLearn now
+supplier.showing_middle,supplier,/,of,/,of
+supplier.showing_prefix,supplier,显示,Showing,显示,Showing
+supplier.showing_suffix,supplier,件商品,products,件商品,products
+supplier.trade_performance,supplier,交易表现,Trade Performance,交易表现,Trade Performance
+supplier.verified_manufacturer,supplier,已核实制造商,Verified Manufacturer,已核实制造商,Verified Manufacturer
+supplieranalysis.2h,supplieranalysis,≤2h,≤2h,≤2h,≤2h
+supplieranalysis.3_000_m,supplieranalysis,3，000+ m²,3，000+ m²,3，000+ m²,3，000+ m²
+supplieranalysis.6_dedicated_production_lines,supplieranalysis,6 dedicated production lines,6 dedicated production lines,6 dedicated production lines,6 dedicated production lines
+supplieranalysis.7_years_of_expertise,supplieranalysis,7 years of expertise,7 years of expertise,7 years of expertise,7 years of expertise
+supplieranalysis.80_staff,supplieranalysis,80+ staff,80+ staff,80+ staff,80+ staff
+supplieranalysis.and,supplieranalysis,and,and,and,and
+supplieranalysis.average_response_time,supplieranalysis,Average Response Time,Average Response Time,Average Response Time,Average Response Time
+supplieranalysis.brand_business_retailer_engine,supplieranalysis,Brand business， Retailer， Engineer， Wholesaler， Manufacturer， For private use,Brand business， Retailer， Engineer， Wholesaler， Manufacturer， For private use,Brand business， Retailer， Engineer， Wholesaler， Manufacturer， For private use,Brand business， Retailer， Engineer， Wholesaler， Manufacturer， For private use
+supplieranalysis.business_profile,supplieranalysis,Business profile,Business profile,Business profile,Business profile
+supplieranalysis.business_type,supplieranalysis,Business Type,Business Type,Business Type,Business Type
+supplieranalysis.ce,supplieranalysis,CE,CE,CE,CE
+supplieranalysis.company_address,supplieranalysis,Company Address,Company Address,Company Address,Company Address
+supplieranalysis.cpc,supplieranalysis,CPC,CPC,CPC,CPC
+supplieranalysis.creative_led_solid_wood_base_l,supplieranalysis,Creative LED Solid Wood Base Lamp with Iron-USB Ball Holder and Crystal Ball,Creative LED Solid Wood Base Lamp with Iron-USB Ball Holder and Crystal Ball,Creative LED Solid Wood Base Lamp with Iron-USB Ball Holder and Crystal Ball,Creative LED Solid Wood Base Lamp with Iron-USB Ball Holder and Crystal Ball
+supplieranalysis.custom_crafts,supplieranalysis,custom crafts,custom crafts,custom crafts,custom crafts
+supplieranalysis.custom_engraved_logo_cute_crys,supplieranalysis,Custom Engraved Logo Cute Crystal Ball Wood...,Custom Engraved Logo Cute Crystal Ball Wood...,Custom Engraved Logo Cute Crystal Ball Wood...,Custom Engraved Logo Cute Crystal Ball Wood...
+supplieranalysis.custom_manufacturer,supplieranalysis,Custom Manufacturer,Custom Manufacturer,Custom Manufacturer,Custom Manufacturer
+supplieranalysis.custom_wooden_essential_oil_di,supplieranalysis,Custom Wooden Essential Oil Diffuser Box Decorative Crafts...,Custom Wooden Essential Oil Diffuser Box Decorative Crafts...,Custom Wooden Essential Oil Diffuser Box Decorative Crafts...,Custom Wooden Essential Oil Diffuser Box Decorative Crafts...
+supplieranalysis.customized_diy_gift_wooden_per,supplieranalysis,Customized DIY Gift Wooden Performance Desk...,Customized DIY Gift Wooden Performance Desk...,Customized DIY Gift Wooden Performance Desk...,Customized DIY Gift Wooden Performance Desk...
+supplieranalysis.demand,supplieranalysis,demand,demand,demand,demand
+supplieranalysis.eco_friendly_natural_wood_desk,supplieranalysis,Eco-friendly Natural Wood Desktop Calendar Blocks...,Eco-friendly Natural Wood Desktop Calendar Blocks...,Eco-friendly Natural Wood Desktop Calendar Blocks...,Eco-friendly Natural Wood Desktop Calendar Blocks...
+supplieranalysis.factory_wholesale_high_quality,supplieranalysis,Factory Wholesale High Quality Wooden Handicrafts Ornaments...,Factory Wholesale High Quality Wooden Handicrafts Ornaments...,Factory Wholesale High Quality Wooden Handicrafts Ornaments...,Factory Wholesale High Quality Wooden Handicrafts Ornaments...
+supplieranalysis.guangdong_cn,supplieranalysis,Guangdong， CN,Guangdong， CN,Guangdong， CN,Guangdong， CN
+supplieranalysis.handcrafted_wooden_wall_clock,supplieranalysis,Handcrafted Wooden Wall Clock Minimalist Design...,Handcrafted Wooden Wall Clock Minimalist Design...,Handcrafted Wooden Wall Clock Minimalist Design...,Handcrafted Wooden Wall Clock Minimalist Design...
+supplieranalysis.huizhou_renhe_premium,supplieranalysis,Huizhou Renhe Premium...,Huizhou Renhe Premium...,Huizhou Renhe Premium...,Huizhou Renhe Premium...
+supplieranalysis.huizhou_renhe_premium_bamboo_w,supplieranalysis,Huizhou Renhe Premium Bamboo & Wood P...,Huizhou Renhe Premium Bamboo & Wood P...,Huizhou Renhe Premium Bamboo & Wood P...,Huizhou Renhe Premium Bamboo & Wood P...
+supplieranalysis.is_an_excellent_fit_for_your_q,supplieranalysis,is an excellent fit for your query， as they hold the required CE certification to ensure product safety and compliance. With,is an excellent fit for your query， as they hold the required CE certification to ensure product safety and compliance. With,is an excellent fit for your query， as they hold the required CE certification to ensure product safety and compliance. With,is an excellent fit for your query， as they hold the required CE certification to ensure product safety and compliance. With
+supplieranalysis.long_term_effective,supplieranalysis,Long term effective,Long term effective,Long term effective,Long term effective
+supplieranalysis.main_client_types,supplieranalysis,Main Client Types,Main Client Types,Main Client Types,Main Client Types
+supplieranalysis.main_markets,supplieranalysis,Main Markets,Main Markets,Main Markets,Main Markets
+supplieranalysis.manufacturer_wholesale_custom,supplieranalysis,Manufacturer Wholesale Custom Fine Only Lamp...,Manufacturer Wholesale Custom Fine Only Lamp...,Manufacturer Wholesale Custom Fine Only Lamp...,Manufacturer Wholesale Custom Fine Only Lamp...
+supplieranalysis.new_products_per_year,supplieranalysis,New Products Per Year,New Products Per Year,New Products Per Year,New Products Per Year
+supplieranalysis.night_lights,supplieranalysis,night lights,night lights,night lights,night lights
+supplieranalysis.no_of_production_lines,supplieranalysis,No. of Production Lines,No. of Production Lines,No. of Production Lines,No. of Production Lines
+supplieranalysis.on_time_delivery_rate,supplieranalysis,On-time Delivery Rate,On-time Delivery Rate,On-time Delivery Rate,On-time Delivery Rate
+supplieranalysis.online_revenue,supplieranalysis,Online Revenue,Online Revenue,Online Revenue,Online Revenue
+supplieranalysis.premium_bamboo_charging_stand,supplieranalysis,Premium Bamboo Charging Stand Organizer with Wireless Pad...,Premium Bamboo Charging Stand Organizer with Wireless Pad...,Premium Bamboo Charging Stand Organizer with Wireless Pad...,Premium Bamboo Charging Stand Organizer with Wireless Pad...
+supplieranalysis.r_d_staff,supplieranalysis,R&D Staff,R&D Staff,R&D Staff,R&D Staff
+supplieranalysis.repurchase_rate,supplieranalysis,Repurchase Rate,Repurchase Rate,Repurchase Rate,Repurchase Rate
+supplieranalysis.sample_processing_graphic_proc,supplieranalysis,sample processing， graphic processing， customization,sample processing， graphic processing， customization,sample processing， graphic processing， customization,sample processing， graphic processing， customization
+supplieranalysis.services,supplieranalysis,Services,Services,Services,Services
+supplieranalysis.they_offer_the_scalability_ne,supplieranalysis,， they offer the scalability needed for volume orders. Their customized on-demand and sample...,， they offer the scalability needed for volume orders. Their customized on-demand and sample...,， they offer the scalability needed for volume orders. Their customized on-demand and sample...,， they offer the scalability needed for volume orders. Their customized on-demand and sample...
+supplieranalysis.this,supplieranalysis,This,This,This,This
+supplieranalysis.total_staff,supplieranalysis,Total Staff,Total Staff,Total Staff,Total Staff
+supplieranalysis.us_1_million_us_3_million,supplieranalysis,US$1 Million - US$3 Million,US$1 Million - US$3 Million,US$1 Million - US$3 Million,US$1 Million - US$3 Million
+supplieranalysis.usb_wooden_base_lamp_led_3d_ni,supplieranalysis,USB Wooden Base Lamp Led 3D Night Light Round Oval Rectangle Wheel Lamp...,USB Wooden Base Lamp Led 3D Night Light Round Oval Rectangle Wheel Lamp...,USB Wooden Base Lamp Led 3D Night Light Round Oval Rectangle Wheel Lamp...,USB Wooden Base Lamp Led 3D Night Light Round Oval Rectangle Wheel Lamp...
+supplieranalysis.wholesale_customized_christmas,supplieranalysis,Wholesale Customized Christmas Gifts Three Colors of Light LED...,Wholesale Customized Christmas Gifts Three Colors of Light LED...,Wholesale Customized Christmas Gifts Three Colors of Light LED...,Wholesale Customized Christmas Gifts Three Colors of Light LED...
+supplieranalysis.wholesale_in_stock_high_qualit,supplieranalysis,Wholesale in Stock High Quality Oval Shape Acrylic Unit Led 3D Warm...,Wholesale in Stock High Quality Oval Shape Acrylic Unit Led 3D Warm...,Wholesale in Stock High Quality Oval Shape Acrylic Unit Led 3D Warm...,Wholesale in Stock High Quality Oval Shape Acrylic Unit Led 3D Warm...
+supplieranalysis.wood_art_ornaments_gift_decora,supplieranalysis,Wood Art Ornaments Gift Decoration Groove Led White Warm Light...,Wood Art Ornaments Gift Decoration Groove Led White Warm Light...,Wood Art Ornaments Gift Decoration Groove Led White Warm Light...,Wood Art Ornaments Gift Decoration Groove Led White Warm Light...
+supplieranalysis.wooden_base,supplieranalysis,wooden base,wooden base,wooden base,wooden base
+supplieranalysis.wooden_diffuser,supplieranalysis,wooden diffuser,wooden diffuser,wooden diffuser,wooden diffuser
+supplieranalysis.wooden_frame,supplieranalysis,wooden frame,wooden frame,wooden frame,wooden frame
+supplieranalysis.year_founded,supplieranalysis,Year Founded,Year Founded,Year Founded,Year Founded
+supplieranalysisdrawer.1,supplieranalysisdrawer,1,1,1,1
+supplieranalysisdrawer.100,supplieranalysisdrawer,100,100,100,100
+supplieranalysisdrawer.2017,supplieranalysisdrawer,2017,2017,2017,2017
+supplieranalysisdrawer.25_0,supplieranalysisdrawer,25.0%,25.0%,25.0%,25.0%
+supplieranalysisdrawer.6,supplieranalysisdrawer,6,6,6,6
+supplieranalysisdrawer.92_9,supplieranalysisdrawer,92.9%,92.9%,92.9%,92.9%
+tag.chinese,tag,用中文,In Chinese,用中文,In Chinese
+tag.concise,tag,偏好直白简短,Prefers straightforward and concise,偏好直白简短,Prefers straightforward and concise
+title.address,title,收货地址,Address,收货地址,Address
+title.api_model,title,添加大模型,Add model,添加大模型,Add model
+title.cart,title,购物车,Cart,购物车,Cart
+title.checkout,title,确认订单,Checkout,确认订单,Checkout
+title.community,title,社群动态,Community,社群动态,Community
+title.contacts,title,通讯录管理,Contacts,通讯录管理,Contacts
+title.coupons,title,卡券与权益,Coupons & Benefits,卡券与权益,Coupons & Benefits
+title.fans,title,签到与粉丝中心,Check-in & Fans,签到与粉丝中心,Check-in & Fans
+title.group_buy,title,正在拼单,Group Buy,正在拼单,Group Buy
+title.influencer,title,达人申请,Influencer Apply,达人申请,Influencer Apply
+title.leaderboard,title,推广排名,Leaderboard,推广排名,Leaderboard
+title.lounge,title,沙龙,Lounge,沙龙,Lounge
+title.me,title,个人中心,Me,个人中心,Me
+title.my_feeds,title,我的动态,My Feeds,我的动态,My Feeds
+title.notification,title,服务通知,Notifications,服务通知,Notifications
+title.orders,title,我的订单,My Orders,我的订单,My Orders
+title.personal_info,title,个人资料,My Profile,个人资料,My Profile
+title.points_exchange,title,积分兑换,Points redemption,积分兑换,Points redemption
+title.points_history,title,积分明细,Points details,积分明细,Points details
+title.prime,title,严选特供,Prime,严选特供,Prime
+title.product_detail,title,商品详情,Details,商品详情,Details
+title.reward_history,title,奖励明细,Rewards,奖励明细,Rewards
+title.security,title,账号与安全,Account & Security,账号与安全,Account & Security
+title.service,title,客服与规则,Service & Rules,客服与规则,Service & Rules
+title.settings,title,设置,set,设置,set
+title.share,title,分享动态,Share,分享动态,Share
+title.square,title,社群广场,Square,社群广场,Square
+title.topics,title,热门话题,Topics,热门话题,Topics
+title.user_profile,title,用户资料,User Profile,用户资料,User Profile
+title.wallet,title,我的钱包,My Wallet,我的钱包,My Wallet
+title.withdraw,title,申请提现,Withdrawal,申请提现,Withdrawal
+tracking.carrier,tracking,物流公司,logistics,物流公司,logistics
+tracking.collapse,tracking,收起全部,Hide all,收起全部,Hide all
+tracking.contact_merchant,tracking,联系商家,Contact,联系商家,Contact
+tracking.contact_phone,tracking,联系电话:,Whatsapp:,联系电话:,Whatsapp:
+tracking.in_transit,tracking,运输中,During,运输中,During
+tracking.recipient,tracking,收,get,收,get
+userprofile.alex_design,userprofile,Alex_Design,Alex_Design,Alex_Design,Alex_Design
+vccinput.message_dumbo,vccinput,Message Dumbo...,Message Dumbo...,Message Dumbo...,Message Dumbo...
+voucher.discount_desc,voucher,全场通用，可与免单活动叠加,"Valid for all items, and can be combined with free purchase promotions.",全场通用，可与免单活动叠加,"Valid for all items, and can be combined with free purchase promotions."
+voucher.discount_name,voucher,$5 无门槛代金券,$5 no minimum spend voucher,$5 无门槛代金券,$5 no minimum spend voucher
+voucher.empty_suffix,voucher,卡券,coupons,卡券,coupons
+voucher.expired,voucher,已过期,Expired,已过期,Expired
+voucher.go_exchange,voucher,去积分商城兑换,Go to the points mall to redeem,去积分商城兑换,Go to the points mall to redeem
+voucher.resurgence_desc,voucher,可补救5天内的断签,Can remedy a missed visa within 5 days,可补救5天内的断签,Can remedy a missed visa within 5 days
+voucher.resurgence_name,voucher,续签卡 (Resurgence Card),Resurgence Card,续签卡 (Resurgence Card),Resurgence Card
+voucher.search_placeholder,voucher,搜索卡券...,Search for coupons...,搜索卡券...,Search for coupons...
+voucher.shipping_desc,voucher,免除基础运费，优先发货,"Free basic shipping, priority delivery",免除基础运费，优先发货,"Free basic shipping, priority delivery"
+voucher.shipping_name,voucher,物流加速券,Logistics acceleration coupons,物流加速券,Logistics acceleration coupons
+voucher.unused,voucher,未使用,Unused,未使用,Unused
+voucher.use_action,voucher,使用,Use,使用,Use
+voucher.used,voucher,已使用,Used,已使用,Used
+voucher.valid_till,voucher,Valid till:,Valid till:,Valid till:,Valid till:
+vouchers.expired,vouchers,expired,expired,expired,expired
+vouchers.valid,vouchers,valid,valid,valid,valid
+wallet.add_custom_model_action,wallet,添加自定义大模型,Add Custom Model,添加自定义大模型,Add Custom Model
+wallet.ai_usage_reward,wallet,大模型使用量与奖励,AI Usage & Rewards,大模型使用量与奖励,AI Usage & Rewards
+wallet.api_tokens,wallet,大模型额度,API Tokens,大模型额度,API Tokens
+wallet.approaching_limit,wallet,即将超限,Approaching Limit,即将超限,Approaching Limit
+wallet.cash_balance,wallet,现金余额,Cash Balance,现金余额,Cash Balance
+wallet.cash_detail,wallet,现金明细,Cash Detail,现金明细,Cash Detail
+wallet.compute_pool,wallet,算力积分池,Compute Points Pool,算力积分池,Compute Points Pool
+wallet.custom_model_active_desc,wallet,当前使用自定义大模型，无限用量，还能持续获得算力贡献积分奖励！,"Currently, we are using a custom large model with unlimited usage, and we can continue to earn computing power contribution points as rewards!",当前使用自定义大模型，无限用量，还能持续获得算力贡献积分奖励！,"Currently, we are using a custom large model with unlimited usage, and we can continue to earn computing power contribution points as rewards!"
+wallet.extract_points_action,wallet,手动提取积分至钱包,Extract Points to Wallet,手动提取积分至钱包,Extract Points to Wallet
+wallet.free_limit_note,wallet,免费额度: 300K Tokens / 日,Free Limit: 300K Tokens / day,免费额度: 300K Tokens / 日,Free Limit: 300K Tokens / day
+wallet.limit_reached_desc,wallet,平台免费额度即将用尽。强烈推荐添加您的自定义大模型，不仅无限量使用，还可获得额外的算力贡献积分奖励！,Free limit almost used. Add custom model for unlimited use and rewards!,平台免费额度即将用尽。强烈推荐添加您的自定义大模型，不仅无限量使用，还可获得额外的算力贡献积分奖励！,Free limit almost used. Add custom model for unlimited use and rewards!
+wallet.local_tokens,wallet,本机调用 Tokens,Local Tokens,本机调用 Tokens,Local Tokens
+wallet.platform_limit,wallet,平台使用限制,Platform Limit,平台使用限制,Platform Limit
+wallet.points_balance,wallet,积分余额,Points Balance,积分余额,Points Balance
+wallet.points_detail,wallet,积分明细,Points Detail,积分明细,Points Detail
+wallet.today_tokens,wallet,今日已消耗 Tokens,Today'，,今日已消耗 Tokens,Today'，
+wallet.withdraw_action,wallet,申请提现,Withdrawal,申请提现,Withdrawal
+wishlistdetail.collective_power,wishlistdetail,Collective Power,Collective Power,Collective Power,Collective Power
+wishlistdetail.direct_notification,wishlistdetail,Direct Notification,Direct Notification,Direct Notification,Direct Notification
+wishlistdetail.discovery,wishlistdetail,Discovery,Discovery,Discovery,Discovery
+wishlistdetail.early_bird_priority,wishlistdetail,Early Bird Priority,Early Bird Priority,Early Bird Priority,Early Bird Priority
+wishlistdetail.joining_the_wishlist_does_not,wishlistdetail,Joining the wishlist does not require immediate payment. You are expressing interest， not placing a binding order. We will not charge you until the official C2W phase starts.,Joining the wishlist does not require immediate payment. You are expressing interest， not placing a binding order. We will not charge you until the official C2W phase starts.,Joining the wishlist does not require immediate payment. You are expressing interest， not placing a binding order. We will not charge you until the official C2W phase starts.,Joining the wishlist does not require immediate payment. You are expressing interest， not placing a binding order. We will not charge you until the official C2W phase starts.
+wishlistdetail.no_commitment_yet,wishlistdetail,No Commitment Yet,No Commitment Yet,No Commitment Yet,No Commitment Yet
+wishlistdetail.this_concept_represents_the_ne,wishlistdetail,This concept represents the next generation of modular workspace integration. We are investigating global manufacturing feasibility. By joining the wishlist， you help us negotiate with top-tier verified artisans to bring this to life at a fraction of retail cost.,This concept represents the next generation of modular workspace integration. We are investigating global manufacturing feasibility. By joining the wishlist， you help us negotiate with top-tier verified artisans to bring this to life at a fraction of retail cost.,This concept represents the next generation of modular workspace integration. We are investigating global manufacturing feasibility. By joining the wishlist， you help us negotiate with top-tier verified artisans to bring this to life at a fraction of retail cost.,This concept represents the next generation of modular workspace integration. We are investigating global manufacturing feasibility. By joining the wishlist， you help us negotiate with top-tier verified artisans to bring this to life at a fraction of retail cost.
+wishlistdetail.we_are_currently_in_the_commun,wishlistdetail,"We are currently in the community discovery phase to gauge real-world demand. Your ""wish"" helps us decide whether to move forward with mass production.","We are currently in the community discovery phase to gauge real-world demand. Your ""wish"" helps us decide whether to move forward with mass production.","We are currently in the community discovery phase to gauge real-world demand. Your ""wish"" helps us decide whether to move forward with mass production.","We are currently in the community discovery phase to gauge real-world demand. Your ""wish"" helps us decide whether to move forward with mass production."
+wishlistdetail.we_noticed_a_gap_in_the_marke,wishlistdetail,"""We noticed a gap in the market for high-quality， sustainable workspace tools. Most options are either too expensive or poorly made. This modular system aims to be the last desk organizer you'll ever need to buy.""","""We noticed a gap in the market for high-quality， sustainable workspace tools. Most options are either too expensive or poorly made. This modular system aims to be the last desk organizer you'll ever need to buy.""","""We noticed a gap in the market for high-quality， sustainable workspace tools. Most options are either too expensive or poorly made. This modular system aims to be the last desk organizer you'll ever need to buy.""","""We noticed a gap in the market for high-quality， sustainable workspace tools. Most options are either too expensive or poorly made. This modular system aims to be the last desk organizer you'll ever need to buy."""
+wishlistdetail.we_re_monitoring_community_in,wishlistdetail,"""We're monitoring community interest. Once we hit goal， we'll launch a collective pre-order with exclusive factory pricing.""","""We're monitoring community interest. Once we hit goal， we'll launch a collective pre-order with exclusive factory pricing.""","""We're monitoring community interest. Once we hit goal， we'll launch a collective pre-order with exclusive factory pricing.""","""We're monitoring community interest. Once we hit goal， we'll launch a collective pre-order with exclusive factory pricing."""
+wishlistdetail.we_will_notify_you_immediately,wishlistdetail,We will notify you immediately via VCC message once the product reaches its goal or moves to the next phase.,We will notify you immediately via VCC message once the product reaches its goal or moves to the next phase.,We will notify you immediately via VCC message once the product reaches its goal or moves to the next phase.,We will notify you immediately via VCC message once the product reaches its goal or moves to the next phase.
+wishlistdetail.wishlist_members_get_a_24_hour,wishlistdetail,"Wishlist members get a 24-hour head start and an additional 10% ""Insight Discount"" when the pre-order goes live.","Wishlist members get a 24-hour head start and an additional 10% ""Insight Discount"" when the pre-order goes live.","Wishlist members get a 24-hour head start and an additional 10% ""Insight Discount"" when the pre-order goes live.","Wishlist members get a 24-hour head start and an additional 10% ""Insight Discount"" when the pre-order goes live."
+withdraw.0_numamount,withdraw,0 && numAmount,0 && numAmount,0 && numAmount,0 && numAmount
+withdraw.all,withdraw,全部,All,全部,All
+withdraw.amount,withdraw,提现金额,Withdrawal Amount,提现金额,Withdrawal Amount
+withdraw.back_to_wallet,withdraw,返回钱包,Back to Wallet,返回钱包,Back to Wallet
+withdraw.crypto,withdraw,虚拟货币 (USDC),USDC,虚拟货币 (USDC),USDC
+withdraw.estimated_arrival,withdraw,预计实际到账,Estimated Arrival,预计实际到账,Estimated Arrival
+withdraw.eta,withdraw,预计到账,Estimated Arrival,预计到账,Estimated Arrival
+withdraw.eta_note,withdraw,提现申请将在 1-3 个工作日内审核并打款。,Withdrawal requests will be reviewed and processed within 1-3 business days.,提现申请将在 1-3 个工作日内审核并打款。,Withdrawal requests will be reviewed and processed within 1-3 business days.
+withdraw.fee,withdraw,服务费,Service Fee,服务费,Service Fee
+withdraw.fee_deduction_note,withdraw,实际到账金额将自动扣除对应的通道手续费。,Actual arrival amount will automatically deduct corresponding channel fees.,实际到账金额将自动扣除对应的通道手续费。,Actual arrival amount will automatically deduct corresponding channel fees.
+withdraw.fee_note,withdraw,含手续费,incl. fee,含手续费,incl. fee
+withdraw.fee_rate,withdraw,费率,Fee Rate,费率,Fee Rate
+withdraw.insufficient_balance,withdraw,余额不足,Insufficient Balance,余额不足,Insufficient Balance
+withdraw.method,withdraw,提现方式,Withdrawal Method,提现方式,Withdrawal Method
+withdraw.min_amount_error,withdraw,提现金额需大于 $50 小于,Amount must be at least $50,提现金额需大于 $50 小于,Amount must be at least $50
+withdraw.min_amount_note,withdraw,最低提现金额为 $50.00。,Minimum withdrawal amount is $50.00.,最低提现金额为 $50.00。,Minimum withdrawal amount is $50.00.
+withdraw.minamount_numamount,withdraw,= minAmount && numAmount,= minAmount && numAmount,= minAmount && numAmount,= minAmount && numAmount
+withdraw.paypal,withdraw,PayPal,PayPal,PayPal,PayPal
+withdraw.submit,withdraw,提交提现,Submit Withdrawal,提交提现,Submit Withdrawal
+withdraw.submitted,withdraw,提现申请已提交,Withdrawal Submitted,提现申请已提交,Withdrawal Submitted
+withdraw.success_desc,withdraw,您提现的 ${amount} 将在 1-3 个工作日内处理至您的 {method} 账户。,Your withdrawal of ${amount} will be processed to your {method} account within 1-3 business days.,您提现的 ${amount} 将在 1-3 个工作日内处理至您的 {method} 账户。,Your withdrawal of ${amount} will be processed to your {method} account within 1-3 business days.
+withdraw.title,withdraw,申请提现,Withdraw Funds,申请提现,Withdraw Funds
+withdraw.withdrawable_balance,withdraw,可提现余额,Withdrawable Balance,可提现余额,Withdrawable Balance
+withdrawdrawer.0_00,withdrawdrawer,0.00,0.00,0.00,0.00
+common.accepted,common,已接受,Accepted,已接受,Accepted
+checkout.continue_chat,checkout,继续聊天,Continue to Chat,继续聊天,Continue to Chat
+contact_note.new_friend,contact_note,新好友,New friend,新好友,New friend

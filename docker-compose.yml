@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-0buck}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: always
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrantdata:/qdrant/storage
+
+  celery_worker:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A app.core.celery_app worker -l info -Q default,high_priority -c 4
+    restart: always
+    env_file:
+      - ./backend/.env
+    environment:
+      - REDIS_URI=redis://redis:6379/0
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/0buck
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_beat:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A app.core.celery_app beat -l info
+    restart: always
+    env_file:
+      - ./backend/.env
+    environment:
+      - REDIS_URI=redis://redis:6379/0
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/0buck
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:
+  qdrantdata:
