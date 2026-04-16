@@ -53,3 +53,39 @@ def test_process_paid_order_idempotency(mock_db_session, sample_payload):
     
     assert result == {"status": "already_processed"}
     mock_db_session.add.assert_not_called()
+
+
+@patch('app.workers.shopify_tasks.RewardsService')
+@patch('app.workers.shopify_tasks.SupplyChainService')
+@patch('app.workers.shopify_tasks.SocialAutomationService')
+@patch('app.workers.shopify_tasks.asyncio.get_event_loop')
+def test_process_paid_order_success(
+    mock_get_event_loop, 
+    mock_social_service, 
+    mock_supply_chain, 
+    mock_rewards_service, 
+    mock_db_session, 
+    sample_payload
+):
+    # Mock DB query to return NO existing order (first time processing)
+    mock_query = MagicMock()
+    mock_db_session.query.return_value = mock_query
+    mock_filter = MagicMock()
+    mock_query.filter_by.return_value = mock_filter
+    mock_filter.first.return_value = None
+    
+    # Mock asyncio loop
+    mock_loop = MagicMock()
+    mock_get_event_loop.return_value = mock_loop
+    
+    result = process_paid_order(sample_payload)
+    
+    assert result == {"status": "success", "order_id": 12345}
+    assert mock_db_session.add.called
+    assert mock_db_session.commit.called
+    
+    # Verify RewardsService was initialized and methods called
+    mock_rewards_instance = mock_rewards_service.return_value
+    mock_rewards_instance.init_checkin_plan.assert_called_once_with(
+        999, 12345, Decimal('50.00'), 'UTC'
+    )
