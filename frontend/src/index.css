@@ -1,40 +1,334 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
+/* Fonts loaded via <link> in index.html (Plus Jakarta Sans, Inter, JetBrains Mono) */
+
+/* ─── 0Buck Theme: Override Tailwind's default tokens ──────────────────── */
+@theme {
+  /* Sans-serif → Inter + Plus Jakarta Sans */
+  --font-sans: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system,
+    'PingFang SC', 'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif;
+
+  /* Mono → JetBrains Mono for prices / codes */
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* ── Warm Gray (replaces Tailwind's cold blue-gray) ──────────────────── */
+  --color-gray-50:  #FAF9F7;
+  --color-gray-100: #F0EDE8;
+  --color-gray-200: #E4DDD6;
+  --color-gray-300: #C9BFB6;
+  --color-gray-400: #A09690;
+  --color-gray-500: #78706A;
+  --color-gray-600: #5A524C;
+  --color-gray-700: #3D3630;
+  --color-gray-800: #272220;
+  --color-gray-900: #1A1714;
+  --color-gray-950: #0E0C0B;
+
+  /* ── Brand Orange (replaces Tailwind's generic orange) ───────────────── */
+  --color-orange-50:  #FFF5F0;
+  --color-orange-100: #FFE5D6;
+  --color-orange-200: #FFCBAD;
+  --color-orange-300: #FFA07A;
+  --color-orange-400: #FF6B35;
+  --color-orange-500: #E8450A;
+  --color-orange-600: #C93A08;
+  --color-orange-700: #A82E06;
+  --color-orange-800: #7A2104;
+  --color-orange-900: #4A1402;
+
+  /* ── Border Radius ───────────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-3xl: 36px;
+}
+
 @layer base {
   :root {
-    --wa-teal: #F35B25; /* 0Buck Orange */
-    --wa-bg: #ECE5DD;
-    --wa-bubble-out: #FFE0D3;
-    --wa-bubble-in: #FFFFFF;
-    --brand-gray: #7A7A7A;
+    /* ── Brand ───────────────────────────────────────────────────── */
+    --brand-primary:   #E8450A;   /* 0Buck Orange */
+    --brand-primary-hover: #C93A08;
+    --brand-primary-active: #A82E06;
+    --brand-secondary: #FF7A3D;   /* Lighter accent */
+    --brand-glow:      rgba(232,69,10,0.25);
+
+    /* ── AI Accent ───────────────────────────────────────────────── */
+    --color-ai-500:    #5B7FFF;
+    --color-ai-100:    #EEF2FF;
+
+    /* ── Backgrounds ─────────────────────────────────────────────── */
+    --bg-page:         #FAFAF9;   /* Warm off-white */
+    --bg-surface:      #FFFFFF;
+    --bg-elevated:     #F5F3F0;
+    --bg-overlay:      rgba(12,11,10,0.6);
+
+    /* ── Chat bubbles (mapped from --wa-* for backward compat) ───── */
+    --wa-teal:         #E8450A;   /* Brand primary — used throughout */
+    --wa-bg:           #F0EDE8;   /* Warm chat bg */
+    --wa-bubble-out:   #FFE5D6;   /* Outgoing bubble — warm orange tint */
+    --wa-bubble-in:    #FFFFFF;   /* Incoming bubble */
+    --brand-gray:      #6B6560;   /* Warm neutral gray */
+
+    /* ── Text ────────────────────────────────────────────────────── */
+    --text-primary:    #1A1816;
+    --text-secondary:  #6B6560;
+    --text-tertiary:   #9C9490;
+    --text-inverse:    #FFFFFF;
+    --text-brand:      #E8450A;
+
+    /* ── Border ──────────────────────────────────────────────────── */
+    --border-subtle:   #E8E4DF;
+    --border-default:  #D4CFC9;
+    --border-strong:   #9C9490;
+    --border-brand:    #E8450A;
+
+    /* ── Orange Scale ────────────────────────────────────────────── */
+    --orange-50:  #FFF5F0;
+    --orange-100: #FFE5D6;
+    --orange-200: #FFCBAD;
+    --orange-300: #FFA07A;
+    --orange-400: #FF6B35;
+    --orange-500: #E8450A;
+    --orange-600: #C93A08;
+    --orange-700: #A82E06;
+    --orange-800: #7A2104;
+    --orange-900: #4A1402;
+
+    /* ── Semantic ────────────────────────────────────────────────── */
+    --color-success: #16A34A;
+    --color-warning: #D97706;
+    --color-error:   #DC2626;
+    --color-info:    #2563EB;
+    --color-live:    #EF4444;  /* LIVE badge only */
+
+    /* ── Shadows ─────────────────────────────────────────────────── */
+    --shadow-xs:    0 1px 2px rgba(26,24,22,0.06);
+    --shadow-sm:    0 2px 6px rgba(26,24,22,0.08);
+    --shadow-md:    0 4px 12px rgba(26,24,22,0.10);
+    --shadow-lg:    0 8px 24px rgba(26,24,22,0.12);
+    --shadow-xl:    0 16px 40px rgba(26,24,22,0.14);
+    --shadow-brand-sm: 0 4px 14px rgba(232,69,10,0.25);
+    --shadow-brand-md: 0 8px 24px rgba(232,69,10,0.30);
+
+    /* ── Radius ──────────────────────────────────────────────────── */
+    --radius-xs:  4px;
+    --radius-sm:  8px;
+    --radius-md:  12px;
+    --radius-lg:  16px;
+    --radius-xl:  24px;
+    --radius-2xl: 32px;
+    --radius-full: 9999px;
+
+    /* ── Motion ──────────────────────────────────────────────────── */
+    --duration-fast:    80ms;
+    --duration-normal: 160ms;
+    --duration-slow:   300ms;
+    --ease-standard:   cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+    --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
   }
 
+  /* ── Dark Theme ───────────────────────────────────────────────── */
   :root.dark {
-    --wa-teal: #D94B1B; /* Slightly muted orange for dark mode */
-    --wa-bg: #111111;   /* Deep WeChat Gray/Black */
-    --wa-bubble-out: #2C2C2C; /* Darker outgoing bubble */
-    --wa-bubble-in: #1E1E1E;  /* Darker incoming bubble */
-    --brand-gray: #999999;
-    color: #E5E5E5;
+    /* Brand — brightened for dark bg vibrancy */
+    --brand-primary:   #FF5A1F;
+    --brand-primary-hover: #E8450A;
+    --brand-primary-active: #C93A08;
+    --brand-glow:      rgba(255,90,31,0.30);
+
+    /* AI accent */
+    --color-ai-500:    #7B9FFF;
+    --color-ai-100:    rgba(91,127,255,0.15);
+
+    /* Backgrounds — warm near-black */
+    --bg-page:         #0C0B0A;
+    --bg-surface:      #1A1916;
+    --bg-elevated:     #252320;
+    --bg-overlay:      rgba(0,0,0,0.75);
+
+    /* Chat bubbles */
+    --wa-teal:         #FF5A1F;
+    --wa-bg:           #111009;
+    --wa-bubble-out:   #2C1A0E;
+    --wa-bubble-in:    #1E1D1A;
+    --brand-gray:      #9C9490;
+
+    /* Text */
+    --text-primary:    #EBE9E4;
+    --text-secondary:  #9C9490;
+    --text-tertiary:   #6B6560;
+    --text-inverse:    #1A1816;
+    --text-brand:      #FF5A1F;
+
+    /* Border */
+    --border-subtle:   #252320;
+    --border-default:  #332F2B;
+    --border-strong:   #4D4843;
+    --border-brand:    #FF5A1F;
+
+    /* Shadows — deeper on dark */
+    --shadow-xs:    0 1px 2px rgba(0,0,0,0.20);
+    --shadow-sm:    0 2px 6px rgba(0,0,0,0.30);
+    --shadow-md:    0 4px 12px rgba(0,0,0,0.40);
+    --shadow-lg:    0 8px 24px rgba(0,0,0,0.50);
+    --shadow-xl:    0 16px 40px rgba(0,0,0,0.60);
+    --shadow-brand-sm: 0 4px 14px rgba(255,90,31,0.30);
+    --shadow-brand-md: 0 8px 24px rgba(255,90,31,0.35);
+
+    color: #EBE9E4;
   }
 }
 
+/* ─── Typography ───────────────────────────────────────────────────────── */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC',
+    'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  /* Apple default: normal letter-spacing */
+  letter-spacing: -0.01em;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+/* Display / headline text uses Plus Jakarta Sans */
+h1, h2, h3 {
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+  letter-spacing: -0.02em;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
+/* Prices and codes use JetBrains Mono */
+.font-mono,
+[class*="price"],
+[class*="code"] {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+}
+
+/* ─── Apple HIG Overrides ────────────────────────────────────────────────
+   Target the most egregious non-Apple patterns globally.
+   These only touch presentation — zero layout change.
+─────────────────────────────────────────────────────────────────────────── */
+
+/* 1. Consistent card surface (Apple uses white cards on gray page bg) */
+.dark .bg-\[\#1c1c1e\],
+.dark .bg-\[\#1C1C1E\] {
+  background-color: #1C1C1E;
+}
+
+/* 2. Page-level dark bg → pure Apple black */
+.dark .bg-\[\#111111\] {
+  background-color: #000000;
+}
+.dark .bg-\[\#000000\] {
+  background-color: #000000;
+}
+
+/* 3. WhatsApp input dark bg → Apple system */
+.dark .bg-\[\#202c33\] {
+  background-color: #1C1C1E !important;
+}
+
+/* 4. Apple sheet handle — always centred, correct proportions */
+.drawer-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 9999px;
+  background-color: #D1D1D6;
+  margin: 0 auto 12px;
+}
+.dark .drawer-handle {
+  background-color: rgba(255,255,255,0.2);
+}
+
+/* 5. Section labels: Apple uses 12px semibold, not 10px font-black caps */
+.section-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* 6. Apple-style list separator (inset, not full-width) */
+.list-row + .list-row {
+  border-top: 0.5px solid rgba(60, 60, 67, 0.12);
+}
+.dark .list-row + .list-row {
+  border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── iOS Select zoom fix ───────────────────────────────────────────────── */
+select option {
+  font-size: 16px;
+  padding: 10px;
+}
+
+/* ─── 0Buck Utility Classes ─────────────────────────────────────────────── */
+
+/* Brand button glow on focus/hover */
+.btn-brand {
+  background-color: var(--brand-primary);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-brand-sm);
+  transition: box-shadow var(--duration-normal) var(--ease-standard),
+              background-color var(--duration-normal) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard);
+}
+.btn-brand:hover  { background-color: var(--brand-primary-hover); box-shadow: var(--shadow-brand-md); }
+.btn-brand:active { background-color: var(--brand-primary-active); transform: scale(0.98); }
+
+/* Surface card */
+.card-surface {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+/* AI accent text */
+.text-ai { color: var(--color-ai-500); }
+
+/* Brand orange text */
+.text-brand { color: var(--brand-primary); }
+
+/* ─── 0Buck Logo System (from brand spec) ─────────────────────────────── */
+.ob-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  line-height: 1;
+}
+.ob-zero {
+  font-family: 'Fira Code', monospace;
+  font-weight: 700;
+  background: linear-gradient(135deg, #FF7A3D 0%, #E8450A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 12px rgba(232, 69, 10, 0.35));
+}
+.ob-buck {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.ob-icon-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FF7A3D 0%, #E8450A 100%);
+  border-radius: 22.5%;
+  filter: drop-shadow(0 6px 20px rgba(232, 69, 10, 0.45));
 }

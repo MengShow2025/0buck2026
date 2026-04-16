@@ -1,5 +1,6 @@
 import shopify
 import logging
+import json
 from decimal import Decimal
 from typing import Dict, Any, Optional, List
 from app.core.config import settings
@@ -52,7 +53,8 @@ class ShopifyDraftOrderService:
         items: List[Dict[str, Any]], 
         balance_to_use: Decimal = Decimal("0.0"),
         referral_code: Optional[str] = None,
-        email: Optional[str] = None
+        email: Optional[str] = None,
+        extra_discount: Decimal = Decimal("0.0"),
     ) -> Dict[str, Any]:
         """
         Schema B: Create a Draft Order with balance deduction.
@@ -104,20 +106,22 @@ class ShopifyDraftOrderService:
             
             # 3. Apply Balance Deduction
             # ... (balance logic remains same)
-            if balance_to_use > 0:
+            total_discount = max(Decimal("0.0"), balance_to_use) + max(Decimal("0.0"), extra_discount)
+            if total_discount > 0:
                 # Cap discount at total price
-                actual_discount = min(balance_to_use, total_price_usd)
+                actual_discount = min(total_discount, total_price_usd)
                 draft_order.applied_discount = {
-                    "description": "0Buck Wallet Balance Deduction",
+                    "description": "0Buck Wallet + Coupon Discount",
                     "value": str(actual_discount),
                     "value_type": "fixed_amount",
-                    "title": "Wallet Balance"
+                    "title": "0Buck Discount"
                 }
             
             # 3. Add Metadata for Audit & Rewards
             meta_attributes = [
                 {"key": "0buck_user_id", "value": str(customer_id)},
                 {"key": "balance_deducted", "value": str(balance_to_use)},
+                {"key": "coupon_discount", "value": str(extra_discount)},
                 {"key": "price_firewall_verified", "value": "true"},
                 {"key": "sourcing_hints", "value": json.dumps(sourcing_hints)}
             ]
@@ -172,6 +176,8 @@ class ShopifyDraftOrderService:
                 db.close()
 
             # 2. Create actual Order with 'paid' status
+            if balance_used < total_price_usd:
+                return {"status": "error", "message": "insufficient_balance_for_full_payment"}
             new_order = shopify.Order()
             new_order.line_items = line_items
             new_order.financial_status = "paid"

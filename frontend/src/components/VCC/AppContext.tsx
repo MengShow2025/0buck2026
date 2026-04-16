@@ -146,6 +146,7 @@ interface AppContextType {
   setMfaRecoveryEnabled: (v: boolean) => void;
   withdrawalMethod: 'PayPal' | 'Bank' | 'USDT';
   setWithdrawalMethod: (v: 'PayPal' | 'Bank' | 'USDT') => void;
+  userCountry: string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -247,6 +248,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isGithubBound, setIsGithubBound] = useState<boolean>(false);
   const [mfaRecoveryEnabled, setMfaRecoveryEnabled] = useState<boolean>(false);
   const [withdrawalMethod, setWithdrawalMethod] = useState<'PayPal' | 'Bank' | 'USDT'>('PayPal');
+  const [userCountry, setUserCountry] = useState<string>(() => {
+    const sysLang = navigator.language.toLowerCase();
+    if (sysLang.includes('jp')) return 'JP';
+    if (sysLang.includes('cn') || sysLang.includes('zh')) return 'CN';
+    if (sysLang.includes('gb') || sysLang.includes('uk')) return 'GB';
+    if (sysLang.includes('de')) return 'DE';
+    if (sysLang.includes('fr')) return 'FR';
+    return 'US';
+  });
   const [orders, setOrders] = useState<any[]>([
     {
       id: '0B-1024',
@@ -386,7 +396,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         mfaRecoveryEnabled,
         setMfaRecoveryEnabled,
         withdrawalMethod,
-        setWithdrawalMethod
+        setWithdrawalMethod,
+        userCountry
       }}>
         {children}
       </AppContext.Provider>

@@ -10,8 +10,7 @@ from app.models.ledger import UserExt, CheckinPlan
 from app.services.config_service import ConfigService
 
 # Constants for Points Engine
-DAILY_POINT_CAP = 150
-RENEWAL_CARD_COST = 3000  # Updated to 3000 as per Master Plan v2.0
+DEFAULT_DAILY_POINT_CAP = 150
 
 def get_reward_rates(db: Session) -> Dict[str, Decimal]:
     """
@@ -102,6 +101,12 @@ def earn_points(db: Session, user_id: int, source: PointSource, amount: int) -> 
     Earn points with a daily cap of 150 Pts for non-transactional tasks.
     Transactional source (PURCHASE) is exempt from the daily cap.
     """
+    config = ConfigService(db)
+    try:
+        daily_cap = int(config.get("POINTS_DAILY_CAP", DEFAULT_DAILY_POINT_CAP))
+    except (TypeError, ValueError):
+        daily_cap = DEFAULT_DAILY_POINT_CAP
+
     # Non-transactional sources are subject to the daily cap
     is_transactional = (source in {PointSource.PURCHASE, PointSource.REFERRAL})
     
@@ -109,12 +114,7 @@ def earn_points(db: Session, user_id: int, source: PointSource, amount: int) -> 
         today = date.today()
         # Aggregate today's non-transactional point earnings
         # v3.4.7: Sum all non-transactional sources (SIGN_IN, AD, etc.)
-        non_transactional_sources = [
-            PointSource.SIGN_IN, 
-            PointSource.AD_WATCH, 
-            PointSource.SOCIAL_POST,
-            PointSource.FEEDBACK
-        ]
+        non_transactional_sources = [s for s in PointSource if s not in {PointSource.PURCHASE, PointSource.REFERRAL}]
         
         today_earned = db.query(func.sum(PointTransaction.amount)).filter(
             PointTransaction.user_id == user_id,
@@ -123,12 +123,12 @@ def earn_points(db: Session, user_id: int, source: PointSource, amount: int) -> 
             func.date(PointTransaction.created_at) == today
         ).scalar() or 0
         
-        if today_earned >= DAILY_POINT_CAP:
+        if today_earned >= daily_cap:
             return False # Cap already reached
             
         # Adjust amount to stay within cap if necessary
-        if today_earned + amount > DAILY_POINT_CAP:
-            amount = DAILY_POINT_CAP - today_earned
+        if today_earned + amount > daily_cap:
+            amount = daily_cap - today_earned
     else:
         # Transactional points (Self purchase * 5, Fan purchase * 2)
         # Requirement: Handled by caller to ensure "Effective Order" status (Delivered + 15D)

@@ -36,7 +36,7 @@ class SyncShopifyService:
         elif not self.access_token.startswith("shpat_"):
             logging.warning("⚠️ SHOPIFY_ACCESS_TOKEN does not start with 'shpat_'. Ensure you are using an Admin API Access Token, not an API Key/Secret.")
         else:
-            logging.info(f"🔑 Token identified: {self.access_token[:8]}...{self.access_token[-4:]}")
+            logging.info("🔑 SHOPIFY_ACCESS_TOKEN is configured")
             
         # Initialize session
         self.session = shopify.Session(self.shop_url, self.api_version, self.access_token)
@@ -146,6 +146,29 @@ class SyncShopifyService:
             html += f'    <p style="margin: 0;"><strong>Artisan Note:</strong> {product.desire_logic}</p>\n'
             html += f'  </div>\n'
 
+        # 3.5 [Fulfillment Truth Table] - v8.0 Warehouse-Aware
+        warehouse = getattr(product, 'warehouse_anchor', 'CN')
+        shipping_days = "3-7 Days" if "US" in str(warehouse) or "DE" in str(warehouse) else "10-15 Days"
+        html += f'''
+        <div class="fulfillment-truth" style="margin-bottom: 25px; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <div style="background: #F3F4F6; padding: 10px 15px; font-weight: 700; font-size: 0.9em; text-transform: uppercase; color: #374151;">Fulfillment Route</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #E5E7EB;">
+                <div style="padding: 10px 15px; border-right: 1px solid #E5E7EB;">
+                    <span style="display: block; font-size: 0.75em; color: #6B7280; text-transform: uppercase;">Origin</span>
+                    <span style="font-weight: 600;">{warehouse} Warehouse</span>
+                </div>
+                <div style="padding: 10px 15px;">
+                    <span style="display: block; font-size: 0.75em; color: #6B7280; text-transform: uppercase;">Speed</span>
+                    <span style="font-weight: 600;">{shipping_days}</span>
+                </div>
+            </div>
+            <div style="padding: 10px 15px; border-top: 1px solid #E5E7EB; background: #FFFBEB;">
+                <span style="display: block; font-size: 0.75em; color: #D97706; text-transform: uppercase;">Truth Protocol</span>
+                <span style="font-weight: 500; font-size: 0.85em; color: #92400E;">Verified Local Inventory. Ships directly from source to minimize carbon & cost.</span>
+            </div>
+        </div>
+        '''
+
         # 4. Technical Specifications (The Evidence)
         html += f'  <div class="product-specs" style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px;">\n'
         html += f'    <h3 style="font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px; color: #666;">Technical Specifications</h3>\n'
@@ -190,12 +213,12 @@ class SyncShopifyService:
             
         cdn_urls = []
         
-        # Shopify GraphQL Endpoint
-        url = f"https://{self.shop_url}/admin/api/{self.api_version}/graphql.json"
-        headers = {
-            "X-Shopify-Access-Token": self.access_token,
-            "Content-Type": "application/json"
-        }
+        from app.services.shopify_graphql import ShopifyGraphQLClient
+        client = ShopifyGraphQLClient(
+            shop_url=self.shop_url,
+            access_token=self.access_token,
+            api_version=self.api_version,
+        )
         
         for i, media_url in enumerate(urls):
             mutation = """
@@ -228,11 +251,8 @@ class SyncShopifyService:
             }
             
             try:
-                # Use synchronous request for simplicity in this script 
-                # (or wrap in async if called from async context)
-                import requests
-                response = requests.post(url, headers=headers, json={"query": mutation, "variables": variables})
-                data = response.json()
+                import asyncio
+                data = asyncio.run(client.execute(query=mutation, variables=variables))
                 
                 # GraphQL Error Handling
                 if "errors" in data:
@@ -305,14 +325,26 @@ class SyncShopifyService:
                             options.append({"name": "Specification"})
                     sp.options = options
 
-                # v3.1 Hybrid Growth Model Tags
+                # v8.0 Truth Protocol: Simplified Tagging
                 tags = [product.category] if product.category else []
+                if getattr(product, 'warehouse_anchor', None):
+                    # Direct codes like "US", "DE", "CN"
+                    tags.extend([t.strip() for t in str(product.warehouse_anchor).split(",")])
+                else:
+                    tags.append("CN") # Fallback to CN
+                    
                 if getattr(product, 'strategy_tag', None):
                     tags.append(f"ids_{product.strategy_tag}")
                 if getattr(product, 'product_category_type', None):
                     tags.append(product.product_category_type)
-                if not getattr(product, 'is_cashback_eligible', True):
+                    
+                # 0-Buck-Eligible Rule: Must be Local (Not CN)
+                is_local = "CN" not in str(getattr(product, 'warehouse_anchor', "CN")) or len(str(getattr(product, 'warehouse_anchor', "CN")).split(",")) > 1
+                if getattr(product, 'is_cashback_eligible', True) and is_local and getattr(product, 'sale_price', 1) == 0:
+                    tags.append("0-Buck-Eligible")
+                elif not getattr(product, 'is_cashback_eligible', True):
                     tags.append("no-cashback")
+                    
                 sp.tags = ", ".join(list(set(tags)))
                 
                 # 2. Variants and Price (Multi-Variant Support)

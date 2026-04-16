@@ -7,18 +7,24 @@ import asyncio
 from typing import List, Dict, Any, Optional
 
 from app.schemas.agent import ChatRequest, ChatResponse, SessionCreate, SessionResponse, ProductSearchRequest
-from app.services.agent import agent_executor
+from app.services.agent import agent_executor, run_agent
 from app.services.vector_search import vector_search_service
 from app.services.stream_chat import stream_chat_service
 from app.models.ledger import AISession
 from app.db.session import get_db
 from sqlalchemy.orm import Session
 from langchain_core.messages import HumanMessage
+from app.api.deps import get_current_user
+from app.models.ledger import UserExt
 
 router = APIRouter()
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest, db: Session = Depends(get_db)):
+async def chat(
+    request: ChatRequest,
+    db: Session = Depends(get_db),
+    current_user: UserExt = Depends(get_current_user),
+):
     """
     Core AI Chat endpoint. Processes natural language, images, and intent.
     Routes to the LangGraph AI agent.
@@ -29,75 +35,56 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
         
         # Verify session if not default
         if session_id != "default":
-            session = db.query(AISession).filter(AISession.session_id == session_id).first()
+            session = db.query(AISession).filter(
+                AISession.session_id == session_id,
+                AISession.user_id == int(current_user.customer_id),
+            ).first()
             if not session:
-                # In dev we might allow it, but in prod we should be strict
-                print(f"Warning: Session {session_id} not found in database. Using as transient.")
+                raise HTTPException(status_code=403, detail="Invalid session")
         
         # Prepare content: if image_url exists, the model should handle it
         content = request.content
         if request.image_url:
             content = f"{content}\n\nImage: {request.image_url}"
 
-        initial_state = {
-            "messages": [HumanMessage(content=content)],
-            "query_params": {},
-            "search_results": [],
-            "next_node": "supervisor",
-            "locale": request.locale or "en",
-            "currency": request.currency or "USD",
-        }
+        unified = await run_agent(content=content, user_id=int(current_user.customer_id), session_id=session_id)
 
-        final_state = await agent_executor.ainvoke(initial_state, config=config)
-        
-        last_msg = final_state["messages"][-1]
-        
-        # Extract metadata if search/order info was populated
-        search_results = final_state.get("search_results", [])
-        order_info = final_state.get("order_info")
-        
-        response_type = "text"
-        if search_results:
-            response_type = "products"
-        elif order_info:
-            response_type = "order_status"
-            
         return ChatResponse(
             id=f"msg_{uuid.uuid4()}",
             role="assistant",
-            content=last_msg.content,
-            type=response_type,
-            products=search_results if search_results else None,
-            order_info=order_info,
+            content=unified.get("content", ""),
+            type="text",
+            products=None,
+            order_info=None,
             timestamp=datetime.now()
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/session", response_model=SessionResponse)
-async def create_session(request: SessionCreate, db: Session = Depends(get_db)):
+async def create_session(
+    request: SessionCreate,
+    db: Session = Depends(get_db),
+    current_user: UserExt = Depends(get_current_user),
+):
     """
     Initialize a new AI session for a user.
     """
     session_id = f"sess_{uuid.uuid4()}"
     
-    # v3.4.4: Selective Persistence - only save sessions for registered users (numeric IDs)
-    is_registered_user = request.user_id.isdigit()
-    
-    if is_registered_user:
-        new_session = AISession(
-            session_id=session_id,
-            user_id=int(request.user_id),
-            metadata_json={"created_via": "api"}
-        )
-        db.add(new_session)
-        db.commit()
-    else:
-        print(f"[VCC] Guest Session Created: {session_id} (No DB persistence)")
+    effective_user_id = str(current_user.customer_id)
+
+    new_session = AISession(
+        session_id=session_id,
+        user_id=int(current_user.customer_id),
+        metadata_json={"created_via": "api"},
+    )
+    db.add(new_session)
+    db.commit()
     
     # Generate Stream Chat token
     try:
-        chat_token = stream_chat_service.generate_user_token(request.user_id)
+        chat_token = stream_chat_service.generate_user_token(effective_user_id)
         chat_api_key = stream_chat_service.get_api_key()
         
         # v3.4.5: Optimization - Do not block the session creation with member additions
@@ -106,7 +93,7 @@ async def create_session(request: SessionCreate, db: Session = Depends(get_db)):
         
         return SessionResponse(
             session_id=session_id,
-            user_id=request.user_id,
+            user_id=effective_user_id,
             chat_token=chat_token,
             chat_api_key=chat_api_key,
             status="active"
@@ -115,7 +102,7 @@ async def create_session(request: SessionCreate, db: Session = Depends(get_db)):
         print(f"Error generating chat token: {e}")
         return SessionResponse(
             session_id=session_id,
-            user_id=request.user_id,
+            user_id=effective_user_id,
             chat_token="",
             chat_api_key="",
             status="error"
@@ -135,7 +122,11 @@ async def product_search(request: ProductSearchRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/stream")
-async def chat_stream(request: ChatRequest):
+async def chat_stream(
+    request: ChatRequest,
+    db: Session = Depends(get_db),
+    current_user: UserExt = Depends(get_current_user),
+):
     """
     Streaming AI response via SSE. Returns text chunks and structured JSON.
     """
@@ -144,6 +135,15 @@ async def chat_stream(request: ChatRequest):
         session_id = request.session_id or "default"
         config = {"configurable": {"thread_id": session_id}}
         initial_input = {"messages": [HumanMessage(content=request.content)]}
+
+        if session_id != "default":
+            session = db.query(AISession).filter(
+                AISession.session_id == session_id,
+                AISession.user_id == int(current_user.customer_id),
+            ).first()
+            if not session:
+                yield f"data: {json.dumps({'type': 'error', 'content': 'Invalid session'})}\n\n"
+                return
 
         try:
             # We use astream to get chunks from LangGraph

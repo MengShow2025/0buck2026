@@ -1,5 +1,15 @@
 import React from 'react';
-import { Image, Store, MapPin, HeadphonesIcon, Users } from 'lucide-react';
+import {
+  Image,
+  Camera,
+  Mic,
+  Contact,
+  Star,
+  Ticket,
+  HeadphonesIcon,
+  User,
+  Gift
+} from 'lucide-react';
 import { useAppContext } from './AppContext';
 
 interface MagicPocketMenuProps {
@@ -7,47 +17,84 @@ interface MagicPocketMenuProps {
 }
 
 export const MagicPocketMenu: React.FC<MagicPocketMenuProps> = ({ isOpen }) => {
-  const { setActiveDrawer } = useAppContext();
+  const { pushDrawer, t, isAuthenticated } = useAppContext();
 
   if (!isOpen) return null;
-  
-  return (
-    <div className="w-full bg-[#f0f2f5] border-t border-gray-200 p-4 grid grid-cols-4 gap-4 animate-in slide-in-from-bottom-5 duration-200">
-      <div className="flex flex-col items-center gap-2 cursor-pointer group" onClick={() => setActiveDrawer('prime')}>
-        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-gray-700 shadow-sm group-active:bg-gray-100">
-          <Store className="w-6 h-6 text-[var(--wa-teal)]" />
-        </div>
-        <span className="text-xs text-gray-600 font-medium">0Buck 小店</span>
-      </div>
-      
-      {/* 朋友圈 / 社群入口 */}
-      <div className="flex flex-col items-center gap-2 cursor-pointer group" onClick={() => setActiveDrawer('square')}>
-        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-gray-700 shadow-sm group-active:bg-gray-100 relative">
-          <Users className="w-6 h-6 text-indigo-500" />
-          <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
-        </div>
-        <span className="text-xs text-gray-600 font-medium">社群广场</span>
-      </div>
 
-      <div className="flex flex-col items-center gap-2 cursor-pointer group">
-        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-gray-700 shadow-sm group-active:bg-gray-100">
-          <Image className="w-6 h-6 text-green-600" />
-        </div>
-        <span className="text-xs text-gray-600 font-medium">发图找同款</span>
-      </div>
-      
-      <div className="flex flex-col items-center gap-2 cursor-pointer group">
-        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-gray-700 shadow-sm group-active:bg-gray-100">
-          <MapPin className="w-6 h-6 text-blue-500" />
-        </div>
-        <span className="text-xs text-gray-600 font-medium">地址管理</span>
-      </div>
-      
-      <div className="flex flex-col items-center gap-2 cursor-pointer group">
-        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-gray-700 shadow-sm group-active:bg-gray-100">
-          <HeadphonesIcon className="w-6 h-6 text-gray-500" />
-        </div>
-        <span className="text-xs text-gray-600 font-medium">人工客服</span>
+  const handleItemClick = (actionName: string, drawerId?: any) => {
+    if (drawerId) {
+      pushDrawer(drawerId);
+    } else {
+      console.log(`${actionName} clicked`);
+    }
+  };
+
+  // Same 9 items, reorganized into 3 semantic groups
+  const groups = [
+    {
+      label: 'MEDIA',
+      items: [
+        { icon: <Image className="w-6 h-6 text-blue-500" />, label: t('pocket.photos'), action: 'photos', description: t('pocket.photos_desc') },
+        { icon: <Camera className="w-6 h-6 text-gray-600 dark:text-gray-300" />, label: t('pocket.camera'), action: 'camera', description: t('pocket.camera_desc') },
+        { icon: <Mic className="w-6 h-6 text-green-500" />, label: t('pocket.voice'), action: 'voice', description: t('pocket.voice_desc') },
+      ]
+    },
+    {
+      label: 'SHOP',
+      items: [
+        { icon: <Star className="w-6 h-6 text-yellow-500" />, label: t('pocket.favorites'), action: 'favorites', description: t('pocket.favorites_desc') },
+        { icon: <Gift className="w-6 h-6 text-red-500" />, label: t('pocket.gift'), action: 'gift', description: t('pocket.gift_desc') },
+        { icon: <Ticket className="w-6 h-6 text-orange-500" />, label: t('pocket.tickets'), action: 'tickets', drawer: 'service', description: t('coupon.platform_tab') },
+      ]
+    },
+    {
+      label: 'ME',
+      items: [
+        { icon: <Contact className="w-6 h-6 text-indigo-500" />, label: t('pocket.card'), action: 'card', description: t('pocket.card_desc') },
+        { icon: <User className="w-6 h-6 text-purple-500" />, label: t('pocket.homepage'), action: 'homepage', drawer: 'me', description: '0Buck ID: 8827' },
+        { icon: <HeadphonesIcon className="w-6 h-6 text-[var(--wa-teal)]" />, label: t('pocket.support'), action: 'support', drawer: 'service', description: '24/7 AI + Human' },
+      ]
+    }
+  ];
+
+  const authRequired = ['homepage', 'favorites', 'gift', 'tickets'];
+
+  return (
+    <div className="w-full bg-white/95 dark:bg-[#1C1C1E]/98 border-t border-black/5 dark:border-white/5 backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-200">
+      <div className="flex divide-x divide-gray-100 dark:divide-white/5 px-1 py-4">
+        {groups.map((group) => (
+          <div key={group.label} className="flex-1 flex flex-col gap-0.5 px-1">
+            {/* Group label */}
+            <p className="text-[8px] font-bold text-gray-300 dark:text-gray-600 uppercase tracking-[0.12em] text-center mb-2.5 px-1">
+              {group.label}
+            </p>
+
+            {/* Group items */}
+            <div className="flex justify-around gap-1">
+              {group.items.map((item) => (
+                <div
+                  key={item.action}
+                  className="flex flex-col items-center gap-1.5 cursor-pointer group flex-1"
+                  onClick={() => {
+                    if (!isAuthenticated && authRequired.includes(item.action)) {
+                      pushDrawer('auth');
+                    } else {
+                      handleItemClick(item.label, (item as any).drawer);
+                    }
+                  }}
+                  title={item.description || item.label}
+                >
+                  <div className="w-12 h-12 bg-gray-100/80 dark:bg-white/6 rounded-[16px] flex items-center justify-center group-active:scale-90 transition-transform duration-150">
+                    {item.icon}
+                  </div>
+                  <span className="text-[10px] text-gray-600 dark:text-gray-400 font-medium text-center leading-tight">
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

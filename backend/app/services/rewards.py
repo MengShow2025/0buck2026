@@ -1,5 +1,5 @@
 from datetime import datetime, date, timedelta
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Dict, Any
 from functools import wraps
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -16,6 +16,57 @@ from app.models.ledger import (
 from app.models.actuarial import RewardPhase, PlatformProfitPool
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_POINTS_MULTIPLIERS = {
+    "self_purchase": 5,
+    "fan_purchase": 2,
+}
+
+DEFAULT_POINTS_ACTIVITY_RULES = {
+    "daily_cap": 150,
+    "events": {
+        "checkin": 10,
+        "post": 20,
+        "comment": 10,
+        "review": 15,
+        "ad_watch": 5,
+        "feedback": 10,
+        "campaign": 30,
+        "presale": 40,
+    },
+}
+
+DEFAULT_POINTS_EXCHANGE_CATALOG = [
+    {
+        "code": "renewal_card",
+        "name": "Renewal Card",
+        "description": "1 card for check-in streak rescue (<=5 days break).",
+        "points_cost": 3000,
+        "type": "renewal_card",
+        "enabled": True,
+        "requires_plan_id": True,
+    },
+    {
+        "code": "voucher_5usd",
+        "name": "5 USD Voucher",
+        "description": "Shopify discount voucher bound to current user.",
+        "points_cost": 1500,
+        "type": "shopify_balance_voucher",
+        "enabled": True,
+        "voucher_usd": 5,
+    },
+]
+
+ACTIVITY_EVENT_TO_SOURCE = {
+    "checkin": PointSource.SIGN_IN,
+    "post": PointSource.SOCIAL_POST,
+    "comment": PointSource.REVIEW,
+    "review": PointSource.REVIEW,
+    "ad_watch": PointSource.AD_WATCH,
+    "feedback": PointSource.FEEDBACK,
+    "campaign": PointSource.TASK,
+    "presale": PointSource.TASK,
+}
 
 def enforce_idor(owner_id_field: str = "user_id"):
     """
@@ -164,6 +215,73 @@ class RewardsService:
         tz = ZoneInfo(timezone_str) if timezone_str else ZoneInfo("UTC")
         return datetime.now(tz).date()
 
+    def get_points_multipliers(self) -> Dict[str, int]:
+        configured = self.config_service.get("POINTS_MULTIPLIERS", DEFAULT_POINTS_MULTIPLIERS) or {}
+        return {
+            "self_purchase": int(configured.get("self_purchase", DEFAULT_POINTS_MULTIPLIERS["self_purchase"])),
+            "fan_purchase": int(configured.get("fan_purchase", DEFAULT_POINTS_MULTIPLIERS["fan_purchase"])),
+        }
+
+    def get_points_activity_rules(self) -> Dict[str, Any]:
+        configured = self.config_service.get("POINTS_ACTIVITY_RULES", DEFAULT_POINTS_ACTIVITY_RULES) or {}
+        configured_events = configured.get("events") if isinstance(configured, dict) else {}
+        if not isinstance(configured_events, dict):
+            configured_events = {}
+        merged_events = dict(DEFAULT_POINTS_ACTIVITY_RULES["events"])
+        for k, v in configured_events.items():
+            try:
+                merged_events[str(k)] = int(v)
+            except (TypeError, ValueError):
+                continue
+        daily_cap = configured.get("daily_cap", DEFAULT_POINTS_ACTIVITY_RULES["daily_cap"]) if isinstance(configured, dict) else DEFAULT_POINTS_ACTIVITY_RULES["daily_cap"]
+        try:
+            daily_cap = int(daily_cap)
+        except (TypeError, ValueError):
+            daily_cap = DEFAULT_POINTS_ACTIVITY_RULES["daily_cap"]
+        return {"daily_cap": daily_cap, "events": merged_events}
+
+    def get_points_exchange_catalog(self) -> List[Dict[str, Any]]:
+        configured = self.config_service.get("POINTS_EXCHANGE_CATALOG", DEFAULT_POINTS_EXCHANGE_CATALOG)
+        if not isinstance(configured, list):
+            return list(DEFAULT_POINTS_EXCHANGE_CATALOG)
+        items: List[Dict[str, Any]] = []
+        for item in configured:
+            if not isinstance(item, dict):
+                continue
+            if not item.get("code"):
+                continue
+            normalized = dict(item)
+            normalized["enabled"] = bool(item.get("enabled", True))
+            try:
+                normalized["points_cost"] = int(item.get("points_cost", 0))
+            except (TypeError, ValueError):
+                normalized["points_cost"] = 0
+            items.append(normalized)
+        return items or list(DEFAULT_POINTS_EXCHANGE_CATALOG)
+
+    def award_activity_points(self, customer_id: int, event: str) -> dict:
+        event_key = (event or "").strip().lower()
+        rules = self.get_points_activity_rules()
+        amount = int(rules.get("events", {}).get(event_key, 0) or 0)
+        if amount <= 0:
+            return {"status": "error", "message": f"Unsupported event: {event_key}"}
+        source = ACTIVITY_EVENT_TO_SOURCE.get(event_key)
+        if not source:
+            return {"status": "error", "message": f"Unsupported event source: {event_key}"}
+        ok = self.award_points(customer_id, amount, source)
+        if not ok:
+            return {"status": "error", "message": "Daily cap reached or zero awardable points."}
+        return {"status": "success", "event": event_key, "points_earned": amount}
+
+    def _find_exchange_item(self, item_code: str) -> Optional[Dict[str, Any]]:
+        code = (item_code or "").strip()
+        if not code:
+            return None
+        for item in self.get_points_exchange_catalog():
+            if item.get("code") == code and bool(item.get("enabled", True)):
+                return item
+        return None
+
     # --- User & Level Management ---
 
     def ensure_user_exists(self, customer_id: int):
@@ -176,12 +294,18 @@ class RewardsService:
             
             user_ext = UserExt(customer_id=customer_id, referral_code=code)
             self.db.add(user_ext)
-            
-            # Create Wallet
+            self.db.commit()
+            self.db.refresh(user_ext)
+
+        # Ensure Wallet exists
+        wallet = self.db.query(Wallet).filter_by(user_id=customer_id).first()
+        if not wallet:
             wallet = Wallet(user_id=customer_id)
             self.db.add(wallet)
-            
-            # Create Points Record & Award Registration Bonus (50 pts)
+        
+        # Ensure Points exists
+        points = self.db.query(Points).filter_by(user_id=customer_id).first()
+        if not points:
             points = Points(user_id=customer_id, balance=50, total_earned=50)
             self.db.add(points)
             
@@ -192,16 +316,16 @@ class RewardsService:
             )
             self.db.add(txn)
             
-            self.db.commit()
-            self.db.refresh(user_ext)
+        self.db.commit()
         return user_ext
 
     def get_user_level(self, customer_id: int) -> dict:
         """
         v3.0 Final Distribution Tiers:
-        Silver: Default (1.5%)
-        Gold: 5 real users OR $500 volume (2.0%)
-        Platinum: 20 real users OR $2,000 volume (3.0%)
+        Bronze: Default (1.0%)
+        Silver: 3 real users OR $500 volume (1.5%)
+        Gold: 10 real users OR $5,000 volume (2.0%)
+        Platinum: 50 real users OR $10,000 volume (3.0%)
         """
         two_years_ago = datetime.now() - timedelta(days=730)
         
@@ -225,15 +349,18 @@ class RewardsService:
                 Order.refund_status != 'refunded'
             ).scalar() or 0
 
-        if active_invitees_count >= 20 or total_volume >= 2000:
+        if active_invitees_count >= 50 or total_volume >= 10000:
             level = "Platinum"
             rate = Decimal('0.030')
-        elif active_invitees_count >= 5 or total_volume >= 500:
+        elif active_invitees_count >= 10 or total_volume >= 5000:
             level = "Gold"
             rate = Decimal('0.020')
-        else:
+        elif active_invitees_count >= 3 or total_volume >= 500:
             level = "Silver"
             rate = Decimal('0.015')
+        else:
+            level = "Bronze"
+            rate = Decimal('0.010')
 
         # Sync back to UserExt model
         user = self.db.query(UserExt).filter_by(customer_id=customer_id).first()
@@ -264,6 +391,25 @@ class RewardsService:
         self.db.add(plan)
         self.db.commit()
         self.db.refresh(plan)
+        
+        # v5.0: Generate RewardPhase entries immediately for visibility
+        from app.models.actuarial import RewardPhase
+        for cfg in plan.plan_config:
+            # v5.1: Calculate absolute amount for each phase
+            phase_ratio = Decimal(str(cfg["reward"])) / Decimal("100")
+            phase_amount = plan.reward_base * phase_ratio
+            
+            phase = RewardPhase(
+                plan_id=plan.id,
+                phase_num=cfg["period"],
+                ratio=phase_ratio,
+                amount=phase_amount,
+                days_required=cfg["days"],
+                status="pending"
+            )
+            self.db.add(phase)
+        self.db.commit()
+        
         return plan
 
     def start_checkin_plan(self, customer_id: int, plan_id: str) -> dict:
@@ -370,7 +516,7 @@ class RewardsService:
             # Check for 5-day grace period with Renewal Card
             if (today - plan.last_checkin_at).days <= 5:
                 already_used = self.db.query(RenewalCard).filter_by(
-                    user_id=customer_id,
+                    user_id=plan.user_id,
                     plan_id=plan.id,
                     status="used",
                     period_num=plan.current_period
@@ -378,7 +524,7 @@ class RewardsService:
                 
                 if not already_used:
                     card = self.db.query(RenewalCard).filter_by(
-                        user_id=customer_id, 
+                        user_id=plan.user_id, 
                         plan_id=plan.id, 
                         status="unused"
                     ).first()
@@ -409,7 +555,7 @@ class RewardsService:
         
         # Award check-in points (logic remains, but batch caller handles awarding to user once)
         point_reward = 10 if plan.current_period <= 2 else 20
-        self.award_points(customer_id, point_reward, PointSource.SIGN_IN)
+        self.award_points(plan.user_id, point_reward, PointSource.SIGN_IN)
 
         log = CheckinLog(
             plan_id=plan.id,
@@ -498,7 +644,8 @@ class RewardsService:
         # Only awarded when the order is "Effective" (Delivered + 15D)
         if is_effective and plan.current_period == 1:
             # We award the full purchase points only once upon first period payout after return window
-            points_amount = int(plan.reward_base * Decimal('5'))
+            multipliers = self.get_points_multipliers()
+            points_amount = int(plan.reward_base * Decimal(str(multipliers["self_purchase"])))
             self.award_points(plan.user_id, points_amount, PointSource.PURCHASE)
             print(f"Self-Purchase Points Awarded: {plan.user_id} received {points_amount} Pts.")
 
@@ -600,13 +747,16 @@ class RewardsService:
         # But must be passed correctly via source
         return finance.earn_points(customer_id, source, amount)
 
-    def redeem_renewal_card(self, customer_id: int, plan_id: str) -> dict:
+    def redeem_renewal_card(self, customer_id: int, plan_id: str, cost_override: Optional[int] = None) -> dict:
         """
-        Redeem 3000 points for a Renewal Card. Max 1 unused card per plan per period.
+        Redeem points for a Renewal Card. Max 1 unused card per plan per period.
         """
+        catalog_item = self._find_exchange_item("renewal_card")
+        configured_cost = int((catalog_item or {}).get("points_cost", 3000) or 3000)
+        cost = int(cost_override if cost_override is not None else configured_cost)
         points = self.db.query(Points).filter_by(user_id=customer_id).first()
-        if not points or points.balance < 3000:
-            return {"status": "error", "message": "Insufficient points (3000 required)."}
+        if not points or points.balance < cost:
+            return {"status": "error", "message": f"Insufficient points ({cost} required)."}
         
         plan = self.db.query(CheckinPlan).filter_by(id=plan_id, user_id=customer_id).first()
         if not plan:
@@ -624,15 +774,69 @@ class RewardsService:
         if existing:
             return {"status": "error", "message": "You already have an unused Renewal Card for this plan."}
         
-        points.balance -= 3000
-        txn = PointTransaction(user_id=customer_id, amount=-3000, source=PointSource.TASK)
+        points.balance -= cost
+        txn = PointTransaction(
+            user_id=customer_id,
+            amount=-cost,
+            source=PointSource.TASK,
+            description=f"Redeem renewal card ({cost} pts)"
+        )
         self.db.add(txn)
         
         card = RenewalCard(user_id=customer_id, plan_id=plan_id)
         self.db.add(card)
         self.db.commit()
         
-        return {"status": "success", "message": "Renewal Card redeemed!"}
+        return {"status": "success", "message": "Renewal Card redeemed!", "item_code": "renewal_card", "points_spent": cost}
+
+    def redeem_points_exchange_item(self, customer_id: int, item_code: str, plan_id: Optional[str] = None) -> dict:
+        item = self._find_exchange_item(item_code)
+        if not item:
+            return {"status": "error", "message": "Exchange item not found or disabled."}
+        item_type = str(item.get("type") or "").strip().lower()
+        points_cost = int(item.get("points_cost", 0) or 0)
+        if points_cost <= 0:
+            return {"status": "error", "message": "Invalid points cost for exchange item."}
+
+        if item_type == "renewal_card":
+            if not plan_id:
+                return {"status": "error", "message": "plan_id is required for renewal card."}
+            return self.redeem_renewal_card(customer_id, plan_id, cost_override=points_cost)
+
+        if item_type == "shopify_balance_voucher":
+            from app.services.shopify_discount import ShopifyDiscountService
+            user = self.db.query(UserExt).filter_by(customer_id=customer_id).first()
+            if not user or not user.email:
+                return {"status": "error", "message": "User email is required for voucher redemption."}
+            voucher_usd = float(item.get("voucher_usd", 0) or 0)
+            if voucher_usd <= 0:
+                return {"status": "error", "message": "Invalid voucher amount configuration."}
+            discount_service = ShopifyDiscountService(self.db)
+            code = discount_service.deduct_balance_and_generate_voucher(
+                user_id=customer_id,
+                email=user.email,
+                amount_points=points_cost,
+                amount_usd=voucher_usd,
+            )
+            if not code:
+                return {"status": "error", "message": "Voucher generation failed."}
+            txn = PointTransaction(
+                user_id=customer_id,
+                amount=-points_cost,
+                source=PointSource.TASK,
+                description=f"Redeem {item_code} voucher (${voucher_usd})"
+            )
+            self.db.add(txn)
+            self.db.commit()
+            return {
+                "status": "success",
+                "item_code": item_code,
+                "points_spent": points_cost,
+                "voucher_code": code,
+                "voucher_usd": voucher_usd,
+            }
+
+        return {"status": "error", "message": f"Unsupported exchange item type: {item_type}"}
 
     def settle_final_reward(self, plan: CheckinPlan):
         if plan.status != 'active_checkin':
@@ -918,7 +1122,8 @@ class RewardsService:
                 # v3.4.7 Transactional Points (Fan purchase * 2)
                 # Only if effective
                 if status == 'completed':
-                    points_amount = int(reward_base * Decimal('2'))
+                    multipliers = self.get_points_multipliers()
+                    points_amount = int(reward_base * Decimal(str(multipliers["fan_purchase"])))
                     self.award_points(beneficiary_id, points_amount, PointSource.REFERRAL)
                     
                 print(f"Commission Recorded: {beneficiary_id} (Status: {status})")
@@ -971,12 +1176,10 @@ class RewardsService:
         wallet = self.db.query(Wallet).filter_by(user_id=customer_id).first()
         points = self.db.query(Points).filter_by(user_id=customer_id).first()
         
-        # v3.4.7: Pending points from transactions linked to non-effective orders
-        # (Assuming PointTransaction has a status field, if not we use logic)
-        pending_points = self.db.query(func.sum(PointTransaction.amount)).filter(
-            PointTransaction.user_id == customer_id,
-            PointTransaction.status == 'pending'
-        ).scalar() or 0
+        # Pending points are not tracked by a dedicated PointTransaction.status field.
+        # Current reward flow settles points directly when awarded, so expose 0 here
+        # until a dedicated pending-points ledger is introduced.
+        pending_points = 0
         
         # Renewal Cards count
         renewal_cards = self.db.query(RenewalCard).filter_by(
@@ -1110,15 +1313,6 @@ class RewardsService:
             "checkin_clawback": res_chk,
             "status": "forfeited"
         }
-
-    def clawback_points_for_order(self, order_id: int) -> dict:
-        """Reverse points earned from check-ins related to this order."""
-        # For now, points are awarded per check-in. 
-        # We need to find point transactions linked to this order's check-in logs.
-        # This is complex because PointTransaction doesn't have order_id currently.
-        # TODO: Link PointTransaction to Order/Plan for precise clawback.
-        # Simple version: find user and deduct some estimate or log it.
-        return {"status": "success", "order_id": order_id, "deducted": 0}
 
     def revoke_renewal_cards_for_order(self, order_id: int) -> dict:
         plan = self.db.query(CheckinPlan).filter_by(order_id=order_id).first()

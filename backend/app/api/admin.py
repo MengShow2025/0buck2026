@@ -16,6 +16,7 @@ from app.models.product import Product, CandidateProduct
 from app.services.discount_service import DiscountSyncService
 from app.services.c2m_service import C2MService
 from app.services.supply_chain import SupplyChainService
+from app.core.security import decrypt_api_key
 
 import logging
 
@@ -83,6 +84,20 @@ class KOLApproveRequest(BaseModel):
 class CouponAssignRequest(BaseModel):
     ai_category: str
     ai_issuance_permission: str = "LOW" # LOW, MEDIUM, HIGH
+
+
+class PointsActivityRulesUpdate(BaseModel):
+    daily_cap: int = 150
+    events: Dict[str, int]
+
+
+class PointsMultipliersUpdate(BaseModel):
+    self_purchase: int = 5
+    fan_purchase: int = 2
+
+
+class PointsExchangeCatalogUpdate(BaseModel):
+    items: List[Dict[str, Any]]
 
 # --- Coupon Management ---
 
@@ -164,6 +179,80 @@ def update_reward_rates(data: RewardRatesUpdate, db: Session = Depends(get_db)):
     for key, value in data.dict().items():
         config.set(key, value, description=f"Reward rate for {key}")
     return {"status": "success"}
+
+
+@router.get("/config/points-rules")
+def get_points_rules_config(db: Session = Depends(get_db)):
+    """Get configurable points rules and multipliers."""
+    from app.services.rewards import RewardsService
+    rewards = RewardsService(db)
+    return {
+        "daily_cap": rewards.get_points_activity_rules().get("daily_cap", 150),
+        "events": rewards.get_points_activity_rules().get("events", {}),
+        "multipliers": rewards.get_points_multipliers(),
+    }
+
+
+@router.post("/config/points-rules")
+def update_points_rules_config(data: PointsActivityRulesUpdate, db: Session = Depends(get_db)):
+    """Update non-transaction points earning details."""
+    from app.services.config_service import ConfigService
+    config = ConfigService(db)
+    normalized_events: Dict[str, int] = {}
+    for k, v in (data.events or {}).items():
+        try:
+            normalized_events[str(k)] = int(v)
+        except (TypeError, ValueError):
+            continue
+    payload = {"daily_cap": int(data.daily_cap), "events": normalized_events}
+    config.set("POINTS_ACTIVITY_RULES", payload, description="Points activity rules with per-event score")
+    config.set("POINTS_DAILY_CAP", int(data.daily_cap), description="Daily cap for non-transaction points")
+    return {"status": "success", "rules": payload}
+
+
+@router.post("/config/points-multipliers")
+def update_points_multipliers_config(data: PointsMultipliersUpdate, db: Session = Depends(get_db)):
+    """Update transactional points multipliers (self/fan)."""
+    from app.services.config_service import ConfigService
+    config = ConfigService(db)
+    payload = {
+        "self_purchase": int(data.self_purchase),
+        "fan_purchase": int(data.fan_purchase),
+    }
+    config.set("POINTS_MULTIPLIERS", payload, description="Points multipliers for transactional rewards")
+    return {"status": "success", "multipliers": payload}
+
+
+@router.get("/config/points-exchange-catalog")
+def get_points_exchange_catalog_config(db: Session = Depends(get_db)):
+    """Get points exchange catalog config."""
+    from app.services.rewards import RewardsService
+    rewards = RewardsService(db)
+    return {"items": rewards.get_points_exchange_catalog()}
+
+
+@router.post("/config/points-exchange-catalog")
+def update_points_exchange_catalog_config(data: PointsExchangeCatalogUpdate, db: Session = Depends(get_db)):
+    """Update points exchange catalog items."""
+    from app.services.config_service import ConfigService
+    config = ConfigService(db)
+    cleaned: List[Dict[str, Any]] = []
+    for item in data.items:
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("code", "")).strip()
+        if not code:
+            continue
+        normalized = dict(item)
+        normalized["code"] = code
+        normalized["enabled"] = bool(item.get("enabled", True))
+        try:
+            normalized["points_cost"] = int(item.get("points_cost", 0))
+        except (TypeError, ValueError):
+            normalized["points_cost"] = 0
+        cleaned.append(normalized)
+    config.set("POINTS_EXCHANGE_CATALOG", cleaned, description="Points exchange catalog")
+    return {"status": "success", "items": cleaned}
 
 # --- Pricing Strategy (v4.6.8) ---
 
@@ -617,7 +706,9 @@ def ai_health_check(db: Session = Depends(get_db)):
     """v3.1 Hourly Health Check for BYOK Keys"""
     active_keys = db.query(UserButlerProfile).filter(UserButlerProfile.ai_api_key.isnot(None)).all()
     for profile in active_keys:
-        profile.byok_status = "active" if profile.ai_api_key.startswith("sk-") else "failed"
+        decrypted = decrypt_api_key(profile.ai_api_key or "")
+        candidate = decrypted or (profile.ai_api_key or "")
+        profile.byok_status = "active" if (candidate.startswith("sk-") or candidate.startswith("AIza")) else "failed"
         profile.last_health_check = datetime.utcnow()
     db.commit()
     return {"status": "success", "checked_count": len(active_keys)}

@@ -1,29 +1,31 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { VCCHeader } from './VCCHeader';
-import './styles.css';
 
 interface VortexContainerProps {
   children: React.ReactNode;
 }
 
 export const VortexContainer: React.FC<VortexContainerProps> = ({ children }) => {
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Scroll to bottom whenever children change (i.e. new messages)
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [children]);
+
   return (
     <>
       <VCCHeader />
       
-      <div className="flex-1 overflow-y-auto relative flex flex-col scrollbar-hide">
-        {/* Subtle Chat Background Pattern */}
-        <div 
-          className="absolute inset-0 opacity-30 pointer-events-none z-0" 
-          style={{ 
-            backgroundImage: "url('data:image/svg+xml;utf8,<svg width=\"100\" height=\"100\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100\" height=\"100\" fill=\"%23ECE5DD\"/><path d=\"M10 10c0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10-10 10-10-4.5-10-10zm40 40c0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10-10 10-10-4.5-10-10z\" fill=\"%23e0d8d0\" fill-opacity=\"0.5\"/></svg>')",
-            backgroundSize: '100px 100px'
-          }} 
-        />
-        
-        {/* Chat Stream Render Area */}
-        <div className="relative z-10 flex-1 p-4 flex flex-col gap-2">
+      <div className="flex-1 relative overflow-hidden bg-transparent">
+        {/* Chat Stream Render Area (Scrollable) */}
+        <div className="absolute inset-0 overflow-y-auto scrollbar-hide z-10 flex flex-col">
+          <div className="p-4 flex flex-col gap-2 min-h-full">
             {children}
+            <div ref={bottomRef} />
+          </div>
         </div>
       </div>
     </>

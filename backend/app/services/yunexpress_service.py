@@ -1,4 +1,3 @@
-import httpx
 import logging
 import hashlib
 import hmac
@@ -6,6 +5,7 @@ import json
 import time
 from typing import List, Dict, Any, Optional
 from app.core.config import settings
+from app.core.http_client import ResilientAsyncClient
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +18,7 @@ class YunExpressService:
         self.source_key = settings.YUNEXPRESS_SOURCE_KEY or self.customer_code # Fallback guess
         self._access_token = None
         self._token_expires_at = 0
+        self._http = ResilientAsyncClient(name="yunexpress", retries=1, timeout_seconds=15.0, connect_timeout_seconds=5.0)
 
     async def get_access_token(self) -> Optional[str]:
         if self._access_token and time.time() < self._token_expires_at - 60:
@@ -41,29 +42,27 @@ class YunExpressService:
             }
         ]
         
-        async with httpx.AsyncClient() as client:
-            for payload in payloads:
-                try:
-                    response = await client.post(url, json=payload, timeout=10.0)
-                    print(f"DEBUG TOKEN (JSON {payload.get('grantType') or payload.get('grant_type')}): Status: {response.status_code} | Text: {response.text}")
-                    data = response.json()
-                    if "accessToken" in data:
-                        self._access_token = data["accessToken"]
-                        self._token_expires_at = time.time() + data.get("expiresIn", 7200)
-                        return self._access_token
-                except: continue
+        for payload in payloads:
+            try:
+                response = await self._http.request("POST", url, json=payload)
+                data = response.json()
+                if "accessToken" in data:
+                    self._access_token = data["accessToken"]
+                    self._token_expires_at = time.time() + data.get("expiresIn", 7200)
+                    return self._access_token
+            except Exception:
+                continue
 
-            # Test Case 2: Form Data
-            for payload in payloads:
-                try:
-                    response = await client.post(url, data=payload, timeout=10.0)
-                    print(f"DEBUG TOKEN (FORM {payload.get('grantType') or payload.get('grant_type')}): Status: {response.status_code} | Text: {response.text}")
-                    data = response.json()
-                    if "accessToken" in data:
-                        self._access_token = data["accessToken"]
-                        self._token_expires_at = time.time() + data.get("expiresIn", 7200)
-                        return self._access_token
-                except: continue
+        for payload in payloads:
+            try:
+                response = await self._http.request("POST", url, data=payload)
+                data = response.json()
+                if "accessToken" in data:
+                    self._access_token = data["accessToken"]
+                    self._token_expires_at = time.time() + data.get("expiresIn", 7200)
+                    return self._access_token
+            except Exception:
+                continue
                 
         return None
 
@@ -129,15 +128,13 @@ class YunExpressService:
         
         headers = await self._get_headers("POST", uri, payload)
         
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(url, headers=headers, json=payload, timeout=10.0)
-                data = response.json()
-                # Return list of quotes
-                return data.get("data", [])
-            except Exception as e:
-                logger.error(f"YunExpress GetFreight Error: {e}")
-                return []
+        try:
+            response = await self._http.request("POST", url, headers=headers, json=payload)
+            data = response.json()
+            return data.get("data", [])
+        except Exception:
+            logger.error("YunExpress GetFreight Error")
+            return []
 
     async def create_order(self, order_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -149,10 +146,9 @@ class YunExpressService:
         
         headers = await self._get_headers("POST", uri, order_data)
         
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(url, headers=headers, json=order_data, timeout=15.0)
-                return response.json()
-            except Exception as e:
-                logger.error(f"YunExpress AddOrder Error: {e}")
-                return {"success": False, "message": str(e)}
+        try:
+            response = await self._http.request("POST", url, headers=headers, json=order_data)
+            return response.json()
+        except Exception:
+            logger.error("YunExpress AddOrder Error")
+            return {"success": False, "message": "yunexpress_unavailable"}

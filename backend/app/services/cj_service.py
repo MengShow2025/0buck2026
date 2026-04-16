@@ -1,8 +1,8 @@
 import logging
-import httpx
 from typing import List, Dict, Any, Optional
 from decimal import Decimal
 from app.core.config import settings
+from app.core.http_client import ResilientAsyncClient
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,7 @@ class CJDropshippingService:
         self.email = settings.CJ_EMAIL
         self.api_key = settings.CJ_API_KEY
         self._token = None
+        self._http = ResilientAsyncClient(name="cj", retries=1, timeout_seconds=15.0, connect_timeout_seconds=5.0)
 
     async def _get_headers(self) -> Dict[str, str]:
         if not self._token:
@@ -28,30 +29,27 @@ class CJDropshippingService:
             "email": self.email,
             "password": self.api_key
         }
-        async with httpx.AsyncClient() as client:
-            response = await client.post(url, json=payload)
-            data = response.json()
-            if data.get("success"):
-                return data["data"]["accessToken"]
-            raise Exception(f"Failed to get CJ access token: {data.get('message')}")
+        response = await self._http.request("POST", url, json=payload)
+        data = response.json()
+        if data.get("success"):
+            return data["data"]["accessToken"]
+        raise Exception(f"Failed to get CJ access token: {data.get('message')}")
 
     async def get_categories(self) -> List[Dict[str, Any]]:
         """Fetch all CJ categories."""
         url = f"{self.BASE_URL}/product/getCategory"
         headers = await self._get_headers()
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers)
-            data = response.json()
-            return data.get("data", []) if data.get("success") else []
+        response = await self._http.request("GET", url, headers=headers)
+        data = response.json()
+        return data.get("data", []) if data.get("success") else []
 
     async def get_product_detail(self, pid: str) -> Optional[Dict[str, Any]]:
         """Fetch full product detail from CJ."""
         url = f"{self.BASE_URL}/product/query"
         headers = await self._get_headers()
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers, params={"pid": pid})
-            data = response.json()
-            return data.get("data") if data.get("success") else None
+        response = await self._http.request("GET", url, headers=headers, params={"pid": pid})
+        data = response.json()
+        return data.get("data") if data.get("success") else None
 
     async def search_products(self, keyword: str = None, page: int = 1, size: int = 20, only_cj_owned: bool = False, category_id: str = None) -> List[Dict[str, Any]]:
         url = f"{self.BASE_URL}/product/listV2"
@@ -67,44 +65,42 @@ class CJDropshippingService:
         if category_id:
             params["categoryId"] = category_id
             
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(url, headers=headers, params=params)
-            data = response.json()
-            # print(f"DEBUG CJ Response: {data}")
+        http = ResilientAsyncClient(name="cj_search", retries=1, timeout_seconds=30.0, connect_timeout_seconds=5.0)
+        response = await http.request("GET", url, headers=headers, params=params)
+        data = response.json()
+        content = data.get("data", {}).get("content", [])
+        products = []
+        if content:
+            products = content[0].get("productList", [])
             
-            # v5.4 Fixed parsing for listV2: data['data']['content'][0]['productList']
-            content = data.get("data", {}).get("content", [])
-            products = []
-            if content:
-                products = content[0].get("productList", [])
-            
-            if not products and (keyword or category_id):
-                # Fallback to list (V1)
-                url_v1 = f"{self.BASE_URL}/product/list"
-                params_v1 = {"page": page, "size": size}
-                if keyword: params_v1["keyWord"] = keyword
-                if category_id: params_v1["categoryId"] = category_id
-                
-                resp_v1 = await client.get(url_v1, headers=headers, params=params_v1)
-                data_v1 = resp_v1.json()
-                products = data_v1.get("data", {}).get("list", []) if data_v1.get("success") else []
+        if not products and (keyword or category_id):
+            url_v1 = f"{self.BASE_URL}/product/list"
+            params_v1 = {"page": page, "size": size}
+            if keyword:
+                params_v1["keyWord"] = keyword
+            if category_id:
+                params_v1["categoryId"] = category_id
 
-            if only_cj_owned:
-                filtered = []
-                for p in products:
-                    name = p.get("nameEn") or p.get("productName") or ""
-                    is_choice = "CJ's Choice" in name
-                    inv = p.get("warehouseInventoryNum") or p.get("inventory") or 0
-                    try:
-                        inv_count = int(inv)
-                    except:
-                        inv_count = 0
-                    
-                    if is_choice or inv_count > 100:
-                        filtered.append(p)
-                return filtered
-                
-            return products
+            resp_v1 = await http.request("GET", url_v1, headers=headers, params=params_v1)
+            data_v1 = resp_v1.json()
+            products = data_v1.get("data", {}).get("list", []) if data_v1.get("success") else []
+
+        if only_cj_owned:
+            filtered = []
+            for p in products:
+                name = p.get("nameEn") or p.get("productName") or ""
+                is_choice = "CJ's Choice" in name
+                inv = p.get("warehouseInventoryNum") or p.get("inventory") or 0
+                try:
+                    inv_count = int(inv)
+                except Exception:
+                    inv_count = 0
+
+                if is_choice or inv_count > 100:
+                    filtered.append(p)
+            return filtered
+
+        return products
 
     async def process_safe_path_candidates(self, keyword: str) -> List[Dict[str, Any]]:
         logger.info(f"🚀 Starting CJ 'Safe-Path' scan for: {keyword}")
@@ -169,11 +165,46 @@ class CJDropshippingService:
                 })
         return candidates
 
+    async def get_freight_calculate(self, pid: str, country_code: str, zip_code: str = None, start_country: str = "CN", vid: str = None) -> List[Dict[str, Any]]:
+        """
+        v8.0 Truth Protocol: Accurate freight calculation with Zip Code and Source Warehouse.
+        """
+        url = f"{self.BASE_URL}/logistic/freightCalculate"
+        headers = await self._get_headers()
+        
+        # Use vid if provided, otherwise pid
+        product_item = {"quantity": 1}
+        if vid:
+            product_item["vid"] = vid
+        else:
+            product_item["pid"] = pid
+            
+        payload = {
+            "startCountryCode": start_country,
+            "endCountryCode": country_code,
+            "products": [product_item]
+        }
+        if zip_code:
+            payload["zip"] = zip_code
+            
+        response = await self._http.request("POST", url, headers=headers, json=payload)
+        data = response.json()
+        return data.get("data", []) if data.get("success") else []
+
+    async def get_inventory_by_pid(self, pid: str) -> Dict[str, Any]:
+        """
+        v8.0 Truth Protocol: Detailed warehouse-level inventory lookup.
+        """
+        url = f"{self.BASE_URL}/product/stock/getInventoryByPid"
+        headers = await self._get_headers()
+        response = await self._http.request("GET", url, headers=headers, params={"pid": pid})
+        data = response.json()
+        return data.get("data", {}) if data.get("success") else {}
+
     async def get_freight_estimate(self, pid: str, country_code: str = "US") -> List[Dict[str, Any]]:
         url = f"{self.BASE_URL}/logistic/freightCalculate"
         headers = await self._get_headers()
         payload = {"pid": pid, "countryCode": country_code}
-        async with httpx.AsyncClient() as client:
-            response = await client.post(url, headers=headers, json=payload)
-            data = response.json()
-            return data.get("data", []) if data.get("success") else []
+        response = await self._http.request("POST", url, headers=headers, json=payload)
+        data = response.json()
+        return data.get("data", []) if data.get("success") else []

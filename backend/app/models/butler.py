@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, BigInteger, String, JSON, ForeignKey, DateTime, Float, Numeric, Boolean, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
+import uuid
 from .product import Base
 
 try:
@@ -155,6 +157,25 @@ class UserMemorySemantic(Base):
         embedding = Column(JSON, nullable=True)
     tags = Column(JSON, default=[]) # e.g., #tired, #gift_ideas
     created_at = Column(DateTime, default=func.now())
+
+class BAPProjection(Base):
+    """
+    v3.4 VCC: Tracks BAP cards projected in channels for 'Private Projection'.
+    Ensures the AI knows exactly what context each user is seeing.
+    """
+    __tablename__ = "bap_projections"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(BigInteger, ForeignKey("users_ext.customer_id"), index=True)
+    channel_id = Column(String(100), index=True) # Stream Channel ID
+    message_id = Column(String(100), index=True) # Stream Message ID
+    
+    card_type = Column(String(50)) # 'ORDER_UPDATE', 'CASHBACK_ALERT', 'KOL_INVITE'
+    payload = Column(JSON, nullable=False) # The structure of the card
+    
+    is_active = Column(Boolean, default=True) # If the card is still valid/visible
+    projected_at = Column(DateTime, default=func.now())
+    expires_at = Column(DateTime, nullable=True)
 
 class BindingCode(Base):
     """

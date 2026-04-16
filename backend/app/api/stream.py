@@ -11,9 +11,21 @@ from app.services.reflection_service import run_butler_learning
 from app.models.ledger import ProcessedWebhookEvent
 from langchain_core.messages import HumanMessage
 from app.core.bap_protocol import BAPCardType, BAP_ProductGrid, BAPAttachment
+from app.core.config import settings
+from app.core.celery_app import celery_app
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _enqueue_ai_response(user_id: str, channel_type: str, channel_id: str, content: str) -> None:
+    if settings.CELERY_ENABLED:
+        try:
+            celery_app.send_task("stream_ai_response", args=[user_id, channel_type, channel_id, content])
+            return
+        except Exception:
+            pass
+    asyncio.create_task(process_ai_response(user_id, channel_type, channel_id, content))
 
 async def send_targeted_bap_card(channel_id: str, user_id: str, bap_payload: dict):
     """
@@ -90,11 +102,17 @@ async def stream_webhook(
         
         logger.info(f"  [VCC Webhook] New message from {user_id} in {channel_type}:{channel_id}: {content[:50]}...")
 
-        # 3. Trigger AI Agent (Asynchronous)
-        # We don't await the full AI response here to keep the webhook fast
-        # Stream expects a 200 OK quickly.
-        asyncio.create_task(process_ai_response(user_id, channel_type, channel_id, content))
-
+    # 3. Trigger AI Agent (Asynchronous)
+    if settings.CELERY_ENABLED:
+        try:
+            # P0 Fix: Enqueue to Celery for reliable background processing (Prevents lost messages on restart)
+            celery_app.send_task("stream_ai_response", args=[user_id, channel_type, channel_id, content])
+            return {"status": "ok"}
+        except Exception as e:
+            logger.warning(f"  [VCC Webhook] Celery enqueue failed, falling back to asyncio: {e}")
+            
+    # Fallback if Celery is disabled or fails
+    asyncio.create_task(process_ai_response(user_id, channel_type, channel_id, content))
     return {"status": "ok"}
 
 async def process_ai_response(user_id: str, channel_type: str, channel_id: str, content: str):
@@ -104,9 +122,9 @@ async def process_ai_response(user_id: str, channel_type: str, channel_id: str, 
     # Simple keyword detection for 'Intent Anchors' (v3.4 Protocol)
     is_intent = any(kw in content.lower() for kw in ["want", "buy", "wish", "track", "price", "想要", "买", "许愿", "进度"])
     
-    # Always respond in private 'concierge' (Butler) channel
-    # Only respond in 'social' (Lounge) if explicitly mentioned or strong intent
-    should_respond = (channel_type == "concierge") or is_intent or "@butler" in content.lower()
+    # User-to-User private chat (concierge) or Group chat (social)
+    # AI is silent by default unless explicitly called or strong intent detected
+    should_respond = is_intent or "@butler" in content.lower()
     
     if not should_respond:
         return
@@ -119,8 +137,25 @@ async def process_ai_response(user_id: str, channel_type: str, channel_id: str, 
         final_state = await agent_executor.ainvoke(initial_input, config=config)
         last_msg = final_state["messages"][-1]
         
-        # Check for products (BAP Card: 0B_PRODUCT_GRID)
-        search_results = final_state.get("search_results", [])
+        # Check for BAP Cards from Tool Messages
+        search_results = []
+        order_info = None
+        wish_info = None
+        
+        for m in reversed(final_state["messages"]):
+            if m.type == "human":
+                break
+            if m.type == "tool":
+                try:
+                    parsed = json.loads(m.content)
+                    if m.name == "product_search" and isinstance(parsed, list):
+                        search_results = parsed
+                    elif m.name == "get_order_status" and isinstance(parsed, dict) and "order_id" in parsed:
+                        order_info = parsed
+                    elif m.name == "trigger_wishing_well" and isinstance(parsed, dict) and "wish_id" in parsed:
+                        wish_info = parsed
+                except Exception:
+                    pass
         
         if search_results:
             # Send BAP Product Card
@@ -129,6 +164,24 @@ async def process_ai_response(user_id: str, channel_type: str, channel_id: str, 
                 channel_id=channel_id,
                 card_type="0B_PRODUCT_GRID",
                 data={"products": search_results[:10], "butler_comment": last_msg.content},
+                targeted_user_id=user_id if channel_type == "social" else None # Private Projection
+            )
+        elif order_info:
+            # Send BAP Logistics Radar Card
+            stream_chat_service.send_bap_card(
+                channel_type=channel_type,
+                channel_id=channel_id,
+                card_type="0B_LOGISTICS_RADAR",
+                data={"order": order_info, "butler_comment": last_msg.content},
+                targeted_user_id=user_id if channel_type == "social" else None # Private Projection
+            )
+        elif wish_info:
+            # Send BAP Wish Well Card
+            stream_chat_service.send_bap_card(
+                channel_type=channel_type,
+                channel_id=channel_id,
+                card_type="0B_WISH_WELL",
+                data={"wish": wish_info, "butler_comment": last_msg.content},
                 targeted_user_id=user_id if channel_type == "social" else None # Private Projection
             )
         else:
@@ -149,6 +202,12 @@ async def process_ai_response(user_id: str, channel_type: str, channel_id: str, 
             finally:
                 db.close()
 
-        asyncio.create_task(asyncio.to_thread(background_reflection, history, user_id))
+        if settings.CELERY_ENABLED:
+            try:
+                celery_app.send_task("butler_learning", args=[history, user_id])
+            except Exception:
+                asyncio.create_task(asyncio.to_thread(background_reflection, history, user_id))
+        else:
+            asyncio.create_task(asyncio.to_thread(background_reflection, history, user_id))
     except Exception as e:
         logger.error(f"Error in VCC AI Response: {e}")

@@ -7,8 +7,18 @@ import random
 from app.db.session import get_db
 from app.models.ledger import Order, UserExt
 from app.models.product import Product
+from app.core.config import settings
 
 router = APIRouter()
+
+
+@router.get("/version")
+async def get_version():
+    return {
+        "environment": settings.ENVIRONMENT,
+        "app_version": settings.APP_VERSION,
+        "git_sha": settings.GIT_SHA,
+    }
 
 @router.get("/ticker", response_model=List[Dict[str, Any]])
 async def get_ticker_data(limit: int = 10, db: Session = Depends(get_db)):

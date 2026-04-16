@@ -3,11 +3,12 @@ from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import func
-import google.generativeai as genai
 import json
 from datetime import datetime
+import hashlib
 
 from app.core.config import settings
+from app.core.genai_client import generate_text
 from app.models.butler import UserMemoryFact, UserButlerProfile, AIUsageStats
 from app.db.session import SessionLocal
 
@@ -21,9 +22,7 @@ class ReflectionService:
     """
     
     def __init__(self):
-        genai.configure(api_key=settings.GOOGLE_API_KEY)
-        # v5.7.10: Using a stable model for reflection, failover handled in methods if needed
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
+        pass
 
     async def extract_facts(self, history: List[Dict[str, str]], user_id: int, db: Session):
         """
@@ -62,13 +61,12 @@ class ReflectionService:
 
         try:
             # v5.7.10: Model Failover for Reflection
-            model_tier = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-pro"]
+            model_tier = ["gemini-2.5-flash", "gemini-2.5-pro"]
             response = None
             last_err = None
             for m_name in model_tier:
                 try:
-                    self.model = genai.GenerativeModel(m_name)
-                    response = await self.model.generate_content_async(prompt)
+                    response = await generate_text(model=m_name, contents=prompt)
                     break
                 except Exception as e:
                     last_err = e
@@ -107,6 +105,12 @@ class ReflectionService:
 
             # 3. Persist Facts to Database (LTM)
             extracted_facts = data.get("new_facts", [])
+            last_user_content = ""
+            for m in reversed(history or []):
+                if m.get("role") == "user":
+                    last_user_content = m.get("content") or ""
+                    break
+            src = f"sha1:{hashlib.sha1(last_user_content.encode('utf-8')).hexdigest()[:12]}" if last_user_content else None
             for item in extracted_facts:
                 key = item.get("key")
                 value = item.get("value")
@@ -129,19 +133,22 @@ class ReflectionService:
                             user_id=user_id,
                             key=key,
                             value=value,
-                            confidence=conf
+                            confidence=conf,
+                            source_message_id=src,
                         ))
                     else:
                         # Update existing with higher confidence or new value
                         existing.value = value
                         existing.confidence = max(existing.confidence, conf)
                         existing.last_verified_at = func.now()
+                        existing.source_message_id = src
                 else:
                     db.add(UserMemoryFact(
                         user_id=user_id,
                         key=key,
                         value=value,
-                        confidence=conf
+                        confidence=conf,
+                        source_message_id=src,
                     ))
             
             # 3. v3.3 C2M: Persist Unmet Needs to Database
@@ -169,7 +176,7 @@ class ReflectionService:
             usage_stat = AIUsageStats(
                 user_id=user_id,
                 task_type="reflection",
-                model_name="gemini-2.0-flash",
+                model_name="gemini-2.5-flash",
                 tokens_in=usage.prompt_token_count,
                 tokens_out=usage.candidates_token_count,
                 cost_usd=(usage.prompt_token_count * 0.000000075) + (usage.candidates_token_count * 0.0000003),

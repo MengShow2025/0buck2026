@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple
-import requests
 
 from app.core.config import settings
+from app.core.http_client import ResilientSyncClient
 
 
 class ShopifyRefundError(Exception):
@@ -25,7 +25,8 @@ def _headers() -> Dict[str, str]:
 
 
 def _request(method: str, url: str, json: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    resp = requests.request(method, url, headers=_headers(), json=json, timeout=30)
+    client = ResilientSyncClient(name="shopify_admin", retries=1, timeout_seconds=30.0, connect_timeout_seconds=5.0)
+    resp = client.request(method, url, headers=_headers(), json=json, retry_on_status=(429,))
     try:
         data = resp.json() if resp.content else {}
     except Exception:
@@ -126,4 +127,3 @@ def refund_order_full(
         raise ShopifyRefundError("Refund create returned unexpected response", details=created)
 
     return True, {"idempotent": False, "refund": created_refund}
-

@@ -1,35 +1,45 @@
-import httpx
 import json
 from typing import Dict, Any, List, Optional
 from app.core.config import settings
+from app.core.http_client import ResilientAsyncClient
+import logging
+
+logger = logging.getLogger(__name__)
 
 class NotionService:
     def __init__(self, token: Optional[str] = None):
         self.token = token or getattr(settings, "NOTION_TOKEN", "")
-        print(f"DEBUG: NotionService init with token: {self.token[:10]}...")
         self.base_url = "https://api.notion.com/v1"
         self.headers = {
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json",
             "Notion-Version": "2022-06-28"
         }
+        self._http = ResilientAsyncClient(
+            name="notion",
+            retries=1,
+            timeout_seconds=30.0,
+            connect_timeout_seconds=5.0,
+            client_kwargs={"trust_env": False},
+        )
 
     async def _request(self, method: str, path: str, data: Optional[Dict] = None) -> Dict[str, Any]:
         # Ensure path starts with a slash
         if not path.startswith("/"):
             path = "/" + path
             
-        async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
-            response = await client.request(
+        try:
+            response = await self._http.request(
                 method,
                 f"{self.base_url}{path}",
                 headers=self.headers,
-                json=data
+                json=data,
+                retry_on_status=(429,),
             )
-            if response.status_code >= 400:
-                print(f"DEBUG Notion Error {response.status_code}: {response.text}")
-            response.raise_for_status()
             return response.json()
+        except Exception as e:
+            logger.error(f"Notion request failed: {e}")
+            raise
 
     async def create_database(self, parent_page_id: str, title: str, properties: Dict[str, Any]) -> Dict[str, Any]:
         """Creates a new database within a parent page."""
@@ -90,9 +100,7 @@ class NotionService:
             # Fallback to hardcoded ID found in check_viral_db.py
             database_id = "3372ab9f-0c63-81db-a9f8-c3c2a676fb2b"
 
-        print(f"DEBUG: get_viral_signals using database_id: {database_id}")
         pages = await self.get_database_contents(database_id)
-        print(f"DEBUG: get_viral_signals found {len(pages)} pages raw.")
         
         parsed_signals = []
         for page in pages:
@@ -116,7 +124,6 @@ class NotionService:
                 return None
 
             status = get_val(["处理状态"])
-            print(f"DEBUG: Page {page['id'][:8]} status: {status}")
             # Only pick "待处理" or "候选款"
             if status not in ["待处理", "候选款"]:
                 continue
@@ -144,7 +151,6 @@ class NotionService:
                     title_list = db.get("title", [])
                     if title_list and title_list[0].get("plain_text") == "0Buck: 全球运营中控 (v3.0)":
                         database_id = db["id"]
-                        print(f"DEBUG: Found database via search: {database_id}")
                         break
         except Exception:
             pass

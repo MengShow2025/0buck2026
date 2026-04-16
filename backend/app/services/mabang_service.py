@@ -1,11 +1,11 @@
 import logging
-import httpx
 import hmac
 import hashlib
 import time
 import json
 from typing import Dict, Any, Optional
 from app.core.config import settings
+from app.core.http_client import ResilientAsyncClient
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +19,7 @@ class MabangService:
         self.app_key = app_key or settings.MABANG_APP_KEY
         self.base_url = "https://gwapi.mabangerp.com/api/v2"
         self.version = "1"
+        self._http = ResilientAsyncClient(name="mabang", retries=1, timeout_seconds=30.0, connect_timeout_seconds=5.0)
 
     def _generate_v2_signature(self, body_str: str) -> str:
         """Calculate HMAC-SHA256 signature for V2."""
@@ -47,18 +48,15 @@ class MabangService:
             "Accept": "application/json"
         }
         
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(self.base_url, headers=headers, content=body_str, timeout=30.0)
-                # print(f"DEBUG MABANG V2: Status: {response.status_code} | Text: {response.text[:200]}")
-                response.raise_for_status()
-                result = response.json()
-                if result.get("code") != "000":
-                    logger.warning(f"⚠️ Mabang API {api_method} returned error: {result.get('message')}")
-                return result
-            except Exception as e:
-                logger.error(f"❌ Mabang API {api_method} failed: {e}")
-                return {"code": "999", "message": str(e)}
+        try:
+            response = await self._http.request("POST", self.base_url, headers=headers, data=body_str)
+            result = response.json()
+            if result.get("code") != "000":
+                logger.warning(f"⚠️ Mabang API {api_method} returned error: {result.get('message')}")
+            return result
+        except Exception as e:
+            logger.error(f"❌ Mabang API {api_method} failed: {e}")
+            return {"code": "999", "message": str(e)}
 
     async def get_1688_product_detail(self, url_1688: str) -> Dict[str, Any]:
         """Fetch 1688 product info via Mabang's 1688 Sourcing interface."""

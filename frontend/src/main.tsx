@@ -4,6 +4,7 @@ import App from './App'
 import './index.css'
 import { AppProvider } from './components/VCC/AppContext'
 
+// Trigger HMR full reload for dark mode root sync
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <AppProvider>

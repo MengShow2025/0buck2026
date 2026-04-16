@@ -6,6 +6,8 @@ from app.services.supply_chain import SupplyChainService
 from app.services.agent import run_agent
 from app.services.whatsapp import send_whatsapp_message
 from app.models.ledger import SystemConfig, Order, ProcessedWebhookEvent
+from app.models.butler import UserIMBinding
+from app.services.whatsapp_payload import extract_whatsapp_message
 from app.models.product import Product
 import hmac
 import hashlib
@@ -44,9 +46,8 @@ async def products_created_webhook(
     4. Push Back (PUT) the enriched data to Shopify.
     """
     data = await request.body()
-    if not verify_shopify_webhook(data, x_shopify_hmac_sha256):
-        if settings.ENVIRONMENT == "production":
-            raise HTTPException(status_code=401, detail="Unauthorized")
+    if not x_shopify_hmac_sha256 or not verify_shopify_webhook(data, x_shopify_hmac_sha256):
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
     payload = json.loads(data)
     shopify_id = payload.get("id")
@@ -91,9 +92,8 @@ async def orders_fulfilled_webhook(
 ):
     data = await request.body()
     # v3.7.5: Enforce HMAC for fulfillment
-    if not verify_shopify_webhook(data, x_shopify_hmac_sha256):
-       if settings.ENVIRONMENT == "production":
-           raise HTTPException(status_code=401, detail="Unauthorized")
+    if not x_shopify_hmac_sha256 or not verify_shopify_webhook(data, x_shopify_hmac_sha256):
+        raise HTTPException(status_code=401, detail="Unauthorized")
     
     payload = json.loads(data)
     order_id = payload.get("id")
@@ -197,12 +197,11 @@ async def receive_whatsapp_webhook(
     
     # Meta's payload structure is deeply nested
     try:
-        entry = payload.get("entry", [])[0]
-        change = entry.get("changes", [])[0]
-        value = change.get("value", {})
-        message_data = value.get("messages", [])[0]
-        
-        msg_id = message_data.get("id")
+        msg = extract_whatsapp_message(payload)
+        if not msg:
+            return {"status": "ok"}
+
+        msg_id = msg.get("message_id")
         # Idempotency Check
         if msg_id:
             existing = db.query(ProcessedWebhookEvent).filter_by(event_id=msg_id, provider="whatsapp").first()
@@ -220,15 +219,27 @@ async def receive_whatsapp_webhook(
                 print(f"Conflict recording WhatsApp event {msg_id}: {e}")
                 return {"status": "skipped", "reason": "conflict"}
 
-        sender_id = message_data.get("from") # User's WhatsApp ID
-        message_text = message_data.get("text", {}).get("body", "")
+        sender_id = msg.get("sender_id")
+        message_text = msg.get("text")
         
         if message_text:
             print(f"WhatsApp Message from {sender_id}: {message_text}")
+
+            binding = (
+                db.query(UserIMBinding)
+                .filter_by(platform="whatsapp", platform_uid=str(sender_id), is_active=True)
+                .first()
+            )
+            if not binding:
+                await send_whatsapp_message(
+                    str(sender_id),
+                    "请先在 0Buck 内绑定你的 WhatsApp（Settings → AI 管家 → 绑定 WhatsApp），绑定后我才能安全地为你提供个性化服务。",
+                )
+                return {"status": "ok", "reason": "unbound"}
             
             # Step 1: Send to AI Agent
             # Use sender_id as thread_id for conversation persistence
-            ai_response = await run_agent(message_text, session_id=f"whatsapp_{sender_id}")
+            ai_response = await run_agent(content=message_text, user_id=int(binding.user_id), session_id=f"whatsapp_{sender_id}")
             
             # Step 2: Extract text response
             reply_text = ai_response.get("content", "Sorry, I couldn't process that.")

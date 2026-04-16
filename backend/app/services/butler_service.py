@@ -1,15 +1,17 @@
 import json
 import logging
 from typing import List, Dict, Any, Optional
-from datetime import datetime
-import google.generativeai as genai
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from app.core.config import settings
+from app.core.genai_client import generate_text
 from app.core.security import encrypt_api_key, decrypt_api_key
 from app.core.quota_manager import check_and_update_quota
 from app.models.butler import UserButlerProfile, UserMemoryFact, UserMemorySemantic, PersonaTemplate
 from app.models import SystemConfig
+from app.core.celery_app import celery_app
+from app.services.semantic_memory import semantic_memory_service
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -23,10 +25,9 @@ class ButlerService:
     
     def __init__(self, db: Session):
         self.db = db
-        genai.configure(api_key=settings.GOOGLE_API_KEY)
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
+        pass
 
-    async def assemble_persona_prompt(self, user_id: int) -> str:
+    async def assemble_persona_prompt(self, user_id: int, last_message: Optional[str] = None) -> str:
         """
         v3.2 3-Layer Prompt Assembler:
         L1: Enforcement (Global)
@@ -47,6 +48,8 @@ class ButlerService:
             "   - ABSOLUTELY FORBIDDEN to call tools for simple greetings (e.g., 'hello', '你好', 'hi').\n"
             "   - If the user is just saying hello, respond with a polite greeting text ONLY.\n"
             "   - Only call 'update_butler_settings' if the user explicitly wants to change your name or settings.\n"
+            "   - If user explicitly asks to change your personality/persona/style (e.g. 萝莉, 可爱萝莉, 专业严谨), "
+            "you MUST call 'update_butler_settings' with persona_id. Never refuse first.\n"
             "If named, acknowledge it IMMEDIATELY and use the 'update_butler_settings' tool to persist the name to your profile. "
             "Respond politely in the SAME language as the user's naming request. "
             "Confirmation template: 'Yes, Master! From now on I'll be called: [Name]. How should I address you?' "
@@ -76,9 +79,11 @@ class ButlerService:
         # --- L3: Surface Layer (User Memory & Facts) ---
         # RAG-based retrieval: Fetch top 5 relevant facts for the current context
         # (For now, we fetch the 10 most recent/high-confidence facts)
+        cutoff = datetime.utcnow() - timedelta(days=365)
         facts = self.db.query(UserMemoryFact).filter(
             UserMemoryFact.user_id == user_id,
-            UserMemoryFact.is_archived == False
+            UserMemoryFact.is_archived == False,
+            UserMemoryFact.last_verified_at >= cutoff,
         ).order_by(UserMemoryFact.confidence.desc(), UserMemoryFact.created_at.desc()).limit(10).all()
         
         l3_memory = "### L3: USER CONTEXT (MEMORY)\n"
@@ -88,12 +93,28 @@ class ButlerService:
         else:
             l3_memory += "- No specific user history yet. Be curious and observant."
 
+        if last_message:
+            try:
+                sem = await semantic_memory_service.search(user_id=user_id, query=last_message, limit=5)
+            except Exception:
+                sem = []
+            if sem:
+                l3_memory += "\n### L3: SEMANTIC MEMORY (TOPK)\n"
+                for item in sem:
+                    txt = str(item.get("content") or "").strip()
+                    if txt:
+                        l3_memory += f"- {txt}\n"
+
         if profile:
             if profile.butler_name:
                 l3_memory += f"\n- Your Name given by User: {profile.butler_name}"
             if profile.user_nickname:
                 l3_memory += f"\n- User's Preferred Nickname: {profile.user_nickname}"
-                l3_memory += f"\n- MANDATORY: Always address the user as '{profile.user_nickname}'."
+                l3_memory += f"\n- MANDATORY: Always address the user as '{profile.user_nickname}' in your responses."
+            
+            # If the AI has a custom name, it should identify itself as such.
+            if profile.butler_name:
+                l3_memory += f"\n- MANDATORY: Always identify yourself as '{profile.butler_name}' in your responses."
 
         # Final Assembly
         final_prompt = f"{l1_prompt}\n\n{l2_prompt}\n\n{l3_memory}"
@@ -166,12 +187,11 @@ History:
             return {"new_facts": [], "emotional_tags": [], "personality_preferences": {}, "affinity_increment": 0, "detected_language": "en", "language_change_needed": False}
 
         try:
-            response = await self.model.generate_content_async(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    response_mime_type="application/json",
-                    temperature=0.1,
-                )
+            response = await generate_text(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                response_mime_type="application/json",
+                temperature=0.1,
             )
             data = json.loads(response.text.strip())
             logger.info(f"Dehydration success for user {user_id}")
@@ -248,6 +268,15 @@ History:
                     tags=dehydrated_data.get("emotional_tags", [])
                 )
                 self.db.add(semantic_mem)
+                self.db.flush()
+                if settings.CELERY_ENABLED:
+                    try:
+                        celery_app.send_task(
+                            "semantic_memory_upsert",
+                            args=[int(semantic_mem.id), int(user_id)],
+                        )
+                    except Exception:
+                        pass
             
             self.db.commit()
         except Exception as e:

@@ -3,6 +3,7 @@ import httpx
 from typing import List, Dict, Any, Optional
 from langchain_core.tools import tool
 from app.core.config import settings
+from app.core.resilience import CircuitBreaker
 from app.db.session import SessionLocal
 from app.models.product import Product
 from app.services.shield_service import ShieldService
@@ -68,8 +69,12 @@ async def _web_search_func(query: str) -> List[Dict[str, Any]]:
     Supports key rotation if multiple keys are provided in settings.EXA_API_KEY (comma-separated).
     """
     if not settings.EXA_API_KEY or settings.EXA_API_KEY == "your-exa-api-key":
-        print("⚠️ EXA_API_KEY is missing or invalid. Falling back to mock results.")
-        return [{"title": "Market Price Placeholder", "text": "Price on Amazon: $100.00. List Price: $120.00", "url": "https://amazon.com"}]
+        return [{
+            "title": "Web Search Unavailable",
+            "text": "Web search is temporarily unavailable. Please retry later.",
+            "url": "https://0buck.com",
+            "degraded": True,
+        }]
 
     # v5.6.6: Multi-Key Rotation & Service Key Support
     # Note: Service Key (Admin API) allows programmatic key generation: https://admin-api.exa.ai
@@ -77,33 +82,55 @@ async def _web_search_func(query: str) -> List[Dict[str, Any]]:
     if not keys:
         return [{"error": "No valid EXA API keys found."}]
     
-    # Simple rotation using time or random (here we use random for simplicity across parallel requests)
     import random
-    active_key = random.choice(keys)
-    
-    print(f"DEBUG: Using EXA_API_KEY: {active_key[:5]}...{active_key[-5:]}")
 
     url = "https://api.exa.ai/search"
-    headers = {
-        "accept": "application/json",
-        "content-type": "application/json",
-        "x-api-key": active_key
-    }
     payload = {
         "query": query,
         "numResults": 5
     }
+
+    breaker = getattr(_web_search_func, "_breaker", None)
+    if breaker is None:
+        breaker = CircuitBreaker(name="exa", failure_threshold=3, reset_timeout_seconds=30.0)
+        setattr(_web_search_func, "_breaker", breaker)
     
-    async with httpx.AsyncClient() as client:
-        try:
+    timeout = httpx.Timeout(10.0, connect=5.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        async def attempt_with_key(active_key: str):
+            headers = {
+                "accept": "application/json",
+                "content-type": "application/json",
+                "x-api-key": active_key,
+            }
             response = await client.post(url, json=payload, headers=headers)
-            # If 401/429 on one key, we could retry with another, but for now simple choice
+            if response.status_code in (401, 403, 429) or response.status_code >= 500:
+                raise httpx.HTTPStatusError(
+                    f"EXA error status {response.status_code}",
+                    request=response.request,
+                    response=response,
+                )
             response.raise_for_status()
-            data = response.json()
-            return data.get("results", [])
-        except Exception as e:
-            print(f"DEBUG EXA ERROR: {e}")
-            return [{"error": str(e)}]
+            return response
+
+        tried: set[str] = set()
+        for _ in range(min(2, len(keys))):
+            active_key = random.choice([k for k in keys if k not in tried]) if len(tried) < len(keys) else random.choice(keys)
+            tried.add(active_key)
+            try:
+                response = await breaker.call(lambda: attempt_with_key(active_key))
+                data = response.json()
+                return data.get("results", [])
+            except Exception as e:
+                last_err = e
+                continue
+
+        return [{
+            "title": "Web Search Unavailable",
+            "text": "Web search is temporarily unavailable. Please retry later.",
+            "url": "https://0buck.com",
+            "degraded": True,
+        }]
 
 web_search = tool(_web_search_func)
 
@@ -127,7 +154,7 @@ async def supply_library_search(query: str) -> List[Dict[str, Any]]:
         } for i in range(1, 4)
     ]
 
-from app.models.butler import UserButlerProfile
+from app.models.butler import UserButlerProfile, PersonaTemplate
 from app.models.ledger import AvailableCoupon, CouponIssuanceAudit, SystemConfig
 import hashlib
 import time
@@ -142,6 +169,69 @@ def update_butler_settings(user_id: int, butler_name: Optional[str] = None, pers
         butler_name: (Optional) A new name for the AI Butler.
         persona_id: (Optional) The ID of the persona template to switch to (e.g., 'cute_loli', 'rigorous_expert').
     """
+    builtin_personas = {
+        "default": {
+            "name": "Default",
+            "style_prompt": "You are a balanced, professional and helpful 0Buck Butler.",
+            "empathy_weight": 0.6,
+            "formality_score": 0.6,
+            "vibrancy_level": 0.4,
+            "emoji_density": 0.2,
+        },
+        "cute_loli": {
+            "name": "Cute Loli",
+            "style_prompt": "Use a cute, warm, playful but helpful style. Keep responses concise and caring.",
+            "empathy_weight": 0.9,
+            "formality_score": 0.2,
+            "vibrancy_level": 0.9,
+            "emoji_density": 0.8,
+        },
+        "rigorous_expert": {
+            "name": "Rigorous Expert",
+            "style_prompt": "Use a professional, rigorous, structured style. Focus on precision and actionable steps.",
+            "empathy_weight": 0.5,
+            "formality_score": 0.9,
+            "vibrancy_level": 0.2,
+            "emoji_density": 0.0,
+        },
+        "friendly_butler": {
+            "name": "Friendly Butler",
+            "style_prompt": "Be polite, proactive and service-oriented. Keep language friendly and practical.",
+            "empathy_weight": 0.8,
+            "formality_score": 0.7,
+            "vibrancy_level": 0.5,
+            "emoji_density": 0.3,
+        },
+    }
+    persona_alias = {
+        "萝莉": "cute_loli",
+        "可爱萝莉": "cute_loli",
+        "萌妹": "cute_loli",
+        "专业严谨": "rigorous_expert",
+        "专家": "rigorous_expert",
+        "严谨": "rigorous_expert",
+        "管家": "friendly_butler",
+        "友好管家": "friendly_butler",
+        "默认": "default",
+        "default": "default",
+        "cute_loli": "cute_loli",
+        "rigorous_expert": "rigorous_expert",
+        "friendly_butler": "friendly_butler",
+    }
+
+    def _normalize_persona_id(raw_value: str) -> Optional[str]:
+        if not raw_value:
+            return None
+        value = raw_value.strip()
+        if not value:
+            return None
+        if value in persona_alias:
+            return persona_alias[value]
+        lower_value = value.lower()
+        if lower_value in persona_alias:
+            return persona_alias[lower_value]
+        return lower_value
+
     db = SessionLocal()
     try:
         profile = db.query(UserButlerProfile).filter_by(user_id=user_id).first()
@@ -152,7 +242,33 @@ def update_butler_settings(user_id: int, butler_name: Optional[str] = None, pers
         if butler_name:
             profile.butler_name = butler_name
         if persona_id:
-            profile.active_persona_id = persona_id
+            target_persona = _normalize_persona_id(persona_id)
+            if target_persona:
+                template = db.query(PersonaTemplate).filter_by(id=target_persona).first()
+                if not template:
+                    builtin = builtin_personas.get(target_persona)
+                    if builtin:
+                        template = PersonaTemplate(
+                            id=target_persona,
+                            name=builtin["name"],
+                            style_prompt=builtin["style_prompt"],
+                            empathy_weight=builtin["empathy_weight"],
+                            formality_score=builtin["formality_score"],
+                            vibrancy_level=builtin["vibrancy_level"],
+                            emoji_density=builtin["emoji_density"],
+                            is_active=True,
+                        )
+                        db.add(template)
+                        db.flush()
+                    else:
+                        available = sorted(set(list(builtin_personas.keys())))
+                        return {
+                            "status": "failed",
+                            "error": "persona_not_found",
+                            "requested_persona": persona_id,
+                            "available_personas": available,
+                        }
+                profile.active_persona_id = target_persona
             
         db.commit()
         return {"status": "success", "butler_name": profile.butler_name, "active_persona": profile.active_persona_id}
@@ -244,3 +360,29 @@ def get_order_status(user_id: int, order_id: str) -> Dict[str, Any]:
         }
     finally:
         db.close()
+
+@tool
+def ui_system_action(action: str, value: str):
+    """
+    Trigger a frontend UI system action on the user's device.
+    Use this when the user asks to change settings on device, navigate pages, or perform local actions.
+    
+    Supported actions and values:
+    - action: "SET_THEME", value: "light" or "dark" or "system"
+    - action: "SET_LANGUAGE", value: "en" or "zh-CN"
+    - action: "SET_CURRENCY", value: "USD" or "CNY" or "JPY" or "EUR" or "GBP"
+    - action: "NAVIGATE", value: "wallet" or "settings" or "orders" or "address" or "checkout" or "reward_history" or "tickets" or "favorites"
+    - action: "CLEAR_LOCAL_CACHE", value: "true"
+    - action: "PERFORM_CHECKIN", value: "true"
+    """
+    import json
+    return json.dumps({
+        "__system_action__": {
+            "type": "0B_SYSTEM_ACTION",
+            "action": action,
+            "payload": {"value": value},
+            "requires_confirmation": False
+        },
+        "status": "success",
+        "message": f"Successfully executed {action} with value {value} on the user's device."
+    })

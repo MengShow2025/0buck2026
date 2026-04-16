@@ -31,6 +31,25 @@ class Supplier(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+class Warehouse(Base):
+    """
+    v3.0 Logistics Anchor: Stores 3PL warehouse locations and coverage.
+    """
+    __tablename__ = "warehouses"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100)) # e.g. 'Dongguan Transit Hub'
+    location_province = Column(String(100))
+    location_city = Column(String(100))
+    address_zh = Column(String(255))
+    
+    # Coverage & Rates
+    supported_countries = Column(JSONB, server_default='[]') # ['US', 'GB', 'DE']
+    shipping_rates_config = Column(JSONB, server_default='{}') # Weight-based rates
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=func.now())
+
 class Product(Base):
     __tablename__ = "products"
 
@@ -44,12 +63,28 @@ class Product(Base):
     titles = Column(JSONB, server_default='{}')
     descriptions = Column(JSONB, server_default='{}')
     
+    # v4.7.1: Sourcing Provenance & Fixed Mapping
+    # '1688' or 'ALIBABA' or 'CJ'
+    source_platform = Column(String(50), default='1688', index=True)
+    cj_pid = Column(String, unique=True, index=True, nullable=True) # CJ Product ID
+    
+    source_url = Column(String, nullable=True)
+    backup_source_url = Column(String, nullable=True)
+    
+    # v8.0 Truth Protocol: Warehouse & Inventory
+    warehouse_anchor = Column(String, index=True) # e.g. "US, CN"
+    inventory = Column(Integer, default=0)
+    inventory_detail = Column(JSONB, server_default='{}')
+    sales_volume = Column(Integer, default=0) # Social Proof (CJ listedNum)
+    sell_price = Column(Float, nullable=True) # Raw CJ price
+    
     # Legacy fields (keep for fallback)
     title_zh = Column(String)
     title_en = Column(String)
     description_zh = Column(String)
     description_en = Column(String)
     
+    # Financial Analysis (Real-time Audit)
     original_price = Column(Float)  # 1688 cost in CNY
     source_cost_usd = Column(Float) # Buffered cost in USD (0.5% buffer applied)
     sale_price = Column(Float)      # Final price in USD
@@ -154,10 +189,19 @@ class CandidateProduct(Base):
     status = Column(String, default="draft", index=True) # 'draft', 'refined', 'audited', 'approved', 'published'
     
     # v4.7.1: Sourcing Provenance & Fixed Mapping
-    # '1688' or 'ALIBABA'
+    # '1688' or 'ALIBABA' or 'CJ'
     source_platform = Column(String, default='1688', index=True)
+    cj_pid = Column(String, unique=True, index=True, nullable=True) # CJ Product ID
+    
     source_url = Column(String) # The hard-mapped direct purchase URL
     backup_source_url = Column(String, nullable=True) # Redundancy link
+    
+    # v8.0 Truth Protocol: Warehouse & Inventory
+    warehouse_anchor = Column(String, index=True) # e.g. "US, CN"
+    inventory = Column(Integer, default=0)
+    inventory_detail = Column(JSONB, server_default='{}')
+    sales_volume = Column(Integer, default=0) # Social Proof (CJ listedNum)
+    sell_price = Column(Float, nullable=True) # Raw CJ price
     
     # AI Discovery Proof (The Evidence Chain)
     discovery_source = Column(String) # 'IDS_FOLLOWING', 'IDS_SPY', 'C2M_WISH'
@@ -233,6 +277,13 @@ class CandidateProduct(Base):
     
     audit_notes = Column(String, nullable=True)
     evidence = Column(JSONB, server_default='{}')
+    
+    # v8.0 Truth Protocol: Warehouse & Inventory
+    warehouse_anchor = Column(String, index=True) # e.g. "US, CN"
+    inventory = Column(Integer, default=0)
+    inventory_detail = Column(JSONB, server_default='{}')
+    sales_volume = Column(Integer, default=0) # Social Proof (CJ listedNum)
+    sell_price = Column(Float, nullable=True) # Raw CJ price
     
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

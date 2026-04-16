@@ -1,9 +1,9 @@
 import logging
 import hashlib
 import time
-import httpx
 from typing import Dict, Any, Optional, List
 from app.core.config import settings
+from app.core.http_client import ResilientAsyncClient
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +20,7 @@ class BuckyDropService:
         self.base_url = self.domain.rstrip('/')
         self._token = None
         self._token_expiry = 0
+        self._http = ResilientAsyncClient(name="buckydrop", retries=1, timeout_seconds=30.0, connect_timeout_seconds=5.0)
 
     def _generate_sign(self, current_time: Any, token: Optional[str] = None) -> str:
         """
@@ -50,23 +51,19 @@ class BuckyDropService:
             "sign": sign
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(url, json=payload, timeout=10.0)
-                data = response.json()
-                print(f"DEBUG: BuckyDrop Auth Response: {data}")
-                if data.get("code") == 0 or data.get("success") is True:
-                    self._token = data.get("data", {}).get("token")
-                    # Set expiry (default token lasts 24h, but we'll refresh every 1h for safety)
-                    self._token_expiry = time.time() + 3600
-                    logger.info("✅ BuckyDrop Token refreshed successfully.")
-                    return self._token
-                else:
-                    logger.error(f"❌ BuckyDrop Auth Error: {data}")
-                    return None
-            except Exception as e:
-                logger.error(f"❌ BuckyDrop Token Request Failed: {e}")
-                return None
+        try:
+            response = await self._http.request("POST", url, json=payload)
+            data = response.json()
+            if data.get("code") == 0 or data.get("success") is True:
+                self._token = data.get("data", {}).get("token")
+                self._token_expiry = time.time() + 3600
+                logger.info("✅ BuckyDrop Token refreshed successfully.")
+                return self._token
+            logger.error(f"❌ BuckyDrop Auth Error: {data}")
+            return None
+        except Exception as e:
+            logger.error(f"❌ BuckyDrop Token Request Failed: {e}")
+            return None
 
     def _generate_business_sign_v2(self, timestamp: int, token: str, body: Dict[str, Any]) -> str:
         """
@@ -76,7 +73,6 @@ class BuckyDropService:
         product_link = body.get("productLink", "")
         raw_str = f"{self.app_code}{timestamp}{token}{product_link}{self.app_secret}"
         sign = hashlib.md5(raw_str.encode('utf-8')).hexdigest()
-        logger.debug(f"DEBUG: BuckyDrop Sign String: {raw_str} -> {sign}")
         return sign
 
     async def get_product_detail(self, product_link: str) -> Optional[Dict[str, Any]]:
@@ -106,20 +102,16 @@ class BuckyDropService:
             "Content-Type": "application/json"
         }
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            try:
-                # Use params for query string and json for body
-                response = await client.post(url, headers=headers, params=params, json=payload, timeout=30.0)
-                data = response.json()
-                print(f"DEBUG: BuckyDrop Detail Response: {data}")
-                if data.get("code") == 200 or data.get("success") is True or data.get("code") == 0:
-                    return data.get("data")
-                else:
-                    logger.error(f"❌ BuckyDrop Detail Error: {data}")
-                    return None
-            except Exception as e:
-                logger.error(f"❌ BuckyDrop Crawl Failed: {e}")
-                return None
+        try:
+            response = await self._http.request("POST", url, headers=headers, params=params, json=payload)
+            data = response.json()
+            if data.get("code") == 200 or data.get("success") is True or data.get("code") == 0:
+                return data.get("data")
+            logger.error(f"❌ BuckyDrop Detail Error: {data}")
+            return None
+        except Exception as e:
+            logger.error(f"❌ BuckyDrop Crawl Failed: {e}")
+            return None
 
     async def create_shop_order(self, order_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
@@ -143,16 +135,14 @@ class BuckyDropService:
             "Content-Type": "application/json"
         }
 
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(url, headers=headers, params=params, json=order_data, timeout=30.0)
-                data = response.json()
-                if data.get("code") == 200:
-                    logger.info(f"✅ BuckyDrop Order Created: {data.get('data', {}).get('orderNo')}")
-                    return data.get("data")
-                else:
-                    logger.error(f"❌ BuckyDrop Order Error: {data.get('message')}")
-                    return None
-            except Exception as e:
-                logger.error(f"❌ BuckyDrop Order Placement Failed: {e}")
-                return None
+        try:
+            response = await self._http.request("POST", url, headers=headers, params=params, json=order_data)
+            data = response.json()
+            if data.get("code") == 200:
+                logger.info(f"✅ BuckyDrop Order Created: {data.get('data', {}).get('orderNo')}")
+                return data.get("data")
+            logger.error(f"❌ BuckyDrop Order Error: {data.get('message')}")
+            return None
+        except Exception as e:
+            logger.error(f"❌ BuckyDrop Order Placement Failed: {e}")
+            return None

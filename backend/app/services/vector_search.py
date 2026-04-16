@@ -1,4 +1,6 @@
 import os
+import hashlib
+import random
 from typing import List, Dict, Any, Optional
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
@@ -50,20 +52,28 @@ class VectorSearchService:
 
     def search(self, vector: List[float], limit: int = 5) -> List[Dict[str, Any]]:
         """执行向量搜索"""
-        results = self.client.search(
+        results = self.client.query_points(
             collection_name=self.collection_name,
-            query_vector=vector,
+            query=vector,
             limit=limit
-        )
+        ).points
         return [r.payload for r in results]
 
     async def get_embedding(self, text: Optional[str] = None, image_url: Optional[str] = None) -> List[float]:
-        """
-        获取 SigLIP 嵌入向量 (Mock)
-        实际开发中应调用推理 API 或本地模型。
-        """
-        # 模拟生成一个 768 维的随机向量
-        import random
-        return [random.uniform(-1, 1) for _ in range(768)]
+        content = text or image_url
+        if not content:
+            raise ValueError("text or image_url required")
+
+        from app.core.genai_client import embed_text
+
+        vec = await embed_text(
+            contents=content,
+            task_type="RETRIEVAL_QUERY",
+            output_dimensionality=768,
+        )
+        if vec and len(vec) == 768:
+            return vec
+        
+        raise RuntimeError(f"Failed to generate valid 768-dimensional embedding for content: {content[:50]}...")
 
 vector_search_service = VectorSearchService()

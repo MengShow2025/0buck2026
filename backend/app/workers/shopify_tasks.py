@@ -2,17 +2,18 @@ import logging
 import asyncio
 from decimal import Decimal
 from app.core.celery_app import celery_app
+from app.core.celery_instrumentation import InstrumentedTask
 from app.db.session import SessionLocal
 from app.services.rewards import RewardsService
 from app.services.supply_chain import SupplyChainService
 from app.services.social_automation import SocialAutomationService
-from app.models.ledger import Order, SystemConfig
+from app.models.ledger import Order, SystemConfig, OrderAttribution, UserExt
 from app.models.product import Product
-from app.core.config import settings
+from app.services.promo_cards import resolve_share_link
 
 logger = logging.getLogger(__name__)
 
-@celery_app.task(name="app.workers.shopify_tasks.process_paid_order", bind=True, max_retries=3)
+@celery_app.task(name="app.workers.shopify_tasks.process_paid_order", bind=True, base=InstrumentedTask, max_retries=3)
 def process_paid_order(self, payload: dict):
     """
     Process paid Shopify orders asynchronously.
@@ -75,6 +76,30 @@ def process_paid_order(self, payload: dict):
             rewards_service.init_checkin_plan(customer_id, order_id, reward_base, customer.get("timezone", "UTC"))
             
         referral_code = next((a["value"] for a in note_attrs if a["name"] == "referral_code"), None)
+        share_token = next((a["value"] for a in note_attrs if a["name"] == "share_token"), None)
+
+        if share_token:
+            share_row = resolve_share_link(db, share_token)
+            if share_row and not db.query(OrderAttribution).filter_by(order_id=order_id).first():
+                db.add(OrderAttribution(
+                    order_id=order_id,
+                    share_token=share_row.share_token,
+                    sharer_user_id=share_row.sharer_user_id,
+                    share_category=share_row.share_category,
+                    card_type=share_row.card_type,
+                    target_type=share_row.target_type,
+                    target_id=share_row.target_id,
+                    entry_type=share_row.entry_type,
+                    policy_version=share_row.policy_version,
+                ))
+                # Bridge existing rewards pipeline without changing payout priority logic.
+                if not referral_code:
+                    referral_code = share_row.source_code
+                    if not referral_code:
+                        sharer = db.query(UserExt).filter_by(customer_id=share_row.sharer_user_id).first()
+                        referral_code = getattr(sharer, "referral_code", None)
+                db.commit()
+
         if referral_code:
             rewards_service.record_referral(customer_id, referral_code)
             rewards_service.process_referral_commissions(customer_id, order_id, reward_base, referral_code)

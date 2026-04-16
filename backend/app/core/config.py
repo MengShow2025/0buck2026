@@ -1,6 +1,11 @@
 import os
+import secrets
+from dotenv import load_dotenv
+load_dotenv(".env", override=True)
+
 from pydantic_settings import BaseSettings
 from typing import Optional
+from app.core.db_url import normalize_database_url_for_runtime
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "0Buck Backend"
@@ -16,8 +21,9 @@ class Settings(BaseSettings):
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         if self.DATABASE_URL:
-            return self.DATABASE_URL
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+            return normalize_database_url_for_runtime(self.DATABASE_URL)
+        raw = f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+        return normalize_database_url_for_runtime(raw)
 
     # External APIs
     ALIBABA_1688_API_KEY: str = os.getenv("ALIBABA_1688_API_KEY", "")
@@ -38,7 +44,7 @@ class Settings(BaseSettings):
     NOTION_TOKEN: str = os.getenv("NOTION_TOKEN", "")
     QDRANT_HOST: str = os.getenv("QDRANT_HOST", "localhost")
     QDRANT_PORT: int = int(os.getenv("QDRANT_PORT", 6333))
-    MASTER_SECRET_KEY: str = os.getenv("MASTER_SECRET_KEY", "0buck_default_master_key_for_api_keys_32")
+    MASTER_SECRET_KEY: str = os.getenv("MASTER_SECRET_KEY", "").strip()
     # For key rotation migration
     PREVIOUS_MASTER_SECRET_KEY: Optional[str] = os.getenv("PREVIOUS_MASTER_SECRET_KEY")
 
@@ -55,12 +61,12 @@ class Settings(BaseSettings):
     FACEBOOK_CLIENT_SECRET: str = os.getenv("FACEBOOK_CLIENT_SECRET", "")
     
     # Session Secret
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "0buck_default_secret_key_for_sessions_32")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "").strip()
     
     # IM Gateway (v5.6)
     WHATSAPP_API_TOKEN: str = os.getenv("WHATSAPP_API_TOKEN", "")
     WHATSAPP_PHONE_NUMBER_ID: str = os.getenv("WHATSAPP_PHONE_NUMBER_ID", "")
-    WHATSAPP_VERIFY_TOKEN: str = os.getenv("WHATSAPP_VERIFY_TOKEN", "0buck_verify_token")
+    WHATSAPP_VERIFY_TOKEN: str = os.getenv("WHATSAPP_VERIFY_TOKEN", "").strip()
     
     FEISHU_APP_ID: str = os.getenv("FEISHU_APP_ID", "")
     FEISHU_APP_SECRET: str = os.getenv("FEISHU_APP_SECRET", "")
@@ -100,35 +106,54 @@ class Settings(BaseSettings):
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
 
     # CJ Dropshipping
-    CJ_ACCOUNT_ID: str = os.getenv("CJ_ACCOUNT_ID", "CJ5226663")
-    CJ_API_KEY: str = os.getenv("CJ_API_KEY", "2c0889e00f7a4bd1881989564c3e148c")
-    CJ_EMAIL: str = os.getenv("CJ_EMAIL", "szyungtay@gmail.com")
+    CJ_ACCOUNT_ID: str = os.getenv("CJ_ACCOUNT_ID", "").strip()
+    CJ_API_KEY: str = os.getenv("CJ_API_KEY", "").strip()
+    CJ_EMAIL: str = os.getenv("CJ_EMAIL", "").strip()
 
     # Mabang ERP
-    MABANG_APP_KEY: str = os.getenv("MABANG_APP_KEY", "MTAwOTg1LDMyMDAxMTE4LDEwMTM3Mw==")
-    MABANG_TOKEN: str = os.getenv("MABANG_TOKEN", "1cfa071710d45a6ce62cd1f0806ec3e0")
+    MABANG_APP_KEY: str = os.getenv("MABANG_APP_KEY", "").strip()
+    MABANG_TOKEN: str = os.getenv("MABANG_TOKEN", "").strip()
     MABANG_API_URL: str = os.getenv("MABANG_API_URL", "https://open.mabangerp.com")
 
     # BuckyDrop API
-    BUCKYDROP_APP_CODE: str = os.getenv("BUCKYDROP_APP_CODE", "b2eea7fbbf558a6f34af0b7b0063204b")
-    BUCKYDROP_APP_SECRET: str = os.getenv("BUCKYDROP_APP_SECRET", "690250bf5c22cf68dd64d6447a0dcb4e")
+    BUCKYDROP_APP_CODE: str = os.getenv("BUCKYDROP_APP_CODE", "").strip()
+    BUCKYDROP_APP_SECRET: str = os.getenv("BUCKYDROP_APP_SECRET", "").strip()
     BUCKYDROP_DOMAIN: str = os.getenv("BUCKYDROP_DOMAIN", "https://bdopenapi.buckydrop.com")
     
     # BuckyDrop Test Credentials (Optional)
-    BUCKYDROP_TEST_CODE: str = "87e05078db55ffa709ca34bd04a0e9e5"
-    BUCKYDROP_TEST_SECRET: str = "1508feaf3034d3adb29bdca2c7e3d4c7"
-    BUCKYDROP_TEST_DOMAIN: str = "https://dev.buckydrop.com"
+    BUCKYDROP_TEST_CODE: str = os.getenv("BUCKYDROP_TEST_CODE", "").strip()
+    BUCKYDROP_TEST_SECRET: str = os.getenv("BUCKYDROP_TEST_SECRET", "").strip()
+    BUCKYDROP_TEST_DOMAIN: str = os.getenv("BUCKYDROP_TEST_DOMAIN", "").strip()
 
     # YunExpress
-    YUNEXPRESS_API_KEY: str = os.getenv("YUNEXPRESS_API_KEY", "1f369c903ef54496a37087f54750b704")
-    YUNEXPRESS_APPID: str = os.getenv("YUNEXPRESS_APPID", "dfc1ca258327")
-    YUNEXPRESS_CUSTOMER_CODE: str = os.getenv("YUNEXPRESS_CUSTOMER_CODE", "CN0C426905")
+    YUNEXPRESS_API_KEY: str = os.getenv("YUNEXPRESS_API_KEY", "").strip()
+    YUNEXPRESS_APPID: str = os.getenv("YUNEXPRESS_APPID", "").strip()
+    YUNEXPRESS_CUSTOMER_CODE: str = os.getenv("YUNEXPRESS_CUSTOMER_CODE", "").strip()
     YUNEXPRESS_SOURCE_KEY: str = os.getenv("YUNEXPRESS_SOURCE_KEY", "") # Might be needed for OAuth
     YUNEXPRESS_API_URL: str = os.getenv("YUNEXPRESS_API_URL", "https://openapi.yunexpress.cn")
 
     # Environment
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development") # "development" or "production"
     COOKIE_DOMAIN: Optional[str] = os.getenv("COOKIE_DOMAIN")
+
+    APP_VERSION: str = os.getenv("APP_VERSION", "unknown")
+    GIT_SHA: str = os.getenv("GIT_SHA", "unknown")
+
+    CELERY_ENABLED: bool = (
+        os.getenv("IM_GATEWAY_ENABLE_CELERY", os.getenv("CELERY_ENABLED", "false")).lower() == "true"
+    )
+
+    def model_post_init(self, __context) -> None:
+        if self.ENVIRONMENT == "production":
+            if not self.SECRET_KEY:
+                raise RuntimeError("SECRET_KEY must be set in production")
+            if not self.MASTER_SECRET_KEY:
+                raise RuntimeError("MASTER_SECRET_KEY must be set in production")
+        else:
+            if not self.SECRET_KEY:
+                self.SECRET_KEY = secrets.token_urlsafe(32)
+            if not self.MASTER_SECRET_KEY:
+                self.MASTER_SECRET_KEY = secrets.token_urlsafe(32)
 
     class Config:
         case_sensitive = True

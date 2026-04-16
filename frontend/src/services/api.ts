@@ -44,7 +44,7 @@ export const authApi = {
 
 // Transaction & Rewards
 export const productApi = {
-  getDiscovery: () => api.get('/products/discovery'),
+  getDiscovery: (user_country?: string) => api.get('/products/discovery', { params: { user_country } }),
   getDetail: (id: number) => api.get(`/products/${id}`),
 };
 

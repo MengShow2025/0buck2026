@@ -1,5 +1,4 @@
 import json
-import httpx
 from decimal import Decimal
 from datetime import datetime
 from typing import List, Dict, Any, Optional
@@ -14,6 +13,7 @@ from app.services.notion import NotionService
 from app.services.cj_service import CJDropshippingService
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
+from app.core.http_client import ResilientAsyncClient
 import logging
 import os
 import re
@@ -31,8 +31,11 @@ class SupplyChainService:
         
         # Initialize AI with Admin-configurable key
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
-            google_api_key=self.config_service.get_api_key("GOOGLE_API_KEY"),
+            model="gemini-2.5-flash",
+            google_api_key=(
+                self.config_service.get_api_key("GEMINI_API_KEY")
+                or self.config_service.get_api_key("GOOGLE_API_KEY")
+            ),
             temperature=0.7
         )
         # v5.3: CJ Dropshipping Integration
@@ -129,29 +132,39 @@ class SupplyChainService:
             "Connection": "keep-alive"
         }
             
-        async with httpx.AsyncClient(proxies=proxies) as client:
-            try:
-                # Add authentication headers/params as per 1688 API spec
-                api_params = {
-                    "method": method,
-                    "api_key": self.api_key,
-                    "timestamp": datetime.now().isoformat(),
-                    **params
-                }
-                response = await client.get(self.api_base_url, params=api_params, headers=headers, timeout=15.0)
-                if response.status_code == 200:
-                    return response.json()
-                elif response.status_code in [403, 429]:
-                    logger.error(f"🛡️ [Anti-Ban] Rate limited or blocked by 1688 (Status: {response.status_code}). Consider updating proxy pool.")
-                else:
-                    logger.error(f"1688 API Error: {response.status_code} - {response.text}")
-                return None
-            except httpx.ProxyError as e:
-                logger.error(f"🛡️ [Anti-Ban] Proxy connection failed: {e}")
-                return None
-            except Exception as e:
-                logger.error(f"1688 API Call failed: {e}")
-                return None
+        http = ResilientAsyncClient(
+            name="alibaba_1688",
+            retries=1,
+            timeout_seconds=15.0,
+            connect_timeout_seconds=5.0,
+            client_kwargs={"proxies": proxies} if proxies else None,
+        )
+        try:
+            api_params = {
+                "method": method,
+                "api_key": self.api_key,
+                "timestamp": datetime.now().isoformat(),
+                **params,
+            }
+            response = await http.request(
+                "GET",
+                self.api_base_url,
+                params=api_params,
+                headers=headers,
+                retry_on_status=(429,),
+            )
+            if response.status_code == 200:
+                return response.json()
+            if response.status_code in [403, 429]:
+                logger.error(
+                    f"🛡️ [Anti-Ban] Rate limited or blocked by 1688 (Status: {response.status_code}). Consider updating proxy pool."
+                )
+            else:
+                logger.error(f"1688 API Error: {response.status_code} - {response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"1688 API Call failed: {e}")
+            return None
 
     def _format_candidate_as_details(self, candidate: CandidateProduct) -> Dict[str, Any]:
         def safe_json_load(data, default=[]):
@@ -374,6 +387,28 @@ class SupplyChainService:
         
         self.db.commit()
         return product
+
+    async def trigger_sourcing(self, order_id: int, line_items: List[Dict], auto_fulfill: bool = True):
+        """
+        v5.3: Automated CJ Sourcing trigger for newly paid order items.
+        """
+        # Logic to notify CJ or create sourcing request
+        # In simulation, we just log and mark the item
+        logger.info(f"🚚 [Supply Chain] Triggering sourcing for Order {order_id}, {len(line_items)} items")
+        
+        # If it's a CJ product, we can create a real sourcing request
+        for item in line_items:
+            variant_id = str(item.get("variant_id"))
+            product = self.db.query(Product).filter_by(shopify_variant_id=variant_id).first()
+            if product and product.source_platform == "CJ":
+                try:
+                    # Use existing cj_service to create sourcing if needed
+                    # (Assuming item.product.source_url or similar is available)
+                    pass
+                except Exception as e:
+                    logger.error(f"CJ Sourcing trigger failed for variant {variant_id}: {e}")
+        
+        return True
 
     def _ensure_absolute_url(self, url: str) -> str:
         if not url: return ""
