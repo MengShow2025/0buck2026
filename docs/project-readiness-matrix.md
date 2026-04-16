@@ -383,3 +383,15 @@
 - 已完成：优惠重算结果改为使用后端返回的 `selected.breakdown/total_discount/valid_codes`，并自动剔除无效选择码。
 - 已完成：优惠券列表状态（可用/不可用）由后端 `items` 驱动，避免前端 mock 规则与后端不一致。
 - 已验证：前端 `npm run build` 通过（exit code 0）。
+
+## 本轮进展（第 54 批：移除 checkout 下单 mock 回退）
+- 已完成：移除 `CheckoutDrawer` 在后端下单分支失败后回退 `mockApi.createGiftCardFromBalance/createShopifyCheckout` 的逻辑，统一为纯后端创建订单闭环。
+- 已完成：当后端未返回 `invoice_url/order_id` 时，前端改为明确错误提示（不再静默回退 mock）。
+- 已完成：Checkout 内优惠券类型定义改为本地轻量类型，去除对 `services/mockApi` 的耦合导入。
+- 已验证：前端 `npm run build` 通过（exit code 0）。
+
+## 本轮进展（第 55 批：Checkout 商品信息改走真实详情）
+- 已完成：`CheckoutDrawer` 去除本地固定商品映射作为主数据源，改为通过 `productApi.getDetail(checkoutProductId)` 获取真实商品标题/价格/原价。
+- 已完成：保留最小 fallback（`p1/p2/p3`）仅用于接口异常兜底，不再作为默认展示口径。
+- 已完成：Checkout 展示金额与商品标题现在与后端商品详情保持一致，降低“详情页与结算页不一致”风险。
+- 已验证：前端 `npm run build` 通过（exit code 0）。

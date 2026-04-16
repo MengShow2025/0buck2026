@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, MapPin, CheckCircle2, DollarSign, Wallet, ShieldCheck, ShoppingBag, ChevronRight, Ticket, Info, Loader2, ChevronLeft, Tag, Lock } from 'lucide-react';
 import { useAppContext } from '../AppContext';
-import { orderApi } from '../../../services/api';
+import { orderApi, productApi } from '../../../services/api';
 import { ShopifyCheckoutModal } from './ShopifyCheckoutModal';
 import { PaymentSuccessScreen } from './PaymentSuccessScreen';
 
@@ -66,15 +66,23 @@ export const CheckoutDrawer: React.FC = () => {
   const [paidOrderId, setPaidOrderId] = useState<string | null>(null);
   const [securingStep, setSecuringStep] = useState<string | null>(null);
 
-  const getProduct = () => {
-    const products: Record<string, { price: number; name: string; originalPrice: number }> = {
-      'p1': { price: 29.99, name: 'Artisan Crafted Wireless Earbuds', originalPrice: 59.99 },
-      'p2': { price: 199.00, name: 'Custom Artisan Mechanical Keyboard', originalPrice: 299.00 },
-      'p3': { price: 899.00, name: 'iPhone 15 Pro (C2W Collective Pre-order)', originalPrice: 999.00 },
-    };
-    return products[selectedProductId || 'p1'] || products['p1'];
+  const checkoutProductId = (() => {
+    if (selectedProductId && /^\d+$/.test(selectedProductId)) return Number(selectedProductId);
+    const fallbackMap: Record<string, number> = { p1: 1, p2: 2, p3: 3 };
+    return fallbackMap[selectedProductId || 'p1'] ?? 1;
+  })();
+  const fallbackProductMap: Record<string, { price: number; name: string; originalPrice: number }> = {
+    p1: { price: 29.99, name: 'Artisan Crafted Wireless Earbuds', originalPrice: 59.99 },
+    p2: { price: 199.0, name: 'Custom Artisan Mechanical Keyboard', originalPrice: 299.0 },
+    p3: { price: 899.0, name: 'iPhone 15 Pro (C2W Collective Pre-order)', originalPrice: 999.0 },
   };
-  const product = getProduct();
+  const fallbackByKey = fallbackProductMap[selectedProductId || 'p1'] || fallbackProductMap.p1;
+  const [product, setProduct] = useState<{ id: number; price: number; name: string; originalPrice: number }>({
+    id: checkoutProductId,
+    price: fallbackByKey.price,
+    name: fallbackByKey.name,
+    originalPrice: fallbackByKey.originalPrice,
+  });
 
   const [availableDiscounts, setAvailableDiscounts] = useState<CheckoutDiscountItem[]>([]);
   const [appliedDiscounts, setAppliedDiscounts] = useState<string[]>([]);
@@ -94,6 +102,37 @@ export const CheckoutDrawer: React.FC = () => {
     balanceUsed: number;
     finalDue: number;
   } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const loadProductDetail = async () => {
+      try {
+        const resp = await productApi.getDetail(checkoutProductId);
+        const detail = resp?.data || {};
+        if (!active) return;
+        const price = Number(detail.price ?? fallbackByKey.price ?? 0);
+        const original = Number(detail.original_price ?? detail.price ?? price);
+        setProduct({
+          id: Number(detail.id ?? checkoutProductId),
+          name: String(detail.title || fallbackByKey.name || `Product #${checkoutProductId}`),
+          price: Number.isFinite(price) ? price : 0,
+          originalPrice: Number.isFinite(original) ? original : price,
+        });
+      } catch (_e) {
+        if (!active) return;
+        setProduct({
+          id: checkoutProductId,
+          price: fallbackByKey.price,
+          name: fallbackByKey.name,
+          originalPrice: fallbackByKey.originalPrice,
+        });
+      }
+    };
+    loadProductDetail();
+    return () => {
+      active = false;
+    };
+  }, [checkoutProductId, selectedProductId]);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -164,11 +203,6 @@ export const CheckoutDrawer: React.FC = () => {
   const effectiveBalanceUsed = quoteSummary?.balanceUsed ?? balanceDeduction;
   const effectiveFinalDue = quoteSummary?.finalDue ?? finalTotal;
   const isFullBalancePayment = useBalance && effectiveFinalDue === 0;
-  const checkoutProductId = (() => {
-    if (selectedProductId && /^\d+$/.test(selectedProductId)) return Number(selectedProductId);
-    const fallbackMap: Record<string, number> = { p1: 1, p2: 2, p3: 3 };
-    return fallbackMap[selectedProductId || 'p1'] ?? 1;
-  })();
 
   const buildSubmitToken = () =>
     (crypto.randomUUID().replace(/-/g, '') + '00000000000000000000000000000000').slice(0, 32);
