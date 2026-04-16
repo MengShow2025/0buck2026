@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, MapPin, CheckCircle2, DollarSign, Wallet, ShieldCheck, ShoppingBag, ChevronRight, Ticket, Info, Loader2, ChevronLeft, Tag, Lock } from 'lucide-react';
 import { useAppContext } from '../AppContext';
-import { mockApi, ShopifyDiscountCode } from '../../../services/mockApi';
 import { orderApi } from '../../../services/api';
 import { ShopifyCheckoutModal } from './ShopifyCheckoutModal';
 import { PaymentSuccessScreen } from './PaymentSuccessScreen';
+
+type CheckoutDiscountItem = {
+  id: string;
+  code: string;
+  type: 'fixed_amount' | 'percentage' | 'free_shipping';
+  value: number;
+  minimumAmount?: number | null;
+  description?: string;
+  isEligible: boolean;
+};
 
 // Step indicator
 const StepBar: React.FC<{ step: number }> = ({ step }) => {
@@ -67,7 +76,7 @@ export const CheckoutDrawer: React.FC = () => {
   };
   const product = getProduct();
 
-  const [availableDiscounts, setAvailableDiscounts] = useState<ShopifyDiscountCode[]>([]);
+  const [availableDiscounts, setAvailableDiscounts] = useState<CheckoutDiscountItem[]>([]);
   const [appliedDiscounts, setAppliedDiscounts] = useState<string[]>([]);
   const [discountBreakdown, setDiscountBreakdown] = useState<{ code: string; discount: number }[]>([]);
   const [totalDiscountAmount, setTotalDiscountAmount] = useState(0);
@@ -91,7 +100,7 @@ export const CheckoutDrawer: React.FC = () => {
       setIsLoadingDiscounts(true);
       try {
         const resp = await orderApi.getDiscounts(product.price);
-        const items = (resp?.data?.items || []) as ShopifyDiscountCode[];
+        const items = (resp?.data?.items || []) as CheckoutDiscountItem[];
         setAvailableDiscounts(items);
         const selected = resp?.data?.selected || {};
         setDiscountBreakdown((selected?.breakdown || []) as { code: string; discount: number }[]);
@@ -120,7 +129,7 @@ export const CheckoutDrawer: React.FC = () => {
         const validCodes = (selected?.valid_codes || []) as string[];
         const breakdown = (selected?.breakdown || []) as { code: string; discount: number }[];
         const total = Number(selected?.total_discount || 0);
-        const items = (data?.items || []) as ShopifyDiscountCode[];
+        const items = (data?.items || []) as CheckoutDiscountItem[];
         setAvailableDiscounts(items);
         setDiscountBreakdown(breakdown);
         setTotalDiscountAmount(total);
@@ -226,7 +235,7 @@ export const CheckoutDrawer: React.FC = () => {
     maximumFractionDigits: currency === 'JPY' ? 0 : 2
   });
 
-  const handleToggleDiscount = async (discount: ShopifyDiscountCode) => {
+  const handleToggleDiscount = async (discount: CheckoutDiscountItem) => {
     if (!discount.isEligible) return;
     const code = discount.code;
     if (appliedDiscounts.includes(code)) {
@@ -297,18 +306,7 @@ export const CheckoutDrawer: React.FC = () => {
         return;
       }
 
-      let giftCardCode = undefined;
-      if (balanceDeduction > 0) {
-        setSecuringStep('freezing');
-        const gc = await mockApi.createGiftCardFromBalance('user123', balanceDeduction);
-        giftCardCode = gc.code;
-      }
-      setSecuringStep('generating');
-      const { checkoutUrl, orderId } = await mockApi.createShopifyCheckout(selectedProductId || 'p1', 0, 1, giftCardCode);
-      await new Promise(r => setTimeout(r, 1200));
-      setShopifyCheckoutUrl(checkoutUrl);
-      (window as any)._pendingOrderId = orderId;
-      setIsShopifyCheckoutOpen(true);
+      throw new Error('create_order_missing_redirect');
     } catch (error: any) {
       const detail = String(error?.response?.data?.detail || '');
       const message = String(error?.message || '').toLowerCase();
@@ -316,6 +314,8 @@ export const CheckoutDrawer: React.FC = () => {
         ? '报价失败，未生成有效报价单。'
         : message.includes('shopify')
         ? '订单创建失败（网关暂不可用），请稍后重试。'
+        : message.includes('create_order_missing_redirect')
+        ? '下单成功但未返回支付跳转信息，请联系管理员排查。'
         : undefined;
       setCheckoutError(mapCheckoutError(detail, fallback));
       console.error('Checkout failed:', error);
