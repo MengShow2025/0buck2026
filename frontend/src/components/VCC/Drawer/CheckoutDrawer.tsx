@@ -79,6 +79,12 @@ export const CheckoutDrawer: React.FC = () => {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [isPreflightChecking, setIsPreflightChecking] = useState(false);
   const [isCheckoutBlocked, setIsCheckoutBlocked] = useState(false);
+  const [quoteSummary, setQuoteSummary] = useState<{
+    subtotal: number;
+    couponDiscount: number;
+    balanceUsed: number;
+    finalDue: number;
+  } | null>(null);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -132,7 +138,11 @@ export const CheckoutDrawer: React.FC = () => {
   }, [useBalance, subtotalWithTax, globalBalance, isPrime]);
 
   const finalTotal = Math.max(0, subtotalWithTax - balanceDeduction);
-  const isFullBalancePayment = useBalance && finalTotal === 0;
+  const effectiveSubtotal = quoteSummary?.subtotal ?? subtotal;
+  const effectiveDiscountAmount = quoteSummary?.couponDiscount ?? totalDiscountAmount;
+  const effectiveBalanceUsed = quoteSummary?.balanceUsed ?? balanceDeduction;
+  const effectiveFinalDue = quoteSummary?.finalDue ?? finalTotal;
+  const isFullBalancePayment = useBalance && effectiveFinalDue === 0;
   const checkoutProductId = (() => {
     if (selectedProductId && /^\d+$/.test(selectedProductId)) return Number(selectedProductId);
     const fallbackMap: Record<string, number> = { p1: 1, p2: 2, p3: 3 };
@@ -165,14 +175,26 @@ export const CheckoutDrawer: React.FC = () => {
           is_full_payment: isFullBalancePayment,
           client_submit_token: buildSubmitToken()
         };
-        await orderApi.createQuote(payload);
+        const quoteResp = await orderApi.createQuote(payload);
         if (!active) return;
+        const summary = quoteResp?.data?.summary;
+        if (summary) {
+          setQuoteSummary({
+            subtotal: Number(summary.subtotal ?? subtotal),
+            couponDiscount: Number(summary.coupon_discount ?? 0),
+            balanceUsed: Number(summary.balance_used ?? 0),
+            finalDue: Number(summary.final_due ?? finalTotal),
+          });
+        } else {
+          setQuoteSummary(null);
+        }
         setIsCheckoutBlocked(false);
         setCheckoutError(null);
       } catch (error: any) {
         if (!active) return;
         const detail = String(error?.response?.data?.detail || '');
         setIsCheckoutBlocked(true);
+        setQuoteSummary(null);
         setCheckoutError(mapCheckoutError(detail));
       } finally {
         if (active) setIsPreflightChecking(false);
@@ -222,6 +244,15 @@ export const CheckoutDrawer: React.FC = () => {
       const quoteToken = quoteResp?.data?.quote_token;
       if (!quoteToken) {
         throw new Error('quote_token_missing');
+      }
+      const quoteS = quoteResp?.data?.summary;
+      if (quoteS) {
+        setQuoteSummary({
+          subtotal: Number(quoteS.subtotal ?? subtotal),
+          couponDiscount: Number(quoteS.coupon_discount ?? 0),
+          balanceUsed: Number(quoteS.balance_used ?? 0),
+          finalDue: Number(quoteS.final_due ?? finalTotal),
+        });
       }
 
       const createResp = await orderApi.create({
@@ -301,7 +332,7 @@ export const CheckoutDrawer: React.FC = () => {
     if (isPreflightChecking) return '校验商品价格中...';
     if (isCheckoutBlocked) return '当前商品暂不可下单';
     if (isFullBalancePayment) return t('checkout.full_balance_payment');
-    return `${t('checkout.place_order')} · ${currencySymbol}${formatPrice(finalTotal)}`;
+    return `${t('checkout.place_order')} · ${currencySymbol}${formatPrice(effectiveFinalDue)}`;
   };
 
   return (
@@ -319,7 +350,7 @@ export const CheckoutDrawer: React.FC = () => {
       {showSuccessScreen && paidOrderId && (
         <PaymentSuccessScreen
           orderId={paidOrderId}
-          amount={subtotalWithTax}
+          amount={effectiveFinalDue}
           onContinue={handleSuccessContinue}
         />
       )}
@@ -359,7 +390,7 @@ export const CheckoutDrawer: React.FC = () => {
           </h2>
           {/* Price always visible in header */}
           <span className="font-mono font-bold text-[15px] text-[var(--wa-teal)]">
-            {currencySymbol}{formatPrice(finalTotal)}
+            {currencySymbol}{formatPrice(effectiveFinalDue)}
           </span>
         </div>
 
@@ -389,7 +420,7 @@ export const CheckoutDrawer: React.FC = () => {
                   <p className="text-[12px] text-gray-400 line-through">{currencySymbol}{formatPrice(product.originalPrice)}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-mono font-bold text-[17px] text-[var(--wa-teal)]">{currencySymbol}{formatPrice(subtotal)}</p>
+                  <p className="font-mono font-bold text-[17px] text-[var(--wa-teal)]">{currencySymbol}{formatPrice(effectiveSubtotal)}</p>
                   <span className="text-[10px] font-semibold text-green-600 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded-full">
                     Save {currencySymbol}{formatPrice(product.originalPrice - product.price)}
                   </span>
@@ -428,7 +459,7 @@ export const CheckoutDrawer: React.FC = () => {
                   {appliedDiscounts.length > 0 ? `${appliedDiscounts.length} ${t('checkout.discounts_applied')}` : t('checkout.voucher')}
                 </span>
                 {appliedDiscounts.length > 0 && (
-                  <span className="text-[12px] font-semibold text-green-600 mr-2">-{currencySymbol}{formatPrice(totalDiscountAmount)}</span>
+                  <span className="text-[12px] font-semibold text-green-600 mr-2">-{currencySymbol}{formatPrice(effectiveDiscountAmount)}</span>
                 )}
                 <ChevronRight className="w-4 h-4 text-gray-300" />
               </button>
@@ -513,16 +544,16 @@ export const CheckoutDrawer: React.FC = () => {
               </div>
             </div>
 
-            {useBalance && balanceDeduction > 0 && (
+            {useBalance && effectiveBalanceUsed > 0 && (
               <div className="px-4 py-2 bg-orange-50/50 dark:bg-orange-500/5 rounded-2xl border border-orange-100 dark:border-orange-500/10 space-y-1">
                 <div className="flex justify-between text-[13px] text-orange-600 dark:text-orange-400">
                   <span className="font-medium">{t('checkout.balance_deduction')}</span>
-                  <span className="font-bold font-mono">-{currencySymbol}{formatPrice(balanceDeduction)}</span>
+                  <span className="font-bold font-mono">-{currencySymbol}{formatPrice(effectiveBalanceUsed)}</span>
                 </div>
                 {isPrime && (
                   <div className="flex justify-between text-[10px] text-indigo-500">
                     <span className="font-medium">Prime 1.2× benefit</span>
-                    <span className="font-bold">-{currencySymbol}{formatPrice(balanceDeduction - actualBalanceCost)} free</span>
+                    <span className="font-bold">-{currencySymbol}{formatPrice(effectiveBalanceUsed - actualBalanceCost)} free</span>
                   </div>
                 )}
               </div>
@@ -612,7 +643,7 @@ export const CheckoutDrawer: React.FC = () => {
             <div className="flex justify-between items-center">
               <p className="text-[12px] text-gray-500 font-medium">{product.name}</p>
               <div className="text-right">
-                <p className="font-mono font-bold text-[16px] text-[var(--wa-teal)]">{currencySymbol}{formatPrice(finalTotal)}</p>
+                <p className="font-mono font-bold text-[16px] text-[var(--wa-teal)]">{currencySymbol}{formatPrice(effectiveFinalDue)}</p>
                 <p className="text-[10px] text-gray-400 flex items-center gap-1 justify-end mt-0.5">
                   <Info className="w-3 h-3" /> incl. tax + discounts
                 </p>
