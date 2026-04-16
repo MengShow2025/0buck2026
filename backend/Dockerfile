@@ -11,7 +11,7 @@ COPY frontend/ .
 RUN npm run build
 
 # 2. Build Backend
-FROM python:3.9-slim
+FROM python:3.11-slim
 WORKDIR /app
 
 # Prevent Python from writing .pyc files and enable unbuffered logging
