@@ -494,3 +494,10 @@
 - 已完成：修改 `backend/app/api/rewards.py` 中的 `quote` 接口，使用 `CheckoutQuoteResponse` 作为 `response_model`，提升 OpenAPI 文档准确性与返回值类型安全。
 - 已完成：新增 TDD 单测 `backend/tests/test_checkout_quote_schema.py`，验证 Quote 响应的默认值回退、枚举字段校验等边界场景，并强制添加到 Git 版本控制中。
 - 已验证：`PYTHONPATH=backend python3 -m pytest -q backend/tests/test_checkout_quote_schema.py` 通过；`py_compile` 通过；`GetDiagnostics` 无新增错误。
+
+## 本轮进展（第 74 批：前端测试自动化基石搭建）
+- 已完成：根据计划在 `frontend` 目录引入了 Vitest 和 React Testing Library 依赖集。
+- 已完成：配置了 `vite.config.ts` 以支持 `jsdom` 环境，并创建了全局的测试环境设置文件 `vitest.setup.ts`。
+- 已完成：编写了工具函数单元测试 `checkoutBlockReason.test.ts`，验证了不同不可下单原因到 i18n 翻译键的正确映射逻辑。
+- 已完成：编写了 React 组件测试 `BongoCat.test.tsx`，验证了组件在无头浏览器环境下的正确渲染。
+- 已验证：`npm run test` 在前端项目成功执行（4 passed），构建了前端 TDD/自动化回归的基础设施。
