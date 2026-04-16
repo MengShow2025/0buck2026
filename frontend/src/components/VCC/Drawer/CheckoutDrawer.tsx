@@ -77,6 +77,8 @@ export const CheckoutDrawer: React.FC = () => {
   const [balanceDeduction, setBalanceDeduction] = useState(0);
   const [actualBalanceCost, setActualBalanceCost] = useState(0);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [isPreflightChecking, setIsPreflightChecking] = useState(false);
+  const [isCheckoutBlocked, setIsCheckoutBlocked] = useState(false);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -137,6 +139,51 @@ export const CheckoutDrawer: React.FC = () => {
     return fallbackMap[selectedProductId || 'p1'] ?? 1;
   })();
 
+  const buildSubmitToken = () =>
+    (crypto.randomUUID().replace(/-/g, '') + '00000000000000000000000000000000').slice(0, 32);
+
+  const mapCheckoutError = (detail: string, fallbackMessage?: string) => {
+    if (detail.startsWith('product_not_ready_for_checkout')) return '该商品尚未完成上架结算配置，暂不可下单。';
+    if (detail.startsWith('invalid_product_price')) return '该商品价格待补全，暂不可下单。';
+    if (detail.startsWith('product_not_found')) return '商品不存在或已下架。';
+    if (detail.startsWith('quote_')) return '报价已过期或不一致，请重试一次。';
+    if (detail.startsWith('duplicate_checkout_submission')) return '检测到重复提交，请稍后查看订单状态。';
+    if (detail.startsWith('insufficient_balance_for_full_payment')) return '余额不足，无法完成全额余额支付。';
+    if (detail.startsWith('not_authenticated') || detail.startsWith('unauthorized')) return '请先登录后再下单。';
+    return fallbackMessage || '下单校验失败，请稍后重试。';
+  };
+
+  useEffect(() => {
+    let active = true;
+    const preflight = async () => {
+      setIsPreflightChecking(true);
+      try {
+        const payload = {
+          items: [{ product_id: checkoutProductId, quantity: 1 }],
+          balance_used: useBalance ? Number(actualBalanceCost.toFixed(2)) : 0,
+          applied_discount_codes: appliedDiscounts,
+          is_full_payment: isFullBalancePayment,
+          client_submit_token: buildSubmitToken()
+        };
+        await orderApi.createQuote(payload);
+        if (!active) return;
+        setIsCheckoutBlocked(false);
+        setCheckoutError(null);
+      } catch (error: any) {
+        if (!active) return;
+        const detail = String(error?.response?.data?.detail || '');
+        setIsCheckoutBlocked(true);
+        setCheckoutError(mapCheckoutError(detail));
+      } finally {
+        if (active) setIsPreflightChecking(false);
+      }
+    };
+    preflight();
+    return () => {
+      active = false;
+    };
+  }, [checkoutProductId, useBalance, actualBalanceCost, isFullBalancePayment, appliedDiscounts.join(',')]);
+
   const localRate = getExchangeRate(currency);
   const currencySymbol = currency === 'JPY' ? '¥' : currency === 'CNY' ? '¥' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
 
@@ -158,11 +205,12 @@ export const CheckoutDrawer: React.FC = () => {
   const handleRemoveAllDiscounts = () => setAppliedDiscounts([]);
 
   const handleConfirm = async () => {
+    if (isCheckoutBlocked) return;
     setIsProcessing(true);
     setCheckoutError(null);
     setSecuringStep('securing');
     try {
-      const submitToken = (crypto.randomUUID().replace(/-/g, '') + '00000000000000000000000000000000').slice(0, 32);
+      const submitToken = buildSubmitToken();
       const quotePayload = {
         items: [{ product_id: checkoutProductId, quantity: 1 }],
         balance_used: useBalance ? Number(actualBalanceCost.toFixed(2)) : 0,
@@ -220,28 +268,13 @@ export const CheckoutDrawer: React.FC = () => {
       setIsShopifyCheckoutOpen(true);
     } catch (error: any) {
       const detail = String(error?.response?.data?.detail || '');
-      if (detail.startsWith('product_not_ready_for_checkout')) {
-        setCheckoutError('该商品尚未完成上架结算配置，暂不可下单。');
-      } else if (detail.startsWith('invalid_product_price')) {
-        setCheckoutError('该商品价格待补全，暂不可下单。');
-      } else if (detail.startsWith('product_not_found')) {
-        setCheckoutError('商品不存在或已下架。');
-      } else if (detail.startsWith('quote_')) {
-        setCheckoutError('报价已过期或不一致，请重试一次。');
-      } else if (detail.startsWith('duplicate_checkout_submission')) {
-        setCheckoutError('检测到重复提交，请稍后查看订单状态。');
-      } else if (detail.startsWith('insufficient_balance_for_full_payment')) {
-        setCheckoutError('余额不足，无法完成全额余额支付。');
-      } else {
-        const message = String(error?.message || '').toLowerCase();
-        if (message.includes('quote_token_missing')) {
-          setCheckoutError('报价失败，未生成有效报价单。');
-        } else if (message.includes('shopify')) {
-          setCheckoutError('订单创建失败（网关暂不可用），请稍后重试。');
-        } else {
-          setCheckoutError('下单校验失败，请稍后重试。');
-        }
-      }
+      const message = String(error?.message || '').toLowerCase();
+      const fallback = message.includes('quote_token_missing')
+        ? '报价失败，未生成有效报价单。'
+        : message.includes('shopify')
+        ? '订单创建失败（网关暂不可用），请稍后重试。'
+        : undefined;
+      setCheckoutError(mapCheckoutError(detail, fallback));
       console.error('Checkout failed:', error);
     } finally {
       setIsProcessing(false);
@@ -265,6 +298,8 @@ export const CheckoutDrawer: React.FC = () => {
   const ctaLabel = () => {
     if (step === 1) return `Continue to Address`;
     if (step === 2) return `Continue to Payment`;
+    if (isPreflightChecking) return '校验商品价格中...';
+    if (isCheckoutBlocked) return '当前商品暂不可下单';
     if (isFullBalancePayment) return t('checkout.full_balance_payment');
     return `${t('checkout.place_order')} · ${currencySymbol}${formatPrice(finalTotal)}`;
   };
@@ -602,7 +637,7 @@ export const CheckoutDrawer: React.FC = () => {
       <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-[#1C1C1E]/90 backdrop-blur-xl border-t border-gray-100 dark:border-white/5 px-4 pt-3 pb-8">
         <button
           onClick={() => step < 3 ? setStep(step + 1) : handleConfirm()}
-          disabled={isProcessing}
+          disabled={isProcessing || (step === 3 && (isPreflightChecking || isCheckoutBlocked))}
           className="w-full h-14 rounded-full font-semibold text-[16px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
           style={{
             background: isFullBalancePayment && step === 3 ? '#16a34a' : 'linear-gradient(135deg, #FF7A3D 0%, #E8450A 100%)',

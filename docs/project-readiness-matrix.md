@@ -346,3 +346,20 @@
   - `invalid_product_price` -> 商品价格待补全；
   - `product_not_found` -> 商品不存在或已下架。
 - 已验证：前端 `npm run build` 通过（exit code 0），无新增 TS 诊断错误。
+
+## 本轮进展（第 50 批：Checkout 真实下单闭环接入）
+- 已完成：`CheckoutDrawer` 将“报价成功”后的下一步接入真实 `orderApi.create`（`/rewards/payment/create-order`），并复用同一 `client_submit_token` 与 `quote_token`。
+- 已完成：根据后端返回自动分流：
+  - 有 `invoice_url` -> 打开 Shopify 支付弹层；
+  - 有 `order_id` -> 直接进入支付成功页；
+  - `status=error` / 业务 detail -> 转为前端可读文案。
+- 已完成：补齐常见后端错误映射（`quote_*`、`duplicate_checkout_submission`、`insufficient_balance_for_full_payment`）。
+- 已验证：前端 `npm run build` 通过（exit code 0）。
+
+## 本轮进展（第 51 批：Checkout 入场预检与按钮门禁）
+- 已完成：进入 Checkout 后自动执行 `quote` 预检（商品/价格/优惠/余额参数实时参与），提前判定“可下单/不可下单”。
+- 已完成：底部 CTA 门禁：
+  - 预检中显示“校验商品价格中...”并禁用；
+  - 预检失败显示“当前商品暂不可下单”并禁用。
+- 已完成：统一错误文案映射函数，保证预检与提交失败文案一致，减少用户困惑。
+- 已验证：前端 `npm run build` 通过（exit code 0）。
