@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { userApi, authApi } from '../../services/api';
-import { translate } from '../../i18n';
+import { translate, normalizeLanguage } from '../../i18n';
 
 type Theme = 'light' | 'dark' | 'system';
-type Language = 'en' | 'zh' | 'ja' | 'ko' | 'es' | 'fr' | 'de' | 'ar';
+type Language = 'en' | 'zh';
 type Currency = 'AUTO' | string; // Use string to support all world currencies dynamically
 export type DrawerType = 'none' | 'lounge' | 'square' | 'prime' | 'wallet' | 'fans' | 'product_detail' | 'checkout' | 'orders' | 'address' | 'service' | 'me' | 'cart' | 'all_group_buy' | 'all_fan_feeds' | 'all_topics' | 'chat_room' | 'notification' | 'contacts' | 'my_feeds' | 'user_profile' 
   | 'share_menu' 
@@ -153,21 +153,15 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>('system');
   const [language, setLanguage] = useState<Language>(() => {
-    const raw = (navigator.language || 'en').toLowerCase();
-    if (raw.startsWith('zh')) return 'zh';
-    if (raw.startsWith('ja')) return 'ja';
-    if (raw.startsWith('ko')) return 'ko';
-    if (raw.startsWith('es')) return 'es';
-    if (raw.startsWith('fr')) return 'fr';
-    if (raw.startsWith('de')) return 'de';
-    if (raw.startsWith('ar')) return 'ar';
-    return 'en';
+    const stored = localStorage.getItem('app_language');
+    return normalizeLanguage(stored || navigator.language);
   });
 
   useEffect(() => {
     const root = window.document.documentElement;
-    root.dir = language === 'ar' ? 'rtl' : 'ltr';
+    root.dir = 'ltr';
     root.lang = language;
+    localStorage.setItem('app_language', language);
   }, [language]);
 
   // Handle Theme Changes

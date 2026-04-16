@@ -268,13 +268,7 @@ export const SettingsDrawer: React.FC = () => {
                 onChange={setLanguage}
                 options={[
                   { value: 'zh', label: 'Chinese (Simplified)' },
-                  { value: 'en', label: 'English' },
-                  { value: 'ja', label: 'Japanese' },
-                  { value: 'ko', label: '한국어' },
-                  { value: 'es', label: 'Español' },
-                  { value: 'fr', label: 'Français' },
-                  { value: 'de', label: 'Deutsch' },
-                  { value: 'ar', label: 'العربية' }
+                  { value: 'en', label: 'English' }
                 ]}
               />
             </div>
