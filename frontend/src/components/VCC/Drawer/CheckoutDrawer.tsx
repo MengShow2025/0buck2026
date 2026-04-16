@@ -155,9 +155,7 @@ export const CheckoutDrawer: React.FC = () => {
   }, [product.price]);
 
   const subtotal = product.price;
-  const taxRate = 0.08;
-  const taxAmount = (subtotal - totalDiscountAmount) * taxRate;
-  const subtotalWithTax = subtotal - totalDiscountAmount + taxAmount;
+  const subtotalWithTax = Math.max(0, subtotal - totalDiscountAmount);
 
   useEffect(() => {
     const recalcDiscounts = async () => {
@@ -476,8 +474,8 @@ export const CheckoutDrawer: React.FC = () => {
               {/* Price breakdown */}
               <div className="pt-3 space-y-2">
                 <div className="flex justify-between text-[13px]">
-                  <span className="text-gray-500">{t('checkout.tax')} (8%)</span>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">{currencySymbol}{formatPrice(taxAmount)}</span>
+                  <span className="text-gray-500">{t('checkout.tax')}</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">At gateway settlement</span>
                 </div>
                 <div className="flex justify-between text-[13px]">
                   <span className="text-gray-500">{t('order.shipping_cost')}</span>
@@ -691,7 +689,7 @@ export const CheckoutDrawer: React.FC = () => {
               <div className="text-right">
                 <p className="font-mono font-bold text-[16px] text-[var(--wa-teal)]">{currencySymbol}{formatPrice(effectiveFinalDue)}</p>
                 <p className="text-[10px] text-gray-400 flex items-center gap-1 justify-end mt-0.5">
-                  <Info className="w-3 h-3" /> incl. tax + discounts
+                  <Info className="w-3 h-3" /> quote-aligned amount
                 </p>
               </div>
             </div>
