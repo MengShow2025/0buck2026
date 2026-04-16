@@ -28,7 +28,7 @@ from app.core.checkout_block_reason import (
     CHECKOUT_BLOCK_REASON_INACTIVE,
     CHECKOUT_BLOCK_REASON_NOT_PUBLISHED,
 )
-from app.schemas.checkout import CheckoutQuoteResponse
+from app.schemas.checkout import CheckoutQuoteResponse, CheckoutCreateResponse
 
 
 router = APIRouter()
@@ -1168,7 +1168,7 @@ def evaluate_checkout_discounts(
 
 from app.services.smart_business import SmartBusinessService
 
-@router.post("/payment/create-order")
+@router.post("/payment/create-order", response_model=CheckoutCreateResponse)
 def create_payment_order(
     payload: Dict[str, Any], 
     db: Session = Depends(get_db),

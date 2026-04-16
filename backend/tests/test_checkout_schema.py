@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.checkout import CheckoutQuoteResponse
+from app.schemas.checkout import CheckoutQuoteResponse, CheckoutCreateResponse
 
 
 def _base_payload():

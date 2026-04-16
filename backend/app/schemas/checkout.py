@@ -21,3 +21,15 @@ class CheckoutQuoteResponse(BaseModel):
     not_ready_reasons: Dict[str, CheckoutBlockReason] = {}
     checkout_block_reason: Optional[CheckoutBlockReason] = None
     summary: CheckoutQuoteSummary
+
+
+class CheckoutCreateResponse(BaseModel):
+    status: str
+    invoice_url: Optional[str] = None
+    order_id: Optional[str] = None
+    server_subtotal: Optional[float] = None
+    coupon_discount: Optional[float] = None
+    validated_discount_codes: Optional[List[str]] = None
+    server_final_due: Optional[float] = None
+    detail: Optional[str] = None
+    trace_id: Optional[str] = None

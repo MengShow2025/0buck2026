@@ -494,3 +494,9 @@
 - 已完成：修改 `backend/app/api/rewards.py` 中的 `quote` 接口，使用 `CheckoutQuoteResponse` 作为 `response_model`，提升 OpenAPI 文档准确性与返回值类型安全。
 - 已完成：新增 TDD 单测 `backend/tests/test_checkout_quote_schema.py`，验证 Quote 响应的默认值回退、枚举字段校验等边界场景，并强制添加到 Git 版本控制中。
 - 已验证：`PYTHONPATH=backend python3 -m pytest -q backend/tests/test_checkout_quote_schema.py` 通过；`py_compile` 通过；`GetDiagnostics` 无新增错误。
+
+## 本轮进展（第 72 批：Create Order 响应 Schema 强类型化）
+- 已完成：在 `backend/app/schemas/checkout.py` 新增 `CheckoutCreateResponse` 模型，定义 `invoice_url`、`order_id` 及服务器重算金额的可选返回字段。
+- 已完成：修改 `backend/app/api/rewards.py` 中的 `create_payment_order` 接口，使用 `CheckoutCreateResponse` 作为 `response_model`，完善结账全链路 OpenAPI 文档与类型安全。
+- 已完成：扩展 `backend/tests/test_checkout_schema.py`，增加对 `CheckoutCreateResponse` 的 Draft Order（B 模式）与 Direct Order（C 模式）数据结构的边界测试。
+- 已验证：`PYTHONPATH=backend python3 -m pytest -q backend/tests/test_checkout_schema.py` 与 `py_compile` 均通过；Checkout 前后端核心链路（预检、报价、防篡改、下单）在类型与逻辑上均已闭环，在矩阵中将其提升为“高完成”。
