@@ -1,4 +1,13 @@
+from enum import Enum
 from typing import Final, FrozenSet
+
+
+class CheckoutBlockReason(str, Enum):
+    INACTIVE = "inactive"
+    MISSING_PRICE = "missing_price"
+    NOT_PUBLISHED = "not_published"
+    UNKNOWN = "unknown"
+
 
 CHECKOUT_BLOCK_REASON_INACTIVE: Final[str] = "inactive"
 CHECKOUT_BLOCK_REASON_MISSING_PRICE: Final[str] = "missing_price"
