@@ -229,6 +229,8 @@ export const CheckoutDrawer: React.FC = () => {
         };
         const quoteResp = await orderApi.createQuote(payload);
         if (!active) return;
+        const checkoutReady = quoteResp?.data?.checkout_ready !== false;
+        const notReadyIds = (quoteResp?.data?.not_ready_product_ids || []) as number[];
         const summary = quoteResp?.data?.summary;
         if (summary) {
           setQuoteSummary({
@@ -240,8 +242,14 @@ export const CheckoutDrawer: React.FC = () => {
         } else {
           setQuoteSummary(null);
         }
-        setIsCheckoutBlocked(false);
-        setCheckoutError(null);
+        if (!checkoutReady) {
+          const blockedId = notReadyIds[0] ?? checkoutProductId;
+          setIsCheckoutBlocked(true);
+          setCheckoutError(mapCheckoutError(`product_not_ready_for_checkout:${blockedId}`));
+        } else {
+          setIsCheckoutBlocked(false);
+          setCheckoutError(null);
+        }
       } catch (error: any) {
         if (!active) return;
         const detail = String(error?.response?.data?.detail || '');
@@ -305,6 +313,13 @@ export const CheckoutDrawer: React.FC = () => {
           balanceUsed: Number(quoteS.balance_used ?? 0),
           finalDue: Number(quoteS.final_due ?? finalTotal),
         });
+      }
+      if (quoteResp?.data?.checkout_ready === false) {
+        const notReadyIds = (quoteResp?.data?.not_ready_product_ids || []) as number[];
+        const blockedId = notReadyIds[0] ?? checkoutProductId;
+        setCheckoutError(mapCheckoutError(`product_not_ready_for_checkout:${blockedId}`));
+        setIsCheckoutBlocked(true);
+        return;
       }
 
       const createResp = await orderApi.create({

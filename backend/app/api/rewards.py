@@ -385,6 +385,7 @@ def _prepare_checkout_context(
         raise HTTPException(status_code=400, detail="items_required")
 
     sanitized_items: List[Dict[str, Any]] = []
+    not_ready_product_ids: List[int] = []
     subtotal = Decimal("0")
     for item in raw_items:
         try:
@@ -412,6 +413,7 @@ def _prepare_checkout_context(
                         raise HTTPException(status_code=400, detail=f"invalid_product_price:{product_id}")
                     subtotal += sale_price * quantity
                     sanitized_items.append({"product_id": product_id, "quantity": quantity})
+                    not_ready_product_ids.append(product_id)
                     continue
                 raise HTTPException(status_code=400, detail=f"product_not_ready_for_checkout:{product_id}")
             try:
@@ -473,6 +475,8 @@ def _prepare_checkout_context(
     return {
         "customer_id": customer_id,
         "sanitized_items": sanitized_items,
+        "checkout_ready": len(not_ready_product_ids) == 0,
+        "not_ready_product_ids": not_ready_product_ids,
         "item_fingerprint": _checkout_items_fingerprint(sanitized_items),
         "subtotal": subtotal,
         "balance_used": balance_used,
@@ -1275,6 +1279,8 @@ def create_checkout_quote(
         "status": "success",
         "quote_token": token,
         "expires_in_seconds": 300,
+        "checkout_ready": bool(ctx["checkout_ready"]),
+        "not_ready_product_ids": ctx["not_ready_product_ids"],
         "summary": {
             "subtotal": float(ctx["subtotal"]),
             "coupon_discount": float(ctx["coupon_discount"]),
