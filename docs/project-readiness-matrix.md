@@ -432,3 +432,15 @@
 - 已完成：`/products/{id}` 详情接口在 Product/Candidate/CJ 三路返回中补充 `checkout_ready`（仅正式可结算 Product 为 `true`）。
 - 已完成：前端 `ProductDetailDrawer` 的购买按钮按 `checkoutReady` 前置门禁，不可下单商品直接禁用并提示“当前商品暂不可下单”。
 - 已验证：后端 `py_compile` 与前端 `npm run build` 通过，`GetDiagnostics` 无新增错误。
+
+## 本轮进展（第 62 批：Discovery 卡片层门禁）
+- 已完成：`PrimeDrawer` 消费 discovery 返回的 `checkout_ready` 字段，前端统一归一化为 `checkoutReady`。
+- 已完成：不可下单商品在卡片层直接灰态、禁点，并展示“当前商品暂不可下单”提示（tooltip + 卡片角标）。
+- 已完成：仅 `checkoutReady=true` 的卡片允许进入商品详情抽屉，进一步减少无效 checkout 流程进入。
+- 已验证：前端 `npm run build` 通过，`GetDiagnostics` 无新增错误。
+
+## 本轮进展（第 63 批：其余商品入口门禁对齐）
+- 已完成：`BAP ProductGridCard` 接入 `checkout_ready/checkoutReady` 归一化，新增不可下单卡片灰态、禁点与提示角标。
+- 已完成：`DesktopSocialView` 的 Live C2W 商品入口接入同一门禁策略，不可下单时禁点并显示 `checkout.blocked_unavailable` 提示。
+- 已完成：新文案复用现有 i18n key，避免引入新的硬编码文案。
+- 已验证：前端 `npm run build` 通过，`GetDiagnostics` 无新增错误。

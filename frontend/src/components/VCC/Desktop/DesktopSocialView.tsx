@@ -14,8 +14,8 @@ const TRENDING_TOPICS = [
 ];
 
 const GROUP_BUY = [
-  { id: 1, name: 'C2W Minimal Keyboard Workstation', tag: 'Crowdfunding', left: 12, img: '3850512', type: 'crowdfunding' },
-  { id: 2, name: 'iPhone 15 Pro Group Buy',          tag: 'C2W',          left: 5,  img: '1092644', type: 'presale' },
+  { id: 1, name: 'C2W Minimal Keyboard Workstation', tag: 'Crowdfunding', left: 12, img: '3850512', type: 'crowdfunding', checkoutReady: false },
+  { id: 2, name: 'iPhone 15 Pro Group Buy',          tag: 'C2W',          left: 5,  img: '1092644', type: 'presale', checkoutReady: false },
 ];
 
 const FEEDS = [
@@ -35,7 +35,7 @@ const TABS: { id: SocialTab; label: string; icon: React.ReactNode }[] = [
 ];
 
 export const DesktopSocialView: React.FC = () => {
-  const { pushDrawer, setSelectedProductId } = useAppContext();
+  const { pushDrawer, setSelectedProductId, t } = useAppContext();
   const [activeTab, setActiveTab] = useState<SocialTab>('feed');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set(['f2']));
 
@@ -185,15 +185,24 @@ export const DesktopSocialView: React.FC = () => {
                   {GROUP_BUY.map(item => (
                     <div
                       key={item.id}
-                      onClick={() => { setSelectedProductId(`p${item.id}`); pushDrawer('product_detail'); }}
-                      className="flex items-center gap-3 cursor-pointer group"
+                      onClick={() => {
+                        if (item.checkoutReady === false) return;
+                        setSelectedProductId(`p${item.id}`);
+                        pushDrawer('product_detail');
+                      }}
+                      className={`flex items-center gap-3 group ${item.checkoutReady === false ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                      title={item.checkoutReady === false ? t('checkout.blocked_unavailable') : undefined}
                     >
                       <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border border-zinc-200 dark:border-zinc-700">
                         <img src={`https://picsum.photos/seed/${item.img}/100/100`} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-200 truncate">{item.name}</div>
-                        <div className="text-[11px] text-zinc-400"><span className="text-orange-500 font-bold">{item.left}</span> more to unlock</div>
+                        <div className="text-[11px] text-zinc-400">
+                          {item.checkoutReady === false
+                            ? t('checkout.blocked_unavailable')
+                            : (<><span className="text-orange-500 font-bold">{item.left}</span> more to unlock</>)}
+                        </div>
                       </div>
                     </div>
                   ))}
