@@ -25,10 +25,10 @@ const CustomSelect = ({ value, options, onChange, width = "w-36" }: { value: str
       </button>
       
       <AnimatePresence>
-        {isOpen && (
-          <>
-            <div className="fixed inset-0 z-[90]" onClick={() => setIsOpen(false)} />
-            <motion.div
+            {isOpen && (
+              <>
+                <div className="absolute inset-0 z-[90]" onClick={() => setIsOpen(false)} />
+                <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -521,7 +521,7 @@ export const SettingsDrawer: React.FC = () => {
       {/* Confirmation Modal */}
       <AnimatePresence>
         {showClearConfirm && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 z-[9999] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

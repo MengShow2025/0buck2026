@@ -63,28 +63,12 @@ class Product(Base):
     titles = Column(JSONB, server_default='{}')
     descriptions = Column(JSONB, server_default='{}')
     
-    # v4.7.1: Sourcing Provenance & Fixed Mapping
-    # '1688' or 'ALIBABA' or 'CJ'
-    source_platform = Column(String(50), default='1688', index=True)
-    cj_pid = Column(String, unique=True, index=True, nullable=True) # CJ Product ID
-    
-    source_url = Column(String, nullable=True)
-    backup_source_url = Column(String, nullable=True)
-    
-    # v8.0 Truth Protocol: Warehouse & Inventory
-    warehouse_anchor = Column(String, index=True) # e.g. "US, CN"
-    inventory = Column(Integer, default=0)
-    inventory_detail = Column(JSONB, server_default='{}')
-    sales_volume = Column(Integer, default=0) # Social Proof (CJ listedNum)
-    sell_price = Column(Float, nullable=True) # Raw CJ price
-    
     # Legacy fields (keep for fallback)
     title_zh = Column(String)
     title_en = Column(String)
     description_zh = Column(String)
     description_en = Column(String)
     
-    # Financial Analysis (Real-time Audit)
     original_price = Column(Float)  # 1688 cost in CNY
     source_cost_usd = Column(Float) # Buffered cost in USD (0.5% buffer applied)
     sale_price = Column(Float)      # Final price in USD
@@ -95,6 +79,68 @@ class Product(Base):
     ebay_price = Column(Float, nullable=True)
     amazon_compare_at_price = Column(Float, nullable=True)
     ebay_compare_at_price = Column(Float, nullable=True)
+    
+    # v7.0: Truth Engine & Industrial Arbitrage
+    amazon_link = Column(String, nullable=True)
+    amazon_list_price = Column(Float, nullable=True)
+    amazon_sale_price = Column(Float, nullable=True)
+    hot_rating = Column(Float, nullable=True)
+    profit_ratio = Column(Float, nullable=True)
+    
+    # v8.0 Advanced Tagging & Classification
+    product_category_label = Column(String, index=True) # 'REBATE', 'NORMAL', 'MAGNET'
+    admin_tags = Column(JSONB, server_default='[]')    # 'HOT', 'PROMOTION', 'PRE-SALE', 'CROWDFUNDING'
+    source_platform_name = Column(String, default='CJ', index=True) # 'CJ', 'ALIBABA', 'ALIEXPRESS', 'WILO', 'SALEYEE'
+    
+    entry_tag = Column(String, index=True) # 'Promotion', 'Rebate'
+    platform_tag = Column(String, default='CJ', index=True)
+    
+    # v7.0 Circuit Breaker & Alerts
+    is_melted = Column(Boolean, default=False, index=True)
+    melt_reason = Column(String, nullable=True)
+    shipping_ratio = Column(Float, nullable=True)
+    shipping_warning = Column(Boolean, default=False)
+    
+    # CJ Specific Meta (Step 6 / cj_fields_matrix.csv)
+    cj_pid = Column(String, index=True)
+    category_id = Column(String, index=True)
+    category_name = Column(String) # v7.0
+    is_test_product = Column(Boolean, default=False)
+    
+    # Media & Display
+    primary_image = Column(String) # v7.0
+    variant_images = Column(JSONB, server_default='[]') # v7.0
+    detail_images_html = Column(Text) # v7.0
+    
+    # Pricing
+    sell_price = Column(Float) # v7.0 (CJ sellPrice)
+    variant_sell_price = Column(Float) # v7.0
+    
+    # Dimensions & Weight
+    dimensions_display = Column(String) # v7.0
+    weight_display = Column(String) # v7.0
+    packing_weight = Column(Float)
+    product_weight = Column(Float)
+    
+    # Logistics
+    freight_fee = Column(Float) # v7.0
+    shipping_days = Column(String) # v7.0
+    inventory_total = Column(Integer)
+    warehouse_anchor = Column(String) # v7.0
+    
+    # v8.5 Truth Engine: Official ICBU & Global Warehouse Fields
+    cost_usd = Column(Float, nullable=True)
+    amazon_shipping_cost = Column(Float, nullable=True)
+    truth_body = Column(Text, nullable=True)
+    
+    # Variants (Explicit v7.0 Fields from Matrix)
+    variant_sku = Column(String) # v7.0
+    variant_key = Column(String) # v7.0
+    
+    # Compliance & Props
+    entry_code = Column(String)
+    entry_name = Column(String)
+    product_props = Column(JSONB, server_default='{}')
     
     images = Column(JSONB, server_default='[]')           # List of image URLs (Main Gallery)
     detail_images = Column(JSONB, server_default='[]') # v4.1: Long-page detail images
@@ -122,19 +168,26 @@ class Product(Base):
     # v4.6.7: Visual Fingerprinting for deduplication
     visual_fingerprint = Column(String, index=True, nullable=True) # MD5 of main image
     
+    # v7.0 Truth Engine: Vision Audit Columns
+    vision_ocr_text = Column(Text, nullable=True)
+    vision_audit_passed = Column(Boolean, default=True)
+    vision_audit_notes = Column(Text, nullable=True)
+    
+    # v7.2 Truth Engine: Asset Fingerprint Columns
+    source_pid = Column(String, index=True, nullable=True)
+    image_fingerprint_md5 = Column(String, index=True, nullable=True)
+    asset_lineage_verified = Column(Boolean, default=False)
+    source_platform_id = Column(String, nullable=True)
+    shopify_product_handle = Column(String, nullable=True)
+    
     # Black Box: Evidence, Social Proof, Tier Pricing
     structural_data = Column(JSONB, server_default='{}')
     
     # Computed Index (Generated Columns)
     # repurchase_rate = Column(Float, Computed("(structural_data->'social'->>'repurchase_rate')::float"))
     
-    # v3.1 Industrial-grade Enhancements
-    strategy_tag = Column(String, index=True) # 'IDS_FOLLOWING', 'IDS_SPY', 'IDS_VECTOR'
-    is_melted = Column(Boolean, default=False)
-    melting_reason = Column(String, nullable=True)
-    melted_at = Column(DateTime, nullable=True) # Timestamp of the melt event
-
     # v4.0: Desire Engine Snippets
+    strategy_tag = Column(String, index=True) # 'IDS_FOLLOWING', 'IDS_SPY', 'IDS_VECTOR'
     desire_hook = Column(String, nullable=True)
     desire_logic = Column(String, nullable=True)
     desire_closing = Column(String, nullable=True)
@@ -165,8 +218,6 @@ class Product(Base):
 Index('idx_product_attributes', Product.attributes, postgresql_using='gin')
 Index('idx_product_variants_data', Product.variants_data, postgresql_using='gin')
 Index('idx_product_structural_data', Product.structural_data, postgresql_using='gin')
-Index('idx_product_detail_images', Product.detail_images, postgresql_using='gin')
-Index('idx_product_metafields', Product.metafields, postgresql_using='gin')
 
 class ProductVector(Base):
     __tablename__ = "product_vectors"
@@ -180,28 +231,30 @@ class ProductVector(Base):
 class CandidateProduct(Base):
     """
     v3.9.0: Autonomous Sourcing Pipeline - Candidate Stage.
-    Status Flow: draft -> refined -> audited -> approved -> published
+    Status Flow: new -> reviewing -> approved/rejected -> synced (Product)
     """
     __tablename__ = "candidate_products"
 
     id = Column(Integer, primary_key=True, index=True)
     product_id_1688 = Column(String, unique=True, index=True)
-    status = Column(String, default="draft", index=True) # 'draft', 'refined', 'audited', 'approved', 'published'
+    status = Column(String, default="new", index=True) # 'new', 'reviewing', 'approved', 'rejected', 'synced'
     
     # v4.7.1: Sourcing Provenance & Fixed Mapping
-    # '1688' or 'ALIBABA' or 'CJ'
+    # '1688' or 'ALIBABA'
     source_platform = Column(String, default='1688', index=True)
-    cj_pid = Column(String, unique=True, index=True, nullable=True) # CJ Product ID
-    
     source_url = Column(String) # The hard-mapped direct purchase URL
     backup_source_url = Column(String, nullable=True) # Redundancy link
     
-    # v8.0 Truth Protocol: Warehouse & Inventory
-    warehouse_anchor = Column(String, index=True) # e.g. "US, CN"
-    inventory = Column(Integer, default=0)
-    inventory_detail = Column(JSONB, server_default='{}')
-    sales_volume = Column(Integer, default=0) # Social Proof (CJ listedNum)
-    sell_price = Column(Float, nullable=True) # Raw CJ price
+    # v7.0 Truth Engine & Industrial Arbitrage (Industrialized Refinement)
+    body_html = Column(Text) # v7.0: Truth UI Placeholder
+    title_en = Column(String) # v7.0: Refined English Title
+    description_en = Column(Text) # v7.0: Refined English Description
+    
+    # v8.5 Truth Engine: Official ICBU & Global Warehouse Fields
+    cost_usd = Column(Float, nullable=True)
+    amazon_shipping_fee = Column(Float, nullable=True)
+    amazon_shipping_cost = Column(Float, nullable=True)
+    truth_body = Column(Text, nullable=True)
     
     # AI Discovery Proof (The Evidence Chain)
     discovery_source = Column(String) # 'IDS_FOLLOWING', 'IDS_SPY', 'C2M_WISH'
@@ -212,12 +265,6 @@ class CandidateProduct(Base):
     description_zh = Column(String)
     images = Column(JSONB, server_default='[]')
     
-    # v4.7.1: Sourcing Provenance
-    source_platform = Column(String, default='1688', index=True)
-    source_url = Column(String) # For Candidate, this is the original sniffed link
-    
-    # v4.7.2: Alibaba Alternative Sniffing
-    backup_source_url = Column(String, nullable=True) # Redundancy link (e.g. Alibaba.com RTS)
     alibaba_comparison_price = Column(Float, nullable=True) # Price on Alibaba.com for comparison
     
     # Financial Analysis (Pre-audit)
@@ -231,8 +278,72 @@ class CandidateProduct(Base):
     ebay_compare_at_price = Column(Float, nullable=True)
     market_comparison_url = Column(String, nullable=True)
     
+    # v7.0: Truth Engine & Industrial Arbitrage
+    amazon_link = Column(String, nullable=True)
+    amazon_list_price = Column(Float, nullable=True)
+    amazon_sale_price = Column(Float, nullable=True)
+    hot_rating = Column(Float, nullable=True)
+    profit_ratio = Column(Float, nullable=True)
+    
+    # v8.0 Advanced Tagging & Classification
+    product_category_label = Column(String, index=True) # 'REBATE', 'NORMAL', 'MAGNET'
+    admin_tags = Column(JSONB, server_default='[]')    # 'HOT', 'PROMOTION', 'PRE-SALE', 'CROWDFUNDING'
+    source_platform_name = Column(String, default='CJ', index=True) # 'CJ', 'ALIBABA', 'ALIEXPRESS', 'WILO', 'SALEYEE'
+    
+    entry_tag = Column(String, index=True) # 'Promotion', 'Rebate'
+    platform_tag = Column(String, default='CJ', index=True)
+    
+    # v7.0 Circuit Breaker & Alerts
+    is_melted = Column(Boolean, default=False, index=True)
+    melt_reason = Column(String, nullable=True)
+    shipping_ratio = Column(Float, nullable=True)
+    shipping_warning = Column(Boolean, default=False)
+    
+    # CJ Specific Meta (Step 6 / cj_fields_matrix.csv)
+    cj_pid = Column(String, index=True)
+    category_id = Column(String, index=True)
+    category_name = Column(String) # v7.0
+    is_test_product = Column(Boolean, default=False)
+    
+    # Media & Display
+    primary_image = Column(String) # v7.0
+    variant_images = Column(JSONB, server_default='[]') # v7.0
+    detail_images_html = Column(Text) # v7.0
+    
+    # Pricing
+    sell_price = Column(Float) # v7.0 (CJ sellPrice)
+    variant_sell_price = Column(Float) # v7.0
+    
+    # Dimensions & Weight
+    dimensions_display = Column(String) # v7.0
+    weight_display = Column(String) # v7.0
+    packing_weight = Column(Float)
+    product_weight = Column(Float)
+    
+    # Logistics
+    freight_fee = Column(Float) # v7.0
+    shipping_days = Column(String) # v7.0
+    inventory_total = Column(Integer)
+    warehouse_anchor = Column(String) # v7.0
+    
+    # v8.5 Truth Engine: Official ICBU & Global Warehouse Fields
+    # cost_usd, amazon_shipping_fee defined above in v8.5 section
+    
+    # Variants (Explicit v7.0 Fields from Matrix)
+    variant_sku = Column(String) # v7.0
+    variant_key = Column(String) # v7.0
+    
+    # Compliance & Props
+    entry_code = Column(String)
+    entry_name = Column(String)
+    product_props = Column(JSONB, server_default='{}')
+    
+    # Supplier Context
+    supplier_id_cj = Column(String)
+    supplier_name = Column(String)
+    vendor_rating = Column(Float)
+    
     estimated_sale_price = Column(Float)
-    profit_ratio = Column(Float)
     
     # Supplier Context
     supplier_id_1688 = Column(String)
@@ -248,6 +359,18 @@ class CandidateProduct(Base):
     
     # v4.6.7: Visual Fingerprinting for deduplication
     visual_fingerprint = Column(String, index=True, nullable=True)
+    
+    # v7.0 Truth Engine: Vision Audit Columns
+    vision_ocr_text = Column(Text, nullable=True)
+    vision_audit_passed = Column(Boolean, default=True)
+    vision_audit_notes = Column(Text, nullable=True)
+    
+    # v7.2 Truth Engine: Asset Fingerprint Columns
+    source_pid = Column(String, index=True, nullable=True)
+    image_fingerprint_md5 = Column(String, index=True, nullable=True)
+    asset_lineage_verified = Column(Boolean, default=False)
+    source_platform_id = Column(String, nullable=True)
+    shopify_product_handle = Column(String, nullable=True)
     
     # v4.0: Desire Engine Snippets
     desire_hook = Column(String, nullable=True) # The Hook: Zapping the pain point
@@ -271,19 +394,8 @@ class CandidateProduct(Base):
     structural_data = Column(JSONB, server_default='{}')
     raw_vendor_info = Column(JSONB, server_default='{}')
     
-    # v3.1 Hybrid Growth Model
-    is_cashback_eligible = Column(Boolean, default=True) # Traffic vs Profit switch
-    category_type = Column(String, default="PROFIT") # 'TRAFFIC', 'PROFIT'
-    
     audit_notes = Column(String, nullable=True)
     evidence = Column(JSONB, server_default='{}')
-    
-    # v8.0 Truth Protocol: Warehouse & Inventory
-    warehouse_anchor = Column(String, index=True) # e.g. "US, CN"
-    inventory = Column(Integer, default=0)
-    inventory_detail = Column(JSONB, server_default='{}')
-    sales_volume = Column(Integer, default=0) # Social Proof (CJ listedNum)
-    sell_price = Column(Float, nullable=True) # Raw CJ price
     
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

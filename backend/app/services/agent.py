@@ -125,14 +125,18 @@ def get_dynamic_llm(user_id: int, db: SessionLocal, task_type: str = "chat"):
         ), True
     
     # Use System Key (Subsidy)
-    system_key = config_service.get_api_key("GEMINI_API_KEY") or config_service.get_api_key("GOOGLE_API_KEY")
+    # Prefer MINIMAX for Chinese mainland IP stability
+    system_key = config_service.get_api_key("MINIMAX_API_KEY")
+    if not system_key:
+        system_key = config_service.get_api_key("GEMINI_API_KEY") or config_service.get_api_key("GOOGLE_API_KEY")
+        
     if not system_key:
         from dotenv import load_dotenv
         load_dotenv(override=True)
-        system_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        system_key = os.getenv("MINIMAX_API_KEY") or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         
     if not system_key or len(system_key) < 10:
-        logger.error("No valid system GEMINI_API_KEY found.")
+        logger.error("No valid system API_KEY found.")
         # Attempt to gracefully return a dummy model if completely missing to prevent hard crash
         system_key = "dummy_key_to_prevent_crash"
     
@@ -206,11 +210,11 @@ async def supervisor(state: AgentState):
         if user_api_key:
             api_keys_to_try = [user_api_key]
         else:
-            raw_pool = config_service.get_api_key("GEMINI_API_KEYS") or config_service.get_api_key("GEMINI_API_KEY") or config_service.get_api_key("GOOGLE_API_KEY")
+            raw_pool = config_service.get_api_key("MINIMAX_API_KEY") or config_service.get_api_key("GEMINI_API_KEYS") or config_service.get_api_key("GEMINI_API_KEY") or config_service.get_api_key("GOOGLE_API_KEY")
             if not raw_pool:
                 from dotenv import load_dotenv
                 load_dotenv()
-                raw_pool = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+                raw_pool = os.getenv("MINIMAX_API_KEY") or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
                 
             if raw_pool:
                 # Support comma-separated keys for pooling

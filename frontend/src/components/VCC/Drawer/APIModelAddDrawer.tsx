@@ -158,10 +158,10 @@ export const APIModelAddDrawer: React.FC = () => {
             </button>
             
             {/* Custom Dropdown */}
-            {isProviderOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setIsProviderOpen(false)}></div>
-                <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-[#2C2C2E] border border-gray-100 dark:border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+              {isProviderOpen && (
+                <>
+                  <div className="absolute inset-0 z-40" onClick={() => setIsProviderOpen(false)}></div>
+                  <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-[#2C2C2E] border border-gray-100 dark:border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
                   {providers.map(p => (
                     <div
                       key={p}
@@ -198,8 +198,8 @@ export const APIModelAddDrawer: React.FC = () => {
             
             {/* Custom Dropdown */}
             {isModelOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setIsModelOpen(false)}></div>
+                <>
+                  <div className="absolute inset-0 z-40" onClick={() => setIsModelOpen(false)}></div>
                 <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-[#2C2C2E] border border-gray-100 dark:border-white/10 rounded-2xl shadow-xl z-50 max-h-[240px] overflow-y-auto scrollbar-hide animate-in fade-in slide-in-from-top-2">
                   {models[provider]?.map(m => (
                     <div

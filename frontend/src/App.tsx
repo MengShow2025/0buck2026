@@ -11,6 +11,7 @@ import { aiApi } from './services/api';
 
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AdminLayout } from './components/Admin/Layout/AdminLayout';
+import { AdminLoginPage } from './components/Admin/Pages/AdminLoginPage';
 
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
@@ -297,49 +298,71 @@ function MainApp() {
 
   const isDesktop = useIsDesktop();
 
+  const mobileContent = (
+    <div className="flex flex-col h-full w-full bg-[var(--wa-bg)] relative overflow-hidden text-[15px] transition-colors duration-300 transform-gpu">
+      {/* Global App Background Pattern */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none opacity-[0.025] dark:opacity-[0.04]"
+        style={{
+          backgroundImage: `radial-gradient(circle, #E8450A 1px, transparent 1px)`,
+          backgroundSize: '28px 28px',
+          backgroundRepeat: 'repeat',
+        }}
+      />
+      
+      <div className="relative z-10 flex flex-col h-full w-full">
+        <VortexContainer>
+          <div className="flex flex-col gap-2 pb-4">
+            {messages.map((msg) => (
+              <CustomMessageUI 
+                key={msg.id} 
+                message={msg} 
+                isMyMessage={() => msg.user.id === 'user'} 
+              />
+            ))}
+          </div>
+        </VortexContainer>
+
+        {/* Fixed positioned input at the bottom */}
+        <div className="w-full bg-transparent pt-2 z-20">
+          <VCCInput onSendMessage={handleSendMessage} />
+        </div>
+      </div>
+
+      {/* Global Drawer Overlay */}
+      <GlobalDrawer />
+      
+      {/* Splash Screen */}
+      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+    </div>
+  );
+
   return (
     <>
-      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
       {isDesktop ? (
-        <DesktopLayout
-          messages={messages}
-          isAiTyping={isAiTyping}
-          onSendMessage={handleSendMessage}
-        />
-      ) : (
-        <div className="flex flex-col h-screen w-full bg-[var(--wa-bg)] relative overflow-hidden text-[15px] transition-colors duration-300">
-        {/* Global App Background Pattern */}
-        <div
-          className="absolute inset-0 z-0 pointer-events-none opacity-[0.025] dark:opacity-[0.04]"
-          style={{
-            backgroundImage: `radial-gradient(circle, #E8450A 1px, transparent 1px)`,
-            backgroundSize: '28px 28px',
-            backgroundRepeat: 'repeat',
-          }}
-        />
-        
-        <div className="relative z-10 flex flex-col h-full w-full">
-          <VortexContainer>
-            <div className="flex flex-col gap-2 pb-4">
-              {messages.map((msg) => (
-                <CustomMessageUI 
-                  key={msg.id} 
-                  message={msg} 
-                  isMyMessage={() => msg.user.id === 'user'} 
-                />
-              ))}
-            </div>
-          </VortexContainer>
-
-          {/* Fixed positioned input at the bottom */}
-          <div className="w-full bg-transparent pt-2 z-20">
-            <VCCInput onSendMessage={handleSendMessage} />
+        <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-[#110C05] via-black to-black py-2 sm:py-4 relative overflow-hidden">
+          {/* Ambient Glow Effects */}
+          <div className="absolute top-1/4 left-1/4 w-[40vw] h-[40vw] bg-orange-600/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none" />
+          <div className="absolute bottom-1/4 right-1/4 w-[30vw] h-[30vw] bg-amber-600/10 rounded-full blur-[100px] mix-blend-screen pointer-events-none" />
+          
+          {/* Subtle Grid Pattern */}
+          <div 
+            className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]"
+            style={{
+              backgroundImage: `linear-gradient(to right, #E8450A 1px, transparent 1px), linear-gradient(to bottom, #E8450A 1px, transparent 1px)`,
+              backgroundSize: '4rem 4rem',
+            }}
+          />
+          
+          {/* Desktop Wrapper for Mobile UI - Stretches to top/bottom, keeps 9:19.5 smartphone ratio */}
+          <div className="relative h-full aspect-[9/19.5] max-w-[480px] bg-white dark:bg-[#0A0A0B] rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(232,69,10,0.15)] border-[6px] border-[#1A1A1A] overflow-hidden ring-1 ring-white/10 transition-all duration-300 z-10 mx-auto">
+            {mobileContent}
           </div>
         </div>
-
-        {/* Global Drawer Overlay */}
-        <GlobalDrawer />
-      </div>
+      ) : (
+        <div className="h-screen w-full">
+          {mobileContent}
+        </div>
       )}
     </>
   );
@@ -350,6 +373,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<MainApp />} />
       <Route path="/diagram" element={<ArchitectureDiagram />} />
+      <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin/*" element={<AdminLayout />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

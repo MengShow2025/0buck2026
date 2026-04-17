@@ -364,7 +364,7 @@ async def test_im_connectivity():
     
     db = SessionLocal()
     config_service = ConfigService(db)
-    ai_key = config_service.get_api_key("GEMINI_API_KEY") or config_service.get_api_key("GOOGLE_API_KEY")
+    ai_key = config_service.get_api_key("MINIMAX_API_KEY") or config_service.get_api_key("GEMINI_API_KEY") or config_service.get_api_key("GOOGLE_API_KEY")
     db.close()
     
     return {
@@ -372,7 +372,7 @@ async def test_im_connectivity():
         "timestamp": datetime.now().isoformat(),
         "status": "ok",
         "ai_brain": {
-            "google_api_key_set": bool(ai_key),
+            "api_key_set": bool(ai_key),
             "key_prefix": ai_key[:5] if ai_key else "None"
         },
         "platforms": {

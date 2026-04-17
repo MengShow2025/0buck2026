@@ -26,11 +26,11 @@ export const PaymentSuccessScreen: React.FC<PaymentSuccessScreenProps> = ({ orde
   const convertedAmount = (amount * localRate).toFixed(2);
 
   return (
-    <motion.div
+    <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[10001] bg-gradient-to-b from-[var(--wa-teal)]/5 via-white to-white dark:from-[var(--wa-teal)]/10 dark:via-[#111111] dark:to-[#111111] flex flex-col items-center justify-center p-6"
+      className="absolute inset-0 z-[10001] bg-gradient-to-b from-[var(--wa-teal)]/5 via-white to-white dark:from-[var(--wa-teal)]/10 dark:via-[#111111] dark:to-[#111111] flex flex-col items-center justify-center p-6"
     >
       {/* Confetti particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

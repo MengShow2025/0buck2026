@@ -445,7 +445,7 @@ export const CheckoutDrawer: React.FC = () => {
 
       {/* Securing overlay */}
       {securingStep && (
-        <div className="fixed inset-0 z-[10002] bg-white/95 dark:bg-black/95 flex flex-col items-center justify-center backdrop-blur-md animate-in fade-in duration-300">
+        <div className="absolute inset-0 z-[10002] bg-white/95 dark:bg-black/95 flex flex-col items-center justify-center backdrop-blur-md animate-in fade-in duration-300">
           <div className="relative mb-8">
             <div className="w-24 h-24 border-4 border-gray-100 dark:border-white/5 rounded-full" />
             <div className="absolute inset-0 w-24 h-24 border-4 border-[var(--wa-teal)] rounded-full border-t-transparent animate-spin" />

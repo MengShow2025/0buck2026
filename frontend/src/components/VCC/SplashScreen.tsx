@@ -69,21 +69,18 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5, ease: "easeOut" }}
-              className="flex items-baseline justify-center"
+              className="ob-wordmark text-[5rem] md:text-[6rem] lg:text-[7rem]"
             >
-              <h1 className="font-black text-7xl md:text-8xl lg:text-[10rem] tracking-tighter flex items-center leading-none">
-                <motion.span 
-                  animate={{ 
-                    filter: ["drop-shadow(0 0 10px rgba(255, 92, 0, 0.3))", "drop-shadow(0 0 40px rgba(255, 92, 0, 0.8))", "drop-shadow(0 0 10px rgba(255, 92, 0, 0.3))"],
-                    opacity: [0.8, 1, 0.8]
-                  }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="text-[#FF5C00] mr-[-0.02em]"
-                >
-                  0
-                </motion.span>
-                <span className={isDarkMode ? "text-white" : "text-gray-900"}>Buck</span>
-              </h1>
+              <motion.span 
+                animate={{ 
+                  filter: ["drop-shadow(0 0 12px rgba(232, 69, 10, 0.35))", "drop-shadow(0 0 24px rgba(232, 69, 10, 0.6))", "drop-shadow(0 0 12px rgba(232, 69, 10, 0.35))"],
+                }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="ob-zero mr-[0.02em]"
+              >
+                0
+              </motion.span>
+              <span className={`ob-buck ${isDarkMode ? "text-white" : "text-gray-900"}`}>Buck</span>
             </motion.div>
           </div>
 
@@ -156,7 +153,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         </div>
 
         {/* Footer Action */}
-        <div className="fixed bottom-16 left-0 w-full flex flex-col items-center space-y-8">
+        <div className="absolute bottom-16 left-0 w-full flex flex-col items-center space-y-8">
           <motion.button 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

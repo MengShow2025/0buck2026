@@ -16,7 +16,6 @@ from app.models.product import Product, CandidateProduct
 from app.services.discount_service import DiscountSyncService
 from app.services.c2m_service import C2MService
 from app.services.supply_chain import SupplyChainService
-from app.core.security import decrypt_api_key
 
 import logging
 
@@ -85,19 +84,22 @@ class CouponAssignRequest(BaseModel):
     ai_category: str
     ai_issuance_permission: str = "LOW" # LOW, MEDIUM, HIGH
 
-
-class PointsActivityRulesUpdate(BaseModel):
-    daily_cap: int = 150
-    events: Dict[str, int]
-
-
-class PointsMultipliersUpdate(BaseModel):
-    self_purchase: int = 5
-    fan_purchase: int = 2
-
-
-class PointsExchangeCatalogUpdate(BaseModel):
-    items: List[Dict[str, Any]]
+class CandidateUpdate(BaseModel):
+    status: Optional[str] = None
+    cost_usd: Optional[float] = None
+    freight_fee: Optional[float] = None
+    amazon_price: Optional[float] = None
+    sell_price: Optional[float] = None
+    product_category_label: Optional[str] = None
+    admin_tags: Optional[List[str]] = None
+    audit_notes: Optional[str] = None
+    images: Optional[List[str]] = None
+    variants_raw: Optional[List[Dict]] = None
+    title_en: Optional[str] = None
+    description_en: Optional[str] = None
+    desire_hook: Optional[str] = None
+    desire_logic: Optional[str] = None
+    desire_closing: Optional[str] = None
 
 # --- Coupon Management ---
 
@@ -117,15 +119,15 @@ def list_coupons(db: Session = Depends(get_db)):
     } for c in coupons]
 
 @router.get("/coupons/sync")
-def sync_coupons(db: Session = Depends(get_db)):
-    """v3.1 Manual trigger for Shopify Coupon Sync"""
+async def sync_coupons(db: Session = Depends(get_db)):
+    """v3.1 Trigger manual sync from Shopify Coupons API"""
     service = DiscountSyncService(db)
-    count = service.sync_from_shopify()
-    return {"status": "success", "synced_count": count}
+    await service.sync_coupons()
+    return {"status": "success"}
 
-@router.post("/coupons/{code}/assign-category")
-def assign_coupon_category(code: str, data: CouponAssignRequest, db: Session = Depends(get_db)):
-    """v3.1 Assign AI category and permission to a synced coupon"""
+@router.post("/coupons/{code}/assign")
+def assign_coupon_to_ai(code: str, data: CouponAssignRequest, db: Session = Depends(get_db)):
+    """v3.1 Assign a coupon to an AI category for autonomous issuance"""
     coupon = db.query(AvailableCoupon).filter_by(code=code).first()
     if not coupon:
         raise HTTPException(status_code=404, detail="Coupon not found")
@@ -134,382 +136,115 @@ def assign_coupon_category(code: str, data: CouponAssignRequest, db: Session = D
     db.commit()
     return {"status": "success"}
 
-# --- Global Config & AI Rules ---
+# --- System & Strategy Config ---
 
-@router.get("/config/ai-rules")
-def get_ai_rules(db: Session = Depends(get_db)):
-    """v3.1 Get AI Coupon Issuance rules and daily budget"""
-    budget = db.query(SystemConfig).filter_by(key="AI_COUPON_DAILY_BUDGET").first()
-    rules = db.query(SystemConfig).filter_by(key="AI_COUPON_RULES").first()
-    
-    return {
-        "daily_budget": budget.value if budget else 50.0,
-        "rules": rules.value if rules else {}
-    }
+@router.get("/config")
+def get_system_config(db: Session = Depends(get_db)):
+    """Fetch all strategy weights and thresholds"""
+    configs = db.query(SystemConfig).all()
+    return {c.key: c.value for c in configs}
 
 @router.post("/config/global")
 def update_global_config(data: GlobalConfigUpdate, db: Session = Depends(get_db)):
-    """Update v3.0/v3.1 global strategy settings (markup, threshold, budget, etc.)"""
-    from app.services.config_service import ConfigService
-    config = ConfigService(db)
-    config.set(data.key, data.value)
-    return {"status": "success", "key": data.key, "value": data.value}
-
-@router.get("/config/reward-rates")
-def get_reward_rates(db: Session = Depends(get_db)):
-    """v3.4.5 Get current reward rates from SystemConfig"""
-    from app.services.config_service import ConfigService
-    config = ConfigService(db)
-    return {
-        "silver_rate": config.get("silver_rate", 0.015),
-        "gold_rate": config.get("gold_rate", 0.02),
-        "platinum_rate": config.get("platinum_rate", 0.03),
-        "kol_dist_default": config.get("kol_dist_default", 0.15),
-        "kol_fan_default": config.get("kol_fan_default", 0.05),
-        "fan_silver_rate": config.get("fan_silver_rate", 0.01),
-        "fan_gold_rate": config.get("fan_gold_rate", 0.0125),
-        "fan_platinum_rate": config.get("fan_platinum_rate", 0.015),
-    }
-
-@router.post("/config/reward-rates")
-def update_reward_rates(data: RewardRatesUpdate, db: Session = Depends(get_db)):
-    """v3.4.5 Update reward rates in SystemConfig"""
-    from app.services.config_service import ConfigService
-    config = ConfigService(db)
-    for key, value in data.dict().items():
-        config.set(key, value, description=f"Reward rate for {key}")
-    return {"status": "success"}
-
-
-@router.get("/config/points-rules")
-def get_points_rules_config(db: Session = Depends(get_db)):
-    """Get configurable points rules and multipliers."""
-    from app.services.rewards import RewardsService
-    rewards = RewardsService(db)
-    return {
-        "daily_cap": rewards.get_points_activity_rules().get("daily_cap", 150),
-        "events": rewards.get_points_activity_rules().get("events", {}),
-        "multipliers": rewards.get_points_multipliers(),
-    }
-
-
-@router.post("/config/points-rules")
-def update_points_rules_config(data: PointsActivityRulesUpdate, db: Session = Depends(get_db)):
-    """Update non-transaction points earning details."""
-    from app.services.config_service import ConfigService
-    config = ConfigService(db)
-    normalized_events: Dict[str, int] = {}
-    for k, v in (data.events or {}).items():
-        try:
-            normalized_events[str(k)] = int(v)
-        except (TypeError, ValueError):
-            continue
-    payload = {"daily_cap": int(data.daily_cap), "events": normalized_events}
-    config.set("POINTS_ACTIVITY_RULES", payload, description="Points activity rules with per-event score")
-    config.set("POINTS_DAILY_CAP", int(data.daily_cap), description="Daily cap for non-transaction points")
-    return {"status": "success", "rules": payload}
-
-
-@router.post("/config/points-multipliers")
-def update_points_multipliers_config(data: PointsMultipliersUpdate, db: Session = Depends(get_db)):
-    """Update transactional points multipliers (self/fan)."""
-    from app.services.config_service import ConfigService
-    config = ConfigService(db)
-    payload = {
-        "self_purchase": int(data.self_purchase),
-        "fan_purchase": int(data.fan_purchase),
-    }
-    config.set("POINTS_MULTIPLIERS", payload, description="Points multipliers for transactional rewards")
-    return {"status": "success", "multipliers": payload}
-
-
-@router.get("/config/points-exchange-catalog")
-def get_points_exchange_catalog_config(db: Session = Depends(get_db)):
-    """Get points exchange catalog config."""
-    from app.services.rewards import RewardsService
-    rewards = RewardsService(db)
-    return {"items": rewards.get_points_exchange_catalog()}
-
-
-@router.post("/config/points-exchange-catalog")
-def update_points_exchange_catalog_config(data: PointsExchangeCatalogUpdate, db: Session = Depends(get_db)):
-    """Update points exchange catalog items."""
-    from app.services.config_service import ConfigService
-    config = ConfigService(db)
-    cleaned: List[Dict[str, Any]] = []
-    for item in data.items:
-        if not isinstance(item, dict):
-            continue
-        code = str(item.get("code", "")).strip()
-        if not code:
-            continue
-        normalized = dict(item)
-        normalized["code"] = code
-        normalized["enabled"] = bool(item.get("enabled", True))
-        try:
-            normalized["points_cost"] = int(item.get("points_cost", 0))
-        except (TypeError, ValueError):
-            normalized["points_cost"] = 0
-        cleaned.append(normalized)
-    config.set("POINTS_EXCHANGE_CATALOG", cleaned, description="Points exchange catalog")
-    return {"status": "success", "items": cleaned}
-
-# --- Pricing Strategy (v4.6.8) ---
-
-@router.get("/config/pricing-strategy")
-def get_pricing_strategy(db: Session = Depends(get_db)):
-    """v4.6.8 Get current pricing strategy from SystemConfig"""
-    from app.services.config_service import ConfigService
-    config = ConfigService(db)
-    return {
-        "sale_price_ratio": config.get("sale_price_ratio", 0.6),
-        "compare_at_price_ratio": config.get("compare_at_price_ratio", 0.95),
-        "amazon_weight": config.get("amazon_weight", 0.5),
-        "ebay_weight": config.get("ebay_weight", 0.5),
-    }
-
-@router.post("/config/pricing-strategy")
-def update_pricing_strategy(data: PricingStrategyUpdate, db: Session = Depends(get_db)):
-    """v4.6.8 Update pricing strategy in SystemConfig"""
-    from app.services.config_service import ConfigService
-    config = ConfigService(db)
-    for key, value in data.dict().items():
-        config.set(key, value, description=f"Pricing strategy: {key}")
-    return {"status": "success"}
-
-# --- Sourcing Strategy (v4.7.3) ---
-
-@router.get("/config/sourcing-strategy")
-def get_sourcing_strategy(db: Session = Depends(get_db)):
-    """v4.7.3 Get current sourcing strategy from SystemConfig"""
-    from app.services.config_service import ConfigService
-    config = ConfigService(db)
-    return {
-        "arbitrage_threshold": config.get("arbitrage_threshold", 0.15),
-        "min_trend_score": config.get("min_trend_score", 85),
-        "min_supplier_years": config.get("min_supplier_years", 2),
-        "require_gold_supplier": config.get("require_gold_supplier", True),
-        "require_trade_assurance": config.get("require_trade_assurance", True),
-    }
-
-@router.post("/config/sourcing-strategy")
-def update_sourcing_strategy(data: SourcingStrategyUpdate, db: Session = Depends(get_db)):
-    """v4.7.3 Update sourcing strategy in SystemConfig"""
-    from app.services.config_service import ConfigService
-    config = ConfigService(db)
-    for key, value in data.dict().items():
-        config.set(key, value, description=f"Sourcing strategy: {key}")
-    return {"status": "success"}
-
-# --- Talent (KOL) Audit (v4.6.8) ---
-
-@router.get("/talents/pending")
-def list_pending_talents(db: Session = Depends(get_db)):
-    """v4.6.8 List users waiting for KOL approval"""
-    pending = db.query(UserExt).filter(UserExt.kol_status == "pending").all()
-    return [{
-        "customer_id": u.customer_id,
-        "email": u.email,
-        "first_name": u.first_name,
-        "last_name": u.last_name,
-        "kol_apply_reason": u.kol_apply_reason,
-        "kol_applied_at": u.kol_applied_at,
-        "dist_rate": float(u.dist_rate) if u.dist_rate else None,
-        "fan_rate": float(u.fan_rate) if u.fan_rate else None
-    } for u in pending]
-
-@router.post("/talents/audit")
-def audit_talent(data: KOLApproveRequest, db: Session = Depends(get_db)):
-    """v4.6.8 Approve or Reject a KOL application"""
-    user = db.query(UserExt).filter(UserExt.customer_id == data.user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    user.kol_status = data.status
-    if data.status == "approved":
-        user.user_type = "kol"
-        if data.dist_rate is not None:
-            user.dist_rate = Decimal(str(data.dist_rate))
-        if data.fan_rate is not None:
-            user.fan_rate = Decimal(str(data.fan_rate))
+    config = db.query(SystemConfig).filter_by(key=data.key).first()
+    if not config:
+        config = SystemConfig(key=data.key, value=data.value)
+        db.add(config)
     else:
-        # If rejected, we might want to keep user_type as customer
-        user.user_type = "customer"
-    
+        config.value = data.value
     db.commit()
-    return {"status": "success", "new_status": user.kol_status}
+    return {"status": "success"}
 
-# --- Finance & KPIs ---
+@router.post("/config/pricing")
+def update_pricing_strategy(data: PricingStrategyUpdate, db: Session = Depends(get_db)):
+    """Update global pricing multipliers and platform weights"""
+    for key, val in data.dict().items():
+        config = db.query(SystemConfig).filter_by(key=key).first()
+        if config:
+            config.value = val
+    db.commit()
+    return {"status": "success"}
 
-@router.get("/finance/balance-sheet")
-def get_balance_sheet(db: Session = Depends(get_db)):
-    """v3.1 Financial Dashboard: Profit vs Liability"""
-    total_sales = db.query(func.sum(Order.total_price)).scalar() or 0.0
-    total_cogs = db.query(func.sum(Order.cogs_total)).scalar() or 0.0
-    # Reserve = Sales * 1.0 (Approx for 500 days return logic)
-    cashback_reserve = total_sales 
-    
-    return {
-        "net_profit": float(total_sales - total_cogs),
-        "total_sales": float(total_sales),
-        "total_cogs": float(total_cogs),
-        "cashback_reserve": float(cashback_reserve)
-    }
+@router.post("/config/sourcing")
+def update_sourcing_strategy(data: SourcingStrategyUpdate, db: Session = Depends(get_db)):
+    """Update AI discovery and supplier vetting thresholds"""
+    for key, val in data.dict().items():
+        config = db.query(SystemConfig).filter_by(key=key).first()
+        if config:
+            config.value = val
+    db.commit()
+    return {"status": "success"}
 
-@router.get("/dashboard/kpis")
-def get_dashboard_kpis(db: Session = Depends(get_db)):
-    """Admin v3.0/v3.1 Dashboard KPIs"""
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    orders_today = db.query(func.count(Order.shopify_order_id)).filter(Order.created_at >= today_start).scalar() or 0
-    
-    month_start = today_start.replace(day=1)
-    # v3.9.6: Enhanced safety for MTD calculations
-    try:
-        profit_mtd = db.query(func.sum(func.coalesce(Product.sale_price, 0) - func.coalesce(Product.source_cost_usd, 0)))\
-            .filter(Product.last_synced_at >= month_start)\
-            .scalar() or 0.0
-    except Exception as e:
-        logger.error(f"Failed to calculate profit_mtd: {e}")
-        profit_mtd = 0.0
+@router.post("/config/rewards")
+def update_reward_rates(data: RewardRatesUpdate, db: Session = Depends(get_db)):
+    """Update global cashback and distribution commission rates"""
+    for key, val in data.dict().items():
+        config = db.query(SystemConfig).filter_by(key=key).first()
+        if config:
+            config.value = val
+    db.commit()
+    return {"status": "success"}
 
-    ids_stats = []
-    try:
-        ids_stats = db.query(Product.strategy_tag, func.count(Product.id))\
-            .group_by(Product.strategy_tag).all()
-    except Exception as e:
-        logger.error(f"Failed to fetch ids_stats: {e}")
-    ids_conversion = {tag: count for tag, count in ids_stats if tag}
-    
-    melting_count = db.query(func.count(Product.id)).filter(Product.is_melted == True).scalar() or 0
-    
-    # v4.6: 1688 API Status check
-    from app.services.config_service import ConfigService
-    config_service = ConfigService(db)
-    api_key = config_service.get_api_key("ALIBABA_1688_API_KEY")
-    api_status = "Active" if api_key else "Simulation"
-
-    return {
-        "orders_today": orders_today,
-        "profit_mtd": round(float(profit_mtd), 2),
-        "ids_conversion": ids_conversion,
-        "melting_count": melting_count,
-        "api_status": api_status
-    }
+@router.post("/config/excluded-categories")
+def update_excluded_categories(data: ExcludedCategoriesUpdate, db: Session = Depends(get_db)):
+    """v3.0.2 Update the list of restricted product categories for AI discovery"""
+    config = db.query(SystemConfig).filter_by(key="excluded_categories").first()
+    if not config:
+        config = SystemConfig(key="excluded_categories", value=data.categories)
+        db.add(config)
+    else:
+        config.value = data.categories
+    db.commit()
+    return {"status": "success"}
 
 # --- Product Management ---
 
-@router.post("/products/{product_id}/update")
-def update_product_admin(product_id: int, data: ProductUpdate, db: Session = Depends(get_db)):
-    """Update product category, eligibility, and v3.0 management fields from admin"""
+@router.get("/products")
+def list_products(
+    category: Optional[str] = None, 
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db)
+):
+    query = db.query(Product)
+    if category:
+        query = query.filter(Product.category == category)
+    products = query.order_by(Product.updated_at.desc()).offset(skip).limit(limit).all()
+    return products
+
+@router.patch("/products/{product_id}")
+def update_product_settings(product_id: int, data: ProductUpdate, db: Session = Depends(get_db)):
     product = db.query(Product).filter_by(id=product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    if data.category is not None:
-        product.category = data.category
-    if data.is_reward_eligible is not None:
-        product.is_reward_eligible = data.is_reward_eligible
-    if data.is_cashback_eligible is not None:
-        product.is_cashback_eligible = data.is_cashback_eligible
-    if data.product_category_type is not None:
-        product.product_category_type = data.product_category_type
-    if data.strategy_tag is not None:
-        product.strategy_tag = data.strategy_tag
-    if data.price_fluctuation_threshold is not None:
-        product.price_fluctuation_threshold = data.price_fluctuation_threshold
-        
+    update_data = data.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(product, key, value)
+    
     db.commit()
-    return {
-        "status": "success", 
-        "product_id": product_id, 
-        "category": product.category,
-        "strategy_tag": product.strategy_tag
-    }
+    return {"status": "success"}
 
-@router.get("/sync-status")
-def get_sync_status(db: Session = Depends(get_db)):
-    """Monitor Supply Chain, Shopify sync and v2.0 Margin (Anchor Pricing)"""
-    products = db.query(Product).order_by(Product.updated_at.desc()).limit(50).all()
-    res = []
-    for p in products:
-        buffered_cost = (float(p.original_price) * 1.005 / 0.14) if p.original_price else 0.0
-        margin_multiplier = p.sale_price / buffered_cost if buffered_cost > 0 else 0.0
-        is_pass = p.sale_price >= (buffered_cost * 4)
-            
-        res.append({
-            "id": p.id,
-            "title": p.title_en or (p.titles.get("en") if p.titles else "N/A"),
-            "shopify_id": p.shopify_product_id,
-            "category": p.category,
-            "cost_cny": float(p.original_price) if p.original_price else 0.0,
-            "buffered_cost_usd": round(buffered_cost, 2),
-            "price_usd": float(p.sale_price) if p.sale_price else 0.0,
-            "compare_at_price": float(p.compare_at_price) if p.compare_at_price else 0.0,
-            "margin_multiplier": round(margin_multiplier, 2),
-            "is_reward_eligible": p.is_reward_eligible,
-            "is_risk": not is_pass,
-            "updated_at": p.updated_at.isoformat()
-        })
-    return res
+# --- Butler & Persona (v3.2) ---
 
-@router.get("/melting/queue")
-def get_melting_queue(db: Session = Depends(get_db)):
-    """List products that triggered price melting"""
-    melted_products = db.query(Product).filter(Product.is_melted == True).all()
-    return [{
-        "product_id": p.id,
-        "title": p.title_en,
-        "id_1688": p.product_id_1688,
-        "old_price": p.last_stable_cost,
-        "current_price": p.original_price,
-        "melted_at": p.melted_at,
-        "melting_reason": p.melting_reason,
-        "updated_at": p.updated_at
-    } for p in melted_products]
-
-# --- AI Persona & Memory OS (v3.2) ---
-
-@router.get("/ai/persona-templates")
+@router.get("/butler/personas")
 def list_persona_templates(db: Session = Depends(get_db)):
-    """v3.2 List all L2 Persona Templates"""
-    templates = db.query(PersonaTemplate).all()
-    return templates
+    """v3.2 List all base personality templates for AI Butlers"""
+    return db.query(PersonaTemplate).all()
 
-@router.post("/ai/persona-templates")
-def update_persona_template(data: PersonaTemplateUpdate, db: Session = Depends(get_db)):
-    """v3.2 Create or Update an L2 Persona Template"""
-    template = db.query(PersonaTemplate).filter_by(id=data.id).first()
-    if not template:
-        template = PersonaTemplate(id=data.id)
-        db.add(template)
+@router.post("/butler/personas")
+def create_persona_template(data: PersonaTemplateUpdate, db: Session = Depends(get_db)):
+    """v3.2 Create or update a personality template"""
+    persona = db.query(PersonaTemplate).filter_by(id=data.id).first()
+    if not persona:
+        persona = PersonaTemplate(id=data.id)
+        db.add(persona)
     
-    template.name = data.name
-    template.style_prompt = data.style_prompt
-    template.empathy_weight = data.empathy_weight
-    template.formality_score = data.formality_score
-    template.vibrancy_level = data.vibrancy_level
-    template.emoji_density = data.emoji_density
-    template.is_active = data.is_active
+    for key, value in data.dict().items():
+        setattr(persona, key, value)
     
     db.commit()
-    return {"status": "success", "template_id": data.id}
-
-class CandidateUpdate(BaseModel):
-    title_zh: Optional[str] = None
-    title_en_preview: Optional[str] = None
-    desire_hook: Optional[str] = None
-    desire_logic: Optional[str] = None
-    desire_closing: Optional[str] = None
-    images: Optional[List[str]] = None
-    variants_raw: Optional[List[Dict]] = None
-    attributes: Optional[List[Dict]] = None
-    logistics_data: Optional[Dict] = None
-    mirror_assets: Optional[Dict] = None
-    structural_data: Optional[Dict] = None
-    category: Optional[str] = None
-    # v4.7.1: Sourcing mapping
-    source_platform: Optional[str] = None
-    source_url: Optional[str] = None
+    return {"status": "success"}
 
 # --- Autonomous Sourcing Decision Engine (v3.9.0) ---
 
@@ -564,31 +299,59 @@ def list_sourcing_candidates(
             try: c.structural_data = json.loads(c.structural_data)
             except: c.structural_data = {}
         
+        if isinstance(c.admin_tags, str):
+            try: c.admin_tags = json.loads(c.admin_tags)
+            except: c.admin_tags = []
+        
         # v4.6.7: Ensure Desire Engine fields are strings, not None
         c.desire_hook = c.desire_hook or ""
         c.desire_logic = c.desire_logic or ""
         c.desire_closing = c.desire_closing or ""
 
-        # v5.2.4: Ensure 0Buck Pricing and Profit metrics are calculated for frontend
-        exchange_rate = 0.14 # Assume standard for now or fetch from config
-        anchor = c.amazon_compare_at_price or c.amazon_price
+        # v8.5.8 Truth Engine: Ali-Mapping
+        c.source_id = c.product_id_1688
+        
+        # v8.5 Truth Engine: Official ICBU & Global Warehouse Calculations
+        anchor = c.amazon_price or c.amazon_compare_at_price
         if anchor and not c.estimated_sale_price:
             c.estimated_sale_price = round(float(anchor) * 0.6, 2)
         
-        # v5.3: Enhanced Price Matrix for Arbitrage Decision
-        cost_usd = float(c.cost_cny) * exchange_rate
-        cj_quote = float(c.structural_data.get("cj_sourcing_price", 0.0)) if isinstance(c.structural_data, dict) else 0.0
-        shipping_usd = float(c.structural_data.get("cj_freight_estimate", 3.0)) if isinstance(c.structural_data, dict) else 3.0
+        # Truth Metric: Net Margin for MAGNET, ROI for others
+        # Prioritize cost_usd field over cost_cny conversion
+        # v8.5.8: Backfill cost_usd for frontend display if it's missing
+        if not c.cost_usd and c.cost_cny:
+            c.cost_usd = round(c.cost_cny * 0.14, 2)
+            
+        final_cost = float(c.cost_usd or 0)
+        final_freight = float(c.freight_fee or 0)
+        total_landed = final_cost + final_freight
         
-        # Total Cost logic: Use CJ Quote if exists, else fallback to 1688 Cost + Buffer
-        landed_cost = (cj_quote or (cost_usd * 1.1)) + shipping_usd
+        # --- CIRCUIT BREAKER: Business Suicide Prevention ---
+        if c.product_category_label == 'MAGNET' and final_cost > 10.0:
+            # 1. Magnet Gate: High cost items CANNOT be free. Force to REBATE.
+            c.product_category_label = 'REBATE'
+            c.admin_tags = list(set((c.admin_tags or []) + ["LOGIC_CORRECTION", "HIGH_COST_REJECT"]))
+            
+        # Target Price calculation
+        target_price = float(c.sell_price or (float(anchor or 0) * 0.6) or 0)
         
-        if c.estimated_sale_price and landed_cost > 0:
-            c.profit_ratio = round(c.estimated_sale_price / landed_cost, 2)
-            # Inject calculated fields into candidate object for frontend
-            setattr(c, "cj_landed_cost", round(landed_cost, 2))
-            setattr(c, "cj_sourcing_price", cj_quote)
-            setattr(c, "cj_shipping_cost", shipping_usd)
+        # 2. Loss Prevention: If target price < landed cost, it's a "Melted" candidate
+        if target_price > 0 and target_price < total_landed and c.product_category_label != 'MAGNET':
+            c.is_melted = True
+            c.melt_reason = f"LOSS_MELT: Landed ${total_landed} > Price ${target_price}"
+            c.status = 'rejected'
+            
+        # v8.5.8: Expose Profit Ratio correctly for all items
+        if total_landed > 0:
+            if c.product_category_label == 'MAGNET':
+                # Net Margin for Magnet
+                shipping_rev = float(c.amazon_shipping_fee or c.amazon_shipping_cost or 0)
+                c.profit_ratio = round(shipping_rev - total_landed, 2)
+            else:
+                # ROI for others
+                c.profit_ratio = round(target_price / total_landed, 2)
+        else:
+            c.profit_ratio = 0
             
     return candidates
 
@@ -675,6 +438,7 @@ def reject_sourcing_candidate(candidate_id: int, reason: str, db: Session = Depe
     return {"status": "success"}
 
 @router.get("/ai/usage-stats")
+@router.get("/ai/usage")
 def get_ai_usage_stats(db: Session = Depends(get_db)):
     """v3.2 Token Economics & Usage Analytics"""
     stats = db.query(
@@ -706,9 +470,7 @@ def ai_health_check(db: Session = Depends(get_db)):
     """v3.1 Hourly Health Check for BYOK Keys"""
     active_keys = db.query(UserButlerProfile).filter(UserButlerProfile.ai_api_key.isnot(None)).all()
     for profile in active_keys:
-        decrypted = decrypt_api_key(profile.ai_api_key or "")
-        candidate = decrypted or (profile.ai_api_key or "")
-        profile.byok_status = "active" if (candidate.startswith("sk-") or candidate.startswith("AIza")) else "failed"
+        profile.byok_status = "active" if profile.ai_api_key.startswith("sk-") else "failed"
         profile.last_health_check = datetime.utcnow()
     db.commit()
     return {"status": "success", "checked_count": len(active_keys)}
@@ -861,7 +623,7 @@ async def sync_approved_products(db: Session = Depends(get_db)):
                  results.append({"name": p['name'], "status": "failed", "reason": product_obj.get("error")})
                  continue
                  
-            shopify_service.sync_to_shopify(product_obj)
+            await shopify_service.sync_to_shopify(product_obj)
             # Update Notion (Mocked here for brevity, actual uses curl PATCH)
             results.append({"name": p['name'], "status": "synced"})
         return {"status": "success", "synced_count": len(results)}
@@ -871,12 +633,14 @@ async def sync_approved_products(db: Session = Depends(get_db)):
 # --- C2M Management (v3.3) ---
 
 @router.get("/c2m/wishes")
+@router.get("/wishes")
 def list_user_wishes(db: Session = Depends(get_db)):
     """v3.3 List all user wishes from the Wishing Well"""
     wishes = db.query(UserWish).order_by(UserWish.created_at.desc()).all()
     return wishes
 
 @router.get("/c2m/insights")
+@router.get("/demand/insights")
 async def get_demand_insights(db: Session = Depends(get_db)):
     """v3.3 Get AI-clustered demand insights from LTM"""
     service = C2MService(db)

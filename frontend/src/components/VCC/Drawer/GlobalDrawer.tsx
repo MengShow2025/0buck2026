@@ -216,7 +216,7 @@ export const GlobalDrawer: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 bg-black/40 z-40"
+            className="absolute inset-0 bg-black/40 z-40"
           />
 
           {/* Drawer */}
@@ -225,7 +225,7 @@ export const GlobalDrawer: React.FC = () => {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-x-0 bottom-0 top-16 bg-[#F2F2F7] dark:bg-[#000000] z-50 rounded-t-3xl overflow-hidden flex flex-col shadow-2xl"
+            className="absolute inset-x-0 bottom-0 top-16 bg-[#F2F2F7] dark:bg-[#000000] z-50 rounded-t-3xl overflow-hidden flex flex-col shadow-2xl"
           >
             {/* Handle Bar & Header */}
             {activeDrawer !== 'chat_room' && activeDrawer !== 'auth' && activeDrawer !== 'withdraw' && activeDrawer !== 'checkout' && (

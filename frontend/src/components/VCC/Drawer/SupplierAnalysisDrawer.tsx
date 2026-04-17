@@ -392,7 +392,7 @@ export const SupplierAnalysisDrawer: React.FC = () => {
       </div>
 
       {/* Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-3xl border-t border-gray-100 dark:border-white/10 p-5 pb-10 flex gap-4 z-50 shadow-2xl">
+      <div className="absolute bottom-0 left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-3xl border-t border-gray-100 dark:border-white/10 p-5 pb-10 flex gap-4 z-50 shadow-2xl">
         <button className="flex-1 h-14 rounded-full border-2 border-[#E8450A] text-[#E8450A] font-semibold text-[14px] flex items-center justify-center gap-2 active:scale-95 transition-all bg-white/50 dark:bg-transparent backdrop-blur-md">
           <MessageCircle className="w-4 h-4" /> {t('supplier.chat_now')}
         </button>

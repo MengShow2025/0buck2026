@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
 
@@ -28,15 +28,22 @@ router = APIRouter()
 @router.get("/discovery", response_model=DiscoveryResponse)
 async def get_discovery_matrix(
     user_country: Optional[str] = "US",
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=50),
     db: Session = Depends(get_db),
     current_user: UserExt = Depends(get_current_user),
 ):
     """
-    v8.0 Truth Protocol: Warehouse-Aware Discovery Matrix.
+    v8.0 Truth Protocol: Warehouse-Aware Discovery Matrix with Pagination.
     """
     try:
         service = PersonalizedMatrixService(db)
-        result = await service.get_personalized_discovery(int(current_user.customer_id), user_country=user_country)
+        result = await service.get_personalized_discovery(
+            int(current_user.customer_id), 
+            user_country=user_country,
+            page=page,
+            limit=limit
+        )
         return result
     except Exception as e:
         logger.error(f"Discovery Matrix Error: {e}", exc_info=True)

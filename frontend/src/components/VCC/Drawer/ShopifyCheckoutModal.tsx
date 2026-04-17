@@ -43,7 +43,7 @@ export const ShopifyCheckoutModal: React.FC<ShopifyCheckoutModalProps> = ({ url,
   }, [url, onSuccess, onClose]);
 
   return (
-    <div className="fixed inset-0 z-[10000] flex flex-col bg-[#F2F2F7] dark:bg-black animate-in slide-in-from-bottom duration-500">
+    <div className="absolute inset-0 z-[10000] flex flex-col bg-[#F2F2F7] dark:bg-black animate-in slide-in-from-bottom duration-500">
       {/* Header */}
       <div className="h-14 border-b border-gray-100 dark:border-white/5 flex items-center justify-between px-4 bg-gray-50 dark:bg-[#1C1C1E] z-20">
         <div className="flex items-center gap-2">

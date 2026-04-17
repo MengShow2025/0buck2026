@@ -44,7 +44,7 @@ export const authApi = {
 
 // Transaction & Rewards
 export const productApi = {
-  getDiscovery: (user_country?: string) => api.get('/products/discovery', { params: { user_country } }),
+  getDiscovery: (user_country?: string, page?: number) => api.get('/products/discovery', { params: { user_country, page } }),
   getDetail: (id: number) => api.get(`/products/${id}`),
 };
 
@@ -106,7 +106,7 @@ export const aiApi = {
       },
       {
         // Force a bounded wait so UI fallback can trigger when backend LLM stalls.
-        timeout: 12000,
+        timeout: 30000, // increased for LLM calls
       }
     );
   },
@@ -171,11 +171,15 @@ export const adminApi = {
   getPersonaTemplates: () => api.get('/admin/ai/persona-templates'),
   updatePersonaTemplate: (id: string, data: any) => api.post('/admin/ai/persona-templates', { id, ...data }),
   getUsageStats: () => api.get('/admin/ai/usage-stats'),
-  getCandidates: () => api.get('/admin/sourcing/candidates'),
+  getCandidates: (status: string = 'pending,new') => api.get(`/admin/sourcing/candidates?status=${status}`),
+  updateCandidate: (id: string, data: any) => api.patch(`/admin/sourcing/candidates/${id}`, data),
+  repolishCandidate: (id: string) => api.post(`/admin/sourcing/candidates/${id}/repolish`, {}, { timeout: 45000 }),
+  getSyncStatus: () => api.get('/admin/sync-status'),
   approveCandidate: (id: string) => api.post(`/admin/sourcing/candidates/${id}/approve`),
   rejectCandidate: (id: string) => api.post(`/admin/sourcing/candidates/${id}/reject`),
   getKpis: () => api.get('/admin/dashboard/kpis'),
   getBalanceSheet: () => api.get('/admin/finance/balance-sheet'),
+  getOrders: (skip = 0, limit = 50) => api.get(`/admin/orders?skip=${skip}&limit=${limit}`),
 };
 
 export default api;

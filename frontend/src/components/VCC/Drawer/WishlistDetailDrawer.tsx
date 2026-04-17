@@ -198,7 +198,7 @@ export const WishlistDetailDrawer: React.FC = () => {
       </div>
 
       {/* 5. Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-[#000000]/80 backdrop-blur-3xl border-t border-white/40 dark:border-white/10 p-6 pb-12 flex gap-4 z-40 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
+      <div className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-[#000000]/80 backdrop-blur-3xl border-t border-white/40 dark:border-white/10 p-6 pb-12 flex gap-4 z-40 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
         <button 
           onClick={() => setIsWished(!isWished)}
           className={`flex-1 h-16 rounded-[32px] font-semibold text-[16px] active:scale-95 transition-all flex items-center justify-center gap-3 border shadow-xl ${

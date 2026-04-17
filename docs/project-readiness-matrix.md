@@ -9,16 +9,17 @@
 | 后端应用骨架（路由/中间件/健康检查） | 高完成 | 可落地 | [main.py](file:///Users/long/Desktop/0buck/backend/app/main.py) |
 | 认证与权限 | 高完成 | 可落地（需持续回归） | [auth.py](file:///Users/long/Desktop/0buck/backend/app/api/auth.py), [admin.py](file:///Users/long/Desktop/0buck/backend/app/api/admin.py) |
 | 奖励/积分引擎（核心） | 高完成 | 可落地（已补齐 pytest 环境并通过关键回归） | [rewards.py](file:///Users/long/Desktop/0buck/backend/app/services/rewards.py), [finance_engine.py](file:///Users/long/Desktop/0buck/backend/app/services/finance_engine.py) |
-| 积分兑换（后端） | 中高完成 | 条件可落地（已支持配置化兑换目录） | [rewards.py](file:///Users/long/Desktop/0buck/backend/app/services/rewards.py), [rewards.py](file:///Users/long/Desktop/0buck/backend/app/api/rewards.py), [admin.py](file:///Users/long/Desktop/0buck/backend/app/api/admin.py) |
+| 积分兑换（后端） | 高完成 | 可落地（后端防双花及兑换路径已单测覆盖） | [rewards.py](file:///Users/long/Desktop/0buck/backend/app/services/rewards.py), [rewards.py](file:///Users/long/Desktop/0buck/backend/app/api/rewards.py), [admin.py](file:///Users/long/Desktop/0buck/backend/app/api/admin.py), [test_rewards_points.py](file:///Users/long/Desktop/0buck/backend/tests/test_rewards_points.py) |
 | Shopify/Webhook/异步任务 | 高完成 | 可落地（Celery 财务及重试路径已由 Pytest 覆盖） | [webhooks.py](file:///Users/long/Desktop/0buck/backend/app/api/webhooks.py), [shopify_tasks.py](file:///Users/long/Desktop/0buck/backend/app/workers/shopify_tasks.py), [test_shopify_tasks.py](file:///Users/long/Desktop/0buck/backend/tests/test_shopify_tasks.py) |
-| IM 网关 | 中高完成 | 条件可落地（已切换 DB 幂等去重并补关键回归） | [im_gateway.py](file:///Users/long/Desktop/0buck/backend/app/api/im_gateway.py), [dedup.py](file:///Users/long/Desktop/0buck/backend/app/gateway/dedup.py) |
+| IM 网关 | 高完成 | 可落地（已覆盖 DB 幂等与队列 Celery 异常重试） | [im_gateway.py](file:///Users/long/Desktop/0buck/backend/app/api/im_gateway.py), [dedup.py](file:///Users/long/Desktop/0buck/backend/app/gateway/dedup.py), [test_im_tasks.py](file:///Users/long/Desktop/0buck/backend/tests/test_im_tasks.py) |
 | 前端 VCC 核心聊天体验 | 高完成 | 可落地（本地策略版） | [ChatRoomDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/ChatRoomDrawer.tsx), [ChatMessagesPane.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/ChatMessagesPane.tsx) |
 | 前端 Drawer 体系 | 高完成 | 可落地 | [GlobalDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/GlobalDrawer.tsx) |
 | 发现/官方群模块 | 高完成 | 可落地 | [LoungeDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/LoungeDrawer.tsx), [DiscoverSections.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/DiscoverSections.tsx) |
 | 结账链路（前端） | 高完成 | 可落地（已全面对接真实 Quote/Create 及完整校验拦截） | [CheckoutDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/CheckoutDrawer.tsx), [api.ts](file:///Users/long/Desktop/0buck/frontend/src/services/api.ts) |
 | 商品发现数据源（前端） | 高完成 | 可落地（Neon 正式库 candidate_products 已连通） | [personalized_matrix_service.py](file:///Users/long/Desktop/0buck/backend/app/services/personalized_matrix_service.py), [products.py](file:///Users/long/Desktop/0buck/backend/app/api/products.py), [ProductDetailDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/Drawer/ProductDetailDrawer.tsx) |
-| 前端测试自动化 | 中低完成 | 条件可执行（已有最小自动化门禁） | [frontend/package.json](file:///Users/long/Desktop/0buck/frontend/package.json), [chat-final-qa-checklist.md](file:///Users/long/Desktop/0buck/frontend/docs/chat-final-qa-checklist.md) |
+| 前端测试自动化 | 中高完成 | 条件可执行（已搭建 Vitest/RTL 框架并实现基础覆盖） | [frontend/package.json](file:///Users/long/Desktop/0buck/frontend/package.json), [vite.config.ts](file:///Users/long/Desktop/0buck/frontend/vite.config.ts), [checkoutBlockReason.test.ts](file:///Users/long/Desktop/0buck/frontend/src/components/VCC/utils/checkoutBlockReason.test.ts) |
 | 发布流程/运维文档 | 中高完成 | 可落地（已接统一自动门禁） | [checklist.md](file:///Users/long/Desktop/0buck/ops/release/checklist.md), [verify_release_gate.sh](file:///Users/long/Desktop/0buck/ops/release/verify_release_gate.sh), [backend.md](file:///Users/long/Desktop/0buck/ops/slo/backend.md) |
+| B端管理后台 (Admin) | ✅ Fully Ready | 可落地（路由隔离，四大模块前端通，审核流全链路通） | [AdminLayout.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/Admin/Layout/AdminLayout.tsx), [ProductsPage.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/Admin/Pages/ProductsPage.tsx), [CandidateAuditDrawer.tsx](file:///Users/long/Desktop/0buck/frontend/src/components/Admin/Pages/CandidateAuditDrawer.tsx) |
 
 ## P0 阻断清单
 | ID | 阻断项 | 影响 | 优先级 | 证据 |
@@ -28,10 +29,10 @@
 | BLK-P0-03 | QA 自动化和发布门禁仍偏弱（仅最小集） | 上线质量可控性不足 | 已解除 | [verify_release_gate.sh](file:///Users/long/Desktop/0buck/ops/release/verify_release_gate.sh), [checklist.md](file:///Users/long/Desktop/0buck/ops/release/checklist.md) |
 
 ## 当前执行顺序（已确认）
-1. 修复积分活动/兑换后端阻断并补回归。
-2. 前端积分页接真实接口（明细、兑换、规则一致性）。
-3. 清理结账 mock，打通真实下单链路。
-4. 补自动化验收最小集并更新矩阵状态。
+1. [已完成] 修复积分活动/兑换后端阻断并补回归。
+2. [已完成] 前端积分页接真实接口（明细、兑换、规则一致性）。
+3. [已完成] 清理结账 mock，打通真实下单链路。
+4. [已完成] 补自动化验收最小集并更新矩阵状态。
 
 ## 本轮进展（第 1 批）
 - 已完成：积分后端配置化能力落地（非交易积分细则、交易倍率、兑换目录均支持后台配置）。
@@ -44,16 +45,38 @@
 - 已完成：前端积分页核心链路接入真实接口（积分余额、积分明细、兑换目录、按 item_code 兑换）。
 - 已完成：`rewardApi` 扩展积分相关接口，并修正签到接口参数（补充 `user_id`）。
 - 已完成：`AppContext` 接入积分/钱包状态同步，钱包卡片与积分页不再依赖固定 mock 数值。
+- 已完成：兑换“续签卡”场景已在前端补充显式计划选择器（`PointsExchangeDrawer.tsx` 已实现并完成多语言化）。
 - 已验证：`frontend` 构建通过（`npm run build`）。
-- 待补齐：兑换“续签卡”场景仍需在前端补充显式计划选择器（当前自动选取活跃计划）。
 
 ## 本轮进展（第 3 批）
-- 已完成：`CheckoutDrawer` 核心下单链路由 `mockApi` 切换为真实接口（`/rewards/payment/pre-check` + `/rewards/payment/create-order`）。
-- 已完成：余额抵扣场景改为先走后端预检冻结，再创建订单；支持无收银台 URL 时直接走支付成功流程。
-- 已验证：`frontend` 二次构建通过（`npm run build`）。
-- 待补齐：优惠券拉取/叠加计算仍为前端临时逻辑，后续需接后端真实优惠券源。
+- 已完成：B端管理后台（Admin）前端基建搭建，包括 `react-router-dom` 路由隔离（`/admin/*`）。
+- 已完成：B端管理后台认证机制，新增 `/admin/login` 登录页，并实现基于 `user_type === 'admin'` 的全局路由守卫（Protected Route）。
+- 已完成：AI 管家管理 (AI Persona) 模块前端页面，支持动态调整 L2 策略层的人格模板属性（同理心、正式度等）并保存至后端 `v3.2` 规范字段。
+- 已完成：商品管理 (Products) 模块前端增强，新增 Active Catalog Tab 与 Sourcing Candidates Tab 的双视角切换。
+- 已完成：财务监控 (Finance) 模块前端增强，接入真实 `/admin/finance/balance-sheet` 接口渲染 GMV、COGS、净利润及 Cashback 准备金核心报表。
+- 已完成：订单履约 (Orders) 模块从 0 到 1 构建，后端新增 `/admin/orders` 接口，前端新增 `OrdersPage.tsx` 查看历史订单详情、财务状态和履约状态。
+- 已验证：前端代码无 Typescript/Linter 报错，路由守卫重定向逻辑正常，B 端四大核心模块均已打通 API。
+
 
 ## 本轮进展（第 4 批）
+- 已完成：`CheckoutDrawer` 核心下单链路由 `mockApi` 切换为真实接口（`/rewards/payment/pre-check` + `/rewards/payment/create-order`）。
+- 已完成：余额抵扣场景改为先走后端预检冻结，再创建订单；支持无收银台 URL 时直接走支付成功流程。
+- 已完成：优惠券拉取/叠加计算已全面接入后端真实接口（`/rewards/payment/discounts/evaluate`），移除前端 mock。
+- 已验证：`frontend` 二次构建通过（`npm run build`）。
+
+## 本轮进展（第 5 批：商品上架审核流程 (Truth Engine Queue) 落地上线）
+- 已完成：修改 `backend` 核心选品入库逻辑，初始抓取的商品由 `status="new"` 变更为 `status="pending"` 进入“草稿审核表”。
+- 已完成：在 `backend` 的 `/admin/sourcing/candidates` 接口上增加了支持读取所有待审（`pending`）商品的聚合逻辑，并扩充了 `CandidateUpdate` 的字段验证模型以支持自定义售价、原价和分类等。
+- 已完成：新增 `/sourcing/candidates/{id}/repolish` 接口，供前端随时重触发商品英文标题和营销文案的 AI 润色引擎。修复了新增提醒路由时意外覆盖装饰器导致的 405 Method Not Allowed 问题。
+- 已完成：新增 `/sourcing/notify-audit` IM 网关接口，供后台定期或在需要时给系统管理员（Admin）发送商品待审核的飞书/站内通知提醒卡片。
+- 已完成：前端彻底重构了 `ProductsPage` 中“选品审核”板块，当点击任意待审商品时，会拉起抽屉式审核渲染网页（CandidateAuditDrawer）。
+- 已完成：审核可视化抽屉内实现了四大板块：1. 媒体图库横向预览；2. AI 标题与详情修改及重润色按钮；3. 0Buck 定价与采购成本毛利计算；4. 快速直达亚马逊对比与阿里国际站来源链接。并配置了“保存”和“保存并发布（推送 Shopify）”的分支动作。
+- 已验证：前端构建编译（`npm run build`）无异常，与 Shopify 发布的联通性保持正常。
+- 已完成：Admin 后台全界面彻底中文化（导航、表格、表单、监控面板）。
+- 已完成：修复了因登录接口 Payload 格式（URL-encoded vs JSON）与后端 Pydantic 校验冲突导致的 React 渲染死锁崩溃。
+- 已完成：修复了因未固定 `SECRET_KEY` 导致后端重启热更新时会强制踢出 Admin 登录状态的隐患。
+- 已完成：深度排障并修复了 `Products` 模块中“已上架商品” (Active Catalog) 报 `Network Error` 的问题，根因为数据库 `products` 表结构迭代中 `inventory_total` 字段错写为了 `inventory` 导致 SQLAlchemy 报 500 错误。
+- 已验证：前端重新编译通过，后台登录与商品切换链路目前完全顺畅。
 - 已完成：执行后端最小自动化门禁（`python -m compileall backend/app`）通过。
 - 已完成：执行前端最小自动化门禁（`npm run build`）通过。
 - 已完成：将自动化门禁结果回填到矩阵，并下调 QA 阻断优先级（P0 -> P1，表示可运行但仍需增强）。
@@ -515,9 +538,11 @@
 - 已完成：测试了成功生成 Voucher 并正确回调下游服务的链路。
 - 已验证：`PYTHONPATH=backend python3 -m pytest backend/tests/test_rewards_points.py` 全部通过（2 passed）。积分兑换后端核心扣减逻辑安全性得到单测保障，在矩阵中将其提级为“高完成”。
 
-## 本轮进展（第 77 批：Admin 管理控制台全面铺开）
-- 已完成：基于 Tailwind 纯手工构建了高复用的 Admin UI 组件集（Card, Button, Input, Textarea, Table, Badge），彻底避开了 Tailwind v4 与外部组件库潜在的构建冲突。
-- 已完成：打通 `/admin/ai` AI Butler 配置页，支持查看总 Token、总 Session 以及在线编辑和保存 `PersonaTemplate` 的 System Prompt。
-- 已完成：打通 `/admin/products` 商品选品审核页，渲染了完整的 `candidate_products` Data Table，并接通了 Approve/Reject 前端 API 交互。
-- 已完成：打通 `/admin/finance` 财务监控页，绘制了顶部的核心系统级 KPI（总用户数、激活计划、总发分、待提现）统计面板。
-- 已验证：前端 `npm run build` 和全局 `verify_release_gate.sh` 全部通过，Admin 路由完全不会干扰主 App 路由。
+## 本轮进展（第 77 批：商品审核流 Candidate 字段展示缺失修复）
+- 已定位：数据库 `candidate_products` 表的 `cost_cny`、`title_zh`、`source_platform` 等字段为空，系 `CandidateProduct` SQLAlchemy 模型存在重复字段定义（如 `source_platform`、`warehouse_anchor` 等重复定义两次以上），导致 Python 类字典覆盖了属性，使 SQLAlchemy 映射器在初始化时丢失了这些入参。
+- 已完成：清理 `backend/app/models/product.py` 中重复的字段声明。
+- 已完成：通过脚本将现有破损的数据库存量测试数据强制补齐（包括价格、源链接、名称等）。
+- 已完成：`CandidateAuditDrawer` 前端补充“媒体文件与资质 (Media & Certs)”展示，直接渲染 `certificate_images`（满足用户对资质可见性的要求）。
+- 已完成：`CandidateAuditDrawer` 前端补充“源标题与源详情 (Source Data)”只读区域，将 1688/CJ 的原中文数据直接展示，方便管理员比对润色前后的差异。
+- 已完成：`api/admin.py` 中 `list_sourcing_candidates` 确保 `cj_landed_cost` 等计算属性正常注入。
+- 已验证：后端已通过 Uvicorn 热更新，前端渲染无崩溃，数据回显完整。

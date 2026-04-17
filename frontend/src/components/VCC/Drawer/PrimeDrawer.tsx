@@ -71,12 +71,15 @@ export const PrimeDrawer: React.FC = () => {
   const { setActiveDrawer, setSelectedProductId, pushDrawer, currency, getExchangeRate, t, userLevel, isPrime, setIsPrime, userCountry } = useAppContext();
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
       try {
-        const resp = await productApi.getDiscovery(userCountry);
+        const resp = await productApi.getDiscovery(userCountry, 1);
         const normalized = (resp.data?.products || []).map((p: any) => {
           const price = Number(p?.price ?? 0);
           const originalPrice = Number(p?.original_price ?? p?.originalPrice ?? p?.price ?? 0);
@@ -91,14 +94,57 @@ export const PrimeDrawer: React.FC = () => {
           };
         });
         setProducts(normalized.length > 0 ? normalized : MOCK_PRODUCTS);
+        setHasMore(normalized.length >= 10);
       } catch (error) {
         setProducts(MOCK_PRODUCTS);
+        setHasMore(false);
       } finally {
         setIsLoading(false);
       }
     };
     fetchProducts();
-  }, []);
+  }, [userCountry]);
+
+  const loadMore = async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    const nextPage = page + 1;
+    try {
+      const resp = await productApi.getDiscovery(userCountry, nextPage);
+      const newProducts = resp.data?.products || [];
+      if (newProducts.length === 0) {
+        setHasMore(false);
+      } else {
+        const normalized = newProducts.map((p: any) => {
+          const price = Number(p?.price ?? 0);
+          const originalPrice = Number(p?.original_price ?? p?.originalPrice ?? p?.price ?? 0);
+          return {
+            ...p,
+            checkoutReady: p?.checkout_ready !== false,
+            checkoutBlockReason: p?.checkout_block_reason,
+            price: Number.isFinite(price) ? price : 0,
+            originalPrice: Number.isFinite(originalPrice) ? originalPrice : (Number.isFinite(price) ? price : 0),
+            dimensions: p?.dimensions ?? p?.structural_data?.dimensions ?? '-',
+            weight: p?.weight ?? p?.structural_data?.weight ?? '-',
+          };
+        });
+        setProducts(prev => [...prev, ...normalized]);
+        setPage(nextPage);
+        setHasMore(newProducts.length >= 10);
+      }
+    } catch (error) {
+      setHasMore(false);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5) {
+      loadMore();
+    }
+  };
 
   const rate = getExchangeRate(currency);
   const currencySymbol = currency === 'JPY' ? '¥' : currency === 'CNY' ? '¥' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
@@ -123,7 +169,10 @@ export const PrimeDrawer: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-[#F2F2F7] dark:bg-[#000000] overflow-y-auto no-scrollbar pb-32">
+    <div 
+      className="flex flex-col h-full bg-[#F2F2F7] dark:bg-[#000000] overflow-y-auto no-scrollbar pb-32"
+      onScroll={handleScroll}
+    >
       {/* Verified Artisan Goods Header */}
       <div className="px-4 mb-4 flex items-center justify-between pt-6">
         <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-widest ml-1">Verified Artisan Goods</h3>
@@ -256,6 +305,23 @@ export const PrimeDrawer: React.FC = () => {
               </div>
             </div>
           ))
+        )}
+        {/* Bottom Loading Indicator */}
+        {isLoadingMore && (
+          <div className="w-full text-center py-4">
+            <span className="text-xs text-gray-400">Loading more products...</span>
+          </div>
+        )}
+        
+        {/* End of List Indicator */}
+        {!hasMore && products.length > 0 && !isLoading && (
+          <div className="w-full text-center py-6">
+            <div className="inline-flex items-center gap-2">
+              <div className="h-px w-12 bg-gray-200 dark:bg-white/10"></div>
+              <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black">End of Collection</span>
+              <div className="h-px w-12 bg-gray-200 dark:bg-white/10"></div>
+            </div>
+          </div>
         )}
       </div>
     </div>

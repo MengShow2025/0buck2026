@@ -1,0 +1,36 @@
+{
+  "changed_files": 2,
+  "replacement_count": 2,
+  "appended_csv_entries": 2,
+  "remaining_zh_lines": 7,
+  "remaining_files": [
+    {
+      "file": "frontend/src/components/VCC/Drawer/GroupManagementOverlays.tsx",
+      "zh_lines": 1
+    },
+    {
+      "file": "frontend/src/components/VCC/Drawer/ContactsDrawer.tsx",
+      "zh_lines": 1
+    },
+    {
+      "file": "frontend/src/components/VCC/Drawer/ChatMessagesPane.tsx",
+      "zh_lines": 1
+    },
+    {
+      "file": "frontend/src/components/VCC/Drawer/CreateGroupDrawer.tsx",
+      "zh_lines": 1
+    },
+    {
+      "file": "frontend/src/components/VCC/Desktop/DesktopSquarePanel.tsx",
+      "zh_lines": 1
+    },
+    {
+      "file": "frontend/src/components/VCC/Desktop/DesktopSidebar.tsx",
+      "zh_lines": 1
+    },
+    {
+      "file": "frontend/src/components/VCC/Desktop/DesktopOrdersView.tsx",
+      "zh_lines": 1
+    }
+  ]
+}

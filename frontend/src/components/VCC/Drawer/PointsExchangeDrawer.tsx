@@ -144,10 +144,10 @@ export const PointsExchangeDrawer: React.FC = () => {
 
       {showPlanSelector && selectedItem && (
         <div className="absolute inset-x-0 bottom-0 bg-white dark:bg-[#1C1C1E] rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-6 z-50 animate-in slide-in-from-bottom-full">
-          <h3 className="text-lg font-black mb-4 dark:text-white">Select a Plan to Renew</h3>
+          <h3 className="text-lg font-black mb-4 dark:text-white">{t('points.select_plan_to_renew') || 'Select a Plan to Renew'}</h3>
           <div className="space-y-3 max-h-60 overflow-y-auto mb-6">
             {plans.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4 font-bold">No eligible plans found.</p>
+              <p className="text-sm text-gray-500 text-center py-4 font-bold">{t('points.no_eligible_plans') || 'No eligible plans found.'}</p>
             ) : (
               plans.map(plan => (
                 <button

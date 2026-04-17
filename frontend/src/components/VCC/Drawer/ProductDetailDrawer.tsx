@@ -198,7 +198,7 @@ export const ProductDetailDrawer: React.FC = () => {
       </div>
 
       {/* Action buttons skeleton */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-[#000000]/80 backdrop-blur-3xl border-t border-white/40 dark:border-white/10 p-6 pb-12 flex gap-4 z-40">
+      <div className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-[#000000]/80 backdrop-blur-3xl border-t border-white/40 dark:border-white/10 p-6 pb-12 flex gap-4 z-40">
         <div className="flex-1 h-16 rounded-[32px] bg-gray-200 dark:bg-white/5" />
         <div className="flex-1 h-16 rounded-[32px] bg-gray-200 dark:bg-white/5" />
       </div>
@@ -718,7 +718,7 @@ export const ProductDetailDrawer: React.FC = () => {
       </div>
 
       {/* Bottom Actions (Unified Brand Style) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-[#000000]/80 backdrop-blur-3xl border-t border-white/40 dark:border-white/10 p-6 pb-12 flex gap-4 z-40 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
+      <div className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-[#000000]/80 backdrop-blur-3xl border-t border-white/40 dark:border-white/10 p-6 pb-12 flex gap-4 z-40 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
         <button className={`flex-1 h-16 rounded-[32px] font-semibold text-[16px] active:scale-95 transition-all flex items-center justify-center gap-2 bg-white dark:bg-[#1C1C1E] border-2 border-transparent text-[#E8450A]`}
           style={{ backgroundImage: 'linear-gradient(white, white), linear-gradient(135deg, #FF7A3D, #E8450A)', backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box' }}
         >

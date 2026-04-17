@@ -1,18 +1,29 @@
 import React from 'react';
-import { Routes, Route, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, Wallet, Bot } from 'lucide-react';
+import { Routes, Route, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Package, ShoppingCart, Wallet, Bot, LogOut } from 'lucide-react';
 import { AIPersonaPage } from '../Pages/AIPersonaPage';
 import { ProductsPage } from '../Pages/ProductsPage';
 import { FinancePage } from '../Pages/FinancePage';
+import { OrdersPage } from '../Pages/OrdersPage';
+import { useAppContext } from '../../VCC/AppContext';
 
 const AdminSidebar = () => {
+  const { user, setUser } = useAppContext();
+  const navigate = useNavigate();
+
   const links = [
-    { to: "/admin", icon: LayoutDashboard, label: "Overview" },
-    { to: "/admin/products", icon: Package, label: "Products" },
-    { to: "/admin/orders", icon: ShoppingCart, label: "Orders" },
-    { to: "/admin/finance", icon: Wallet, label: "Finance" },
-    { to: "/admin/ai", icon: Bot, label: "AI Butler" },
+    { to: "/admin", icon: LayoutDashboard, label: "概览 (Overview)" },
+    { to: "/admin/products", icon: Package, label: "商品管理" },
+    { to: "/admin/orders", icon: ShoppingCart, label: "订单履约" },
+    { to: "/admin/finance", icon: Wallet, label: "财务与大盘" },
+    { to: "/admin/ai", icon: Bot, label: "AI 管家配置" },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    setUser(null);
+    navigate('/admin/login');
+  };
 
   return (
     <div className="w-64 bg-gray-900 text-white flex flex-col h-full shrink-0">
@@ -36,23 +47,51 @@ const AdminSidebar = () => {
           </NavLink>
         ))}
       </nav>
+      
+      <div className="p-4 border-t border-white/10">
+        <div className="mb-4 px-4">
+          <div className="text-xs text-gray-500 font-bold uppercase">当前登录管理员</div>
+          <div className="text-sm text-white font-bold truncate">{user?.email}</div>
+        </div>
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all font-bold text-red-400 hover:bg-red-500/10"
+        >
+          <LogOut className="w-5 h-5" />
+          退出登录
+        </button>
+      </div>
     </div>
   );
 };
 
 export const AdminLayout: React.FC = () => {
+  const { user } = useAppContext();
+  const location = useLocation();
+
+  // Protect the entire /admin/* route
+  if (!user || user.user_type !== 'admin') {
+    // Redirect to login page, but save the current location they were trying to go to
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+
   return (
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden font-sans">
       <AdminSidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-200 h-16 shrink-0 flex items-center px-8">
-          <span className="font-bold text-gray-500">Admin Dashboard Mode</span>
+        <header className="bg-white border-b border-gray-200 h-16 shrink-0 flex items-center justify-between px-8">
+          <span className="font-black text-gray-900 uppercase tracking-tighter">0Buck Truth Control Center</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] px-2 py-0.5 bg-amber-500 text-white rounded-full font-black uppercase tracking-widest">
+              v8.5.8 INDUSTRIAL PRO
+            </span>
+          </div>
         </header>
         <main className="flex-1 overflow-auto p-8">
           <Routes>
-            <Route path="/" element={<h2 className="text-2xl font-black text-gray-900">Overview</h2>} />
+            <Route path="/" element={<h2 className="text-2xl font-black text-gray-900">概览 (Overview)</h2>} />
             <Route path="/products" element={<ProductsPage />} />
-            <Route path="/orders" element={<h2 className="text-2xl font-black text-gray-900">Order Fulfillment</h2>} />
+            <Route path="/orders" element={<OrdersPage />} />
             <Route path="/finance" element={<FinancePage />} />
             <Route path="/ai" element={<AIPersonaPage />} />
           </Routes>

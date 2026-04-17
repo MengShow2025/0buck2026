@@ -1,0 +1,40 @@
+Section,Field,Meaning,Current Source (Raw/DB/API),Available Now,Frontend Display,Storage Suggestion,Notes
+Product Basics,product_id,0Buck 商品唯一 ID,cj_raw_products.id / products.id,Yes,Prime 列表卡/商品详情,products.id or cj_raw_products.id,"Discovery 当前返回的 id 对应 cj_raw_products.id 或 products.id"
+Product Basics,cj_pid,CJ 商品唯一 ID,cj_raw_products.cj_pid / raw_json.pid,Yes,商品详情(溯源),cj_raw_products.cj_pid,"示例 1530899566923624448"
+Product Basics,title,商品标题(展示用),cj_raw_products.title_en / raw_json.productNameEn,Yes,Prime 列表卡/商品详情,products.title_en or cj_raw_products.title_en,"raw_json.productName 可能为中文关键词数组字符串"
+Product Basics,category_name,CJ 类目名,raw_json.categoryName,Yes,Prime 列表卡(可选),products.category,"可用于筛选/标签"
+Product Basics,category_id,CJ 类目 ID,raw_json.categoryId,Yes,后台/筛选,cj_raw_products.raw_json,"通常用于回查/分类"
+Product Basics,is_test_product,是否测试商品,raw_json.isTestProduct,Yes,不展示,cj_raw_products.raw_json,
+
+Media,images[],商品图片列表(保持顺序),raw_json.productImage (string json list) > raw_json.productImageSet (list),Yes,商品详情图集,products.images / cj_raw_products.raw_json,"顺序以 productImage 为准; 解析后输出为 mirror_assets"
+Media,primary_image,主图,raw_json.bigImage or images[0],Yes,Prime 列表卡/商品详情首图,products.images[0],"bigImage 通常是主图"
+Media,variant_images[],变体图,raw_json.variants[].variantImage,Yes,商品详情(变体),products.variants_data,"可用于变体切图"
+Media,video_url,商品视频 URL,raw_json.productVideo,Sometimes,商品详情(可选),products.origin_video_url,"部分商品为空"
+Media,detail_images_html,详情富文(图在 HTML 内),raw_json.description,Yes,商品详情(下拉图文),products.descriptions / products.detail_images,"description 内含多张 <img src=...>"
+
+Pricing,sell_price,CJ 基础售价,raw_json.sellPrice (string),Yes,Prime 列表卡/商品详情,products.sale_price,"字符串需转 float"
+Pricing,variant_sell_price,变体售价,raw_json.variants[].variantSellPrice,Yes,商品详情(变体价格),products.variants_data,"通常比 sellPrice 更准确"
+Pricing,compare_at_price,划线价/对比价,(官网可见; OpenAPI/raw_json 不稳定),No,商品详情(可选),products.compare_at_price,"当前未可靠获取"
+
+Variants,variants[],变体列表,raw_json.variants,Yes,商品详情变体区,products.variants_data,"包含 vid/variantSku/variantKey/variantNameEn/variantSellPrice 等"
+Variants,variant_sku,变体 SKU,raw_json.variants[].variantSku,Yes,后台/下单,products.variants_data,
+Variants,variant_key,变体关键词(如颜色),raw_json.variants[].variantKey,Yes,商品详情,products.variants_data,
+
+Dimensions & Weight,dimensions_display,尺寸(展示用 cm),variants[0].variantLength/Width/Height or variantStandard,Yes,Prime 列表卡/商品详情,products.structural_data.dimensions,"已解析并返回例如 31x29x2 cm"
+Dimensions & Weight,weight_display,重量(展示用 g),raw_json.packingWeight > raw_json.productWeight > variants[0].variantWeight,Yes,Prime 列表卡/商品详情,products.structural_data.weight,"已解析并返回例如 155 g"
+Dimensions & Weight,packing_weight,包装重量,raw_json.packingWeight,Yes,后台/物流,cj_raw_products.raw_json,
+Dimensions & Weight,product_weight,商品重量,raw_json.productWeight,Yes,后台/物流,cj_raw_products.raw_json,"单位需确认; 当前按 g 展示"
+
+Logistics & Inventory,freight_fee,运费(到指定国家/地区),CJ logistic/freightCalculate (需要 pid+countryCode),No,商品详情(运费),cj_raw_products.freight_fee,"当前正式库 freight_fee 列全为空; 需 enrichment 任务"
+Logistics & Inventory,shipping_days,预计时效(到指定国家/地区),CJ logistic/freightCalculate,No,商品详情(预计时间),cj_raw_products.shipping_days,"当前正式库 shipping_days 列全为空; 需 enrichment 任务"
+Logistics & Inventory,inventory_total,库存合计,(可能来自 variants[].inventoryNum 或库存接口),No/Unstable,商品详情(库存),cj_raw_products.inventory_total,"样本里 inventories/inventoryNum 多为 null"
+Logistics & Inventory,warehouse_anchor,仓库/发货地,(官网可见; OpenAPI/raw_json 不稳定),No,商家/物流区,cj_raw_products.raw_json,"后续可用独立接口补齐"
+
+Supplier,supplier_id,供应商/店铺 ID,raw_json.supplierId,No/Unstable,商家详情页,suppliers + shadow_id_mappings,"大量商品为 null"
+Supplier,supplier_name,供应商名,raw_json.supplierName,No/Unstable,商家详情页,suppliers + shadow_id_mappings,"大量商品为 null"
+Supplier,vendor_rating,商家评分,(官网可见; OpenAPI/raw_json 不稳定),No,商家详情页,suppliers,"当前用 '-' 占位"
+Supplier,source_url,溯源链接,cj_raw_products.source_url / raw_json.pid 拼接,Yes,商品详情/商家详情,cj_raw_products.source_url,
+
+Compliance & Meta,entry_code,可能是海关/条目编码,raw_json.entryCode,Yes,后台/合规,cj_raw_products.raw_json,
+Compliance & Meta,entry_name,条目名称,raw_json.entryName,Yes,后台/合规,cj_raw_products.raw_json,
+Compliance & Meta,product_props,商品属性集合,raw_json.productProSet/productKeySet/materialNameSet 等,Yes,商品详情(可选),products.attributes,"多为数组/JSON 字符串"

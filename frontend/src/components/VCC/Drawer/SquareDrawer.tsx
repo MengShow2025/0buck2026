@@ -419,7 +419,7 @@ export const SquareDrawer: React.FC = () => {
       {/* Media Preview Overlay */}
       {previewMedia && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4 animate-in fade-in duration-300"
+          className="absolute inset-0 z-[100] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4 animate-in fade-in duration-300"
           onClick={() => setPreviewMedia(null)}
         >
           <button 

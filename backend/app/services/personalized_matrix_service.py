@@ -31,11 +31,12 @@ class PersonalizedMatrixService:
         self.db = db
         self.model_enabled = bool(settings.GEMINI_API_KEY or settings.GOOGLE_API_KEY)
 
-    async def get_personalized_discovery(self, user_id: int, user_country: str = "US", limit: int = 10) -> Dict[str, Any]:
+    async def get_personalized_discovery(self, user_id: int, user_country: str = "US", page: int = 1, limit: int = 10) -> Dict[str, Any]:
         """
         v8.0 Truth Protocol: Warehouse-Aware Discovery.
-        Fetches a 2x5 matrix of products, filtered by user_country to ensure local stock.
+        Fetches a matrix of products with pagination, filtered by user_country to ensure local stock.
         """
+        skip = (page - 1) * limit
         # 1. Fetch Top 3 LTM facts to use as search query
         facts = []
         try:
@@ -53,14 +54,40 @@ class PersonalizedMatrixService:
         
         # 2. Vector Search for matching products (Fall back to DB if search fails or is empty)
         products = []
+        
+        # ALWAYS prioritize fetching from the official Published/Live products table first
         try:
-            vector = await vector_search_service.get_embedding(text=search_query)
-            products = vector_search_service.search(vector=vector, limit=limit)
+            db_products = self.db.query(Product).filter(Product.is_active == True).order_by(Product.updated_at.desc()).offset(skip).limit(limit).all()
+            for p in db_products:
+                image_url = ""
+                if p.images and isinstance(p.images, list) and len(p.images) > 0:
+                    image_url = p.images[0]
+
+                products.append({
+                    "id": p.id,
+                    "name": p.title_en or p.title_zh or "Unknown Product",
+                    "title": p.title_en or p.title_zh or "Unknown Product",
+                    "price": float(p.sale_price or 0.0),
+                    "original_price": float(p.compare_at_price or p.sale_price or 0.0),
+                    "image": image_url,
+                    "supplier": "0Buck Verified",
+                    "category": p.category or "General",
+                    "attributes": p.attributes or {},
+                    "structural_data": {}
+                })
         except Exception as e:
-            logger.error(f"Vector search failed for personalized matrix: {e}")
-            products = []
+            logger.error(f"Live products query failed: {e}")
             
-        if not products:
+        # Fallback to vector search / candidates if no published products exist yet
+        if not products and page == 1:
+            try:
+                vector = await vector_search_service.get_embedding(text=search_query)
+                products = vector_search_service.search(vector=vector, limit=limit)
+            except Exception as e:
+                logger.error(f"Vector search failed for personalized matrix: {e}")
+                products = []
+            
+        if not products and page == 1:
             # Fallback: candidate_products (official staged table) first
             try:
                 # v8.0 Truth Protocol: Only show local warehouse items or CN
@@ -114,7 +141,7 @@ class PersonalizedMatrixService:
                 logger.warning(f"Candidate products fallback unavailable: {e}")
                 products = []
 
-        if not products:
+        if not products and page == 1:
             # Fallback: CJ raw products (cj_raw_products) if present
             try:
                 cj_rows = self.db.execute(
@@ -190,7 +217,7 @@ class PersonalizedMatrixService:
                 logger.warning(f"CJ raw products fallback unavailable: {e}")
                 products = []
 
-        if not products:
+        if not products and page == 1:
             # Secondary fallback to DB products if CJ raw products are empty/unavailable
             try:
                 db_products = self.db.query(Product).filter(Product.is_active == True).limit(limit).all()
