@@ -656,7 +656,7 @@ class SyncShopifyService:
             return False
         
         pricing = calculate_final_price(
-            cost_cny=candidate.cost_cny,
+            cost_cny=candidate.cost_cny if candidate.cost_cny is not None else (float(candidate.cost_usd or 0) / exchange_rate),
             exchange_rate=exchange_rate,
             comp_price_usd=market_anchor,
             sale_price_ratio=0.6,

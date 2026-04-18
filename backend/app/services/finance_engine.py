@@ -174,6 +174,13 @@ def calculate_final_price(
     
     STRICT: Uses Decimal for all currency calculations.
     """
+    # v5.0 Truth Engine Pricing: Cost is USD directly if cost_cny is None
+    if cost_cny is None:
+        cost_cny = float(shipping_cost_usd or 0) / exchange_rate # Fallback logic if needed, but wait
+        # Better: calculate from cost_usd if we had it, but we only have cost_cny as arg.
+        # Actually, let's just default to 0 if None
+        cost_cny = 0.0
+
     cost_cny_dec = Decimal(str(cost_cny))
     rate_dec = Decimal(str(exchange_rate))
     shipping_dec = Decimal(str(shipping_cost_usd))

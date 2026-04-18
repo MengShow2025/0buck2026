@@ -223,6 +223,11 @@ function MainApp() {
     }
   }, [setTheme, setLanguage, setCurrency, pushDrawer, setWithdrawalMethod, setHasCheckedInToday]);
 
+  useEffect(() => {
+    (window as any).setActiveDrawer = setActiveDrawer;
+    (window as any).pushDrawer = pushDrawer;
+  }, [setActiveDrawer, pushDrawer]);
+
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 

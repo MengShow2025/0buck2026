@@ -76,6 +76,8 @@ export const VCCHeader = () => {
 
         <div className="relative" ref={menuRef}>
           <div 
+            role="button"
+            aria-label="Menu"
             className="w-7 h-7 flex items-center justify-center border-2 border-white rounded-full cursor-pointer"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >

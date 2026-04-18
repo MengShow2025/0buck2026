@@ -21,7 +21,7 @@ export const CandidateAuditDrawer: React.FC<CandidateAuditDrawerProps> = ({ cand
     desire_hook: '',
     desire_logic: '',
     truth_body: '',
-    estimated_sale_price: 0,
+    sell_price: 0,
     cost_usd: 0,
     freight_fee: 0,
     amazon_price: 0,
@@ -40,7 +40,7 @@ export const CandidateAuditDrawer: React.FC<CandidateAuditDrawerProps> = ({ cand
         desire_hook: candidate.desire_hook || '',
         desire_logic: candidate.desire_logic || '',
         truth_body: candidate.truth_body || '',
-        estimated_sale_price: candidate.estimated_sale_price || candidate.sell_price || 0,
+        sell_price: candidate.sell_price || candidate.estimated_sale_price || 0,
         cost_usd: candidate.cost_usd || (candidate.cost_cny ? candidate.cost_cny * 0.14 : 0),
         freight_fee: candidate.freight_fee || 0,
         amazon_price: candidate.amazon_price || candidate.amazon_sale_price || 0,
@@ -252,8 +252,8 @@ export const CandidateAuditDrawer: React.FC<CandidateAuditDrawerProps> = ({ cand
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500" />
                   <Input 
                     type="number"
-                    name="estimated_sale_price"
-                    value={formData.estimated_sale_price}
+                    name="sell_price"
+                    value={formData.sell_price}
                     onChange={handleChange}
                     className="pl-9 font-mono font-bold text-blue-700 border-blue-200 focus:border-blue-500"
                   />
