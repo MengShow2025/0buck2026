@@ -159,7 +159,9 @@ def _resolve_backend_url() -> str:
 def _build_oauth_redirect_uri(provider: str, request: Optional[Request]) -> str:
     api_base = str(getattr(settings, "API_V1_STR", "/api/v1") or "/api/v1").rstrip("/")
     backend = _resolve_backend_url()
-    return f"{backend}{api_base}/auth/callback/{provider}"
+    # Critical fix: ensure no trailing slash in the generated callback URL
+    # as Google matches string exactly
+    return f"{backend}{api_base}/auth/callback/{provider}".rstrip("/")
 
 
 def _build_auth_error_redirect_url(frontend_url: str, error_code: str, message: str = "") -> str:
@@ -997,14 +999,14 @@ async def auth_callback(provider: str, request: Request, db: Session = Depends(g
     
     # Construct final redirect URL (v5.7.25)
     if saved_redirect:
-        # Avoid malformed paths like "/*/"
+        # Deep clean any variant of wildcard or broken paths
         clean_redirect = saved_redirect.replace("/*/", "/").replace("/*", "/")
         # Avoid double slashes at the start of path
-        if clean_redirect.startswith("//"):
+        while clean_redirect.startswith("//"):
             clean_redirect = clean_redirect[1:]
         
-        # If the path is empty or just a slash, we don't need to append it
-        if clean_redirect == "/" or not clean_redirect:
+        # If the path is empty, just a slash, or literally just the string 'null' or 'undefined'
+        if clean_redirect in ["/", "", "null", "undefined"]:
             final_redirect_url = f"{frontend_url}/"
         else:
             final_redirect_url = f"{frontend_url}{clean_redirect}"
