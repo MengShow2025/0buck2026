@@ -890,7 +890,7 @@ async def login(provider: str, request: Request, redirect: Optional[str] = None)
     v5.7.25: OAuth login with redirect persistence.
     Saves the desired post-login URL in the session.
     """
-    if provider not in ['google', 'apple', 'facebook', 'alibaba']:
+    if provider not in ['google', 'apple', 'facebook', 'alibaba', 'github']:
         raise HTTPException(status_code=400, detail="Invalid provider")
     if not _provider_oauth_ready(provider):
         raise HTTPException(status_code=503, detail=f"{provider} OAuth is not configured")
