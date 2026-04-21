@@ -106,12 +106,12 @@ export const AuthDrawer: React.FC = () => {
     }
   };
 
-  const handleSocialLogin = (provider: 'google' | 'apple' | 'facebook') => {
+  const handleSocialLogin = (provider: 'google' | 'apple' | 'facebook' | 'github') => {
     const redirect = `${window.location.pathname}${window.location.search}`;
-    // Since window.location.href bypasses vite proxy, we must use the absolute backend URL
-    const isDev = import.meta.env.VITE_ENVIRONMENT === 'development';
-    const backendHost = isDev ? 'http://127.0.0.1:8000' : window.location.origin;
-    const absoluteOauthBase = oauthBase.startsWith('http') ? oauthBase : `${backendHost}${oauthBase}`;
+    // Force absolute path for local dev because Vite proxy doesn't catch window.location.href
+    const absoluteOauthBase = import.meta.env.VITE_ENVIRONMENT === 'development' 
+      ? `http://127.0.0.1:8000/api/v1` 
+      : `${window.location.origin}/api/v1`;
     
     window.location.href = `${absoluteOauthBase}/auth/login/${provider}?redirect=${encodeURIComponent(redirect)}`;
   };
