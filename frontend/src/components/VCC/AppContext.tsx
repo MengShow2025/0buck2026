@@ -248,7 +248,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch {
         setUser(baseUser);
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to fetch user:', error);
+      if (error?.response?.status === 401) {
+        // If unauthorized, explicitly clear tokens
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+      }
       setUser(null);
     }
   }, []);

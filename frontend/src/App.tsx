@@ -82,6 +82,9 @@ function MainApp() {
       const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '');
       window.history.replaceState({}, document.title, newUrl);
       
+      // Close the auth drawer if it's open
+      setActiveDrawer('none');
+      
       // Optionally add a welcome message from the AI Butler to confirm login
       setTimeout(() => {
         const welcomeMsg: Message = {
@@ -94,7 +97,7 @@ function MainApp() {
         setMessages(prev => [...prev, welcomeMsg]);
       }, 1000);
     }
-  }, [t]);
+  }, [t, setActiveDrawer]);
 
   useEffect(() => {
     setOnPaymentSuccess(() => (orderId: string) => {
@@ -347,7 +350,8 @@ function MainApp() {
 
   const isDesktop = useIsDesktop();
   const hasUserMessage = messages.some((m) => m.user.id === 'user');
-  const showButlerWelcome = !hasUserMessage && !isAiTyping;
+  const hasAuthSuccessMessage = messages.some((m) => m.id.startsWith('ai-login-success'));
+  const showButlerWelcome = !hasUserMessage && !isAiTyping && !hasAuthSuccessMessage;
   const welcomeRaw = t('chat.butler_welcome_shadow') || '';
   const welcomeNormalized = String(welcomeRaw).replace(/^"(.*)"$/s, '$1').replace(/\\n/g, '\n');
   const welcomeParagraphs = welcomeNormalized.split(/\n\s*\n/).filter(Boolean);
