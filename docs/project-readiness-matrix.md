@@ -664,6 +664,19 @@
 - 已完成：`main.tsx` 接入启动前清洗逻辑，并在首屏渲染前用 `history.replaceState` 移除 URL 中的 `auth_success/access_token/email`，避免后续状态判断继续受污染。
 - 已完成：新增 TDD 回归 `frontend/src/bootstrapAuth.test.ts`，覆盖“启动前写 token”“清理 OAuth 参数”“保留无关 query 参数”三条关键行为。
 - 已验证：`cd frontend && npm test -- src/bootstrapAuth.test.ts` 通过（`3 passed`）；`cd frontend && npm run build` 通过。
+
+## 本轮进展（第 84 批：登录成功后欢迎遮罩误判修复）
+- 已定位：Google OAuth 成功后，线上会先落到 `/?auth_success=true&access_token=...`，随后 `/api/v1/users/me` 与 `/api/v1/butler/profile/{id}` 已实际发起，说明登录链路成功；但首页 `SplashScreen` 每次首屏强制展示，视觉上把已登录主界面盖成了“未登录欢迎页”。
+- 已完成：`main.tsx` 在 OAuth 启动引导成功后写入 `sessionStorage.recent_oauth_login=1`，作为本次回跳的首屏抑制信号。
+- 已完成：`App.tsx` 将 `showSplash` 初始值改为基于 `recent_oauth_login/access_token` 判断；当 `isAuthenticated` 变为真时强制关闭欢迎遮罩并清理本次登录标记。
+- 已验证：`cd frontend && npm run build` 通过；新构建产物切换为 `dist/assets/index-CueWIbrT.js`。
+
+## 本轮进展（第 85 批：OAuth 串号根因修复）
+- 已定位：GitHub 与 Google 名字混同并非同邮箱合并，而是旧 `localStorage.access_token` 在前端请求拦截器中持续注入 `Authorization` 头；后端鉴权又优先读取 Bearer，导致“新 cookie 登录成功，但接口仍按旧用户返回数据”。
+- 已完成：`backend/app/api/deps.py` 调整鉴权优先级为 `cookie > bearer > query`，避免浏览器端旧 Bearer 覆盖刚完成的社交登录 cookie。
+- 已完成：新增后端回归 `backend/tests/test_deps.py`，覆盖“旧 header token + 新 cookie 同时存在时必须识别 cookie 用户”。
+- 已完成：新增前端 `frontend/src/services/authSession.ts` 统一清理 `access_token / refresh_token / token`；社交登录前先排毒，用户端与管理端退出统一调用后端 `logout` 并清空本地残留。
+- 已验证：`cd backend && ./venv/bin/pytest tests/test_deps.py` 通过（`3 passed`）；`cd frontend && npm test -- src/services/authSession.test.ts` 通过（`1 passed`）。
 - 已验证：`PYTHONPATH=. python3 -m pytest -q tests/test_butler_chat_timeout_guard.py` 通过（`3 passed`）。
 
 ## 本轮进展（第 83 批：AI 命名显示与系统动作覆盖扩展）

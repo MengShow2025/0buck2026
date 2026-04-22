@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, KeyRound, ChevronLeft, ArrowRight, Zap } from 'lucide-react';
 import { useAppContext } from '../AppContext';
 import { authApi } from '../../../services/api';
+import { clearStoredAuthTokens } from '../../../services/authSession';
 
 type AuthStep = 'email' | 'password';
 
@@ -16,7 +17,6 @@ export const AuthDrawer: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const { setUser, pendingAuthAction, setPendingAuthAction, setActiveDrawer, t } = useAppContext();
-  const oauthBase = (import.meta.env.VITE_API_URL || '/api/v1').replace(/\/$/, '');
 
   const currentStepIndex = STEPS.indexOf(step);
 
@@ -107,6 +107,7 @@ export const AuthDrawer: React.FC = () => {
   };
 
   const handleSocialLogin = (provider: 'google' | 'apple' | 'facebook' | 'github') => {
+    clearStoredAuthTokens(window.localStorage);
     let redirect = `${window.location.pathname}${window.location.search}`;
     // Fix wildcard path causing 404 in callback
     if (redirect.includes('/*')) {

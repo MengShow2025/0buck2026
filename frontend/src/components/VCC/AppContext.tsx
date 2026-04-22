@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { userApi, authApi, aiApi } from '../../services/api';
 import { translate, normalizeLanguage } from '../../i18n';
+import { clearStoredAuthTokens } from '../../services/authSession';
 
 type Theme = 'light' | 'dark' | 'system';
 type Language = 'en' | 'zh';
@@ -252,8 +253,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error('Failed to fetch user:', error);
       if (error?.response?.status === 401) {
         // If unauthorized, explicitly clear tokens
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        clearStoredAuthTokens(window.localStorage);
       }
       setUser(null);
     }

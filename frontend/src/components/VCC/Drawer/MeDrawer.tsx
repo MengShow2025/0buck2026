@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Settings, Users, ChevronRight, CreditCard, MapPin, Ticket, Camera, Star, Package, Heart, Edit3 } from 'lucide-react';
-import { useAppContext } from '../AppContext';
+import { useState } from 'react';
+import { Settings, ChevronRight, CreditCard, MapPin, Ticket, Camera, Star, Package, Heart, Edit3 } from 'lucide-react';
+import { DrawerType, useAppContext } from '../AppContext';
+import { authApi } from '../../../services/api';
+import { clearStoredAuthTokens } from '../../../services/authSession';
 
 export const MeDrawer = () => {
   const { setActiveDrawer, pushDrawer, t, userLevel, userBalance, isPrime, isAuthenticated, user, setUser } = useAppContext();
@@ -21,10 +23,16 @@ export const MeDrawer = () => {
     setIsEditing(false);
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('token');
-    setActiveDrawer('none');
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // Best-effort logout: clear local auth state even if server logout fails.
+    } finally {
+      clearStoredAuthTokens(window.localStorage);
+      setUser(null);
+      setActiveDrawer('none');
+    }
   };
 
   return (
@@ -205,11 +213,11 @@ export const MeDrawer = () => {
 
       {/* ── 3-col Tool Tiles ── */}
       <div className="grid grid-cols-3 gap-3 mx-4 mt-3">
-        {[
+        {([
           { icon: MapPin, label: t('me.shipping_address'), color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20', drawer: 'address' },
           { icon: Ticket, label: t('me.coupons_benefits'), color: 'text-teal-500', bg: 'bg-teal-50 dark:bg-teal-900/20', drawer: 'coupons' },
           { icon: Settings, label: t('settings'), color: 'text-gray-500', bg: 'bg-gray-100 dark:bg-white/8', drawer: 'settings' },
-        ].map(({ icon: Icon, label, color, bg, drawer }) => (
+        ] as Array<{ icon: any; label: string; color: string; bg: string; drawer: DrawerType }>).map(({ icon: Icon, label, color, bg, drawer }) => (
           <button
             key={drawer}
             onClick={() => pushDrawer(drawer)}

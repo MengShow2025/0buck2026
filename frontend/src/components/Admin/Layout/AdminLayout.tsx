@@ -6,6 +6,8 @@ import { ProductsPage } from '../Pages/ProductsPage';
 import { FinancePage } from '../Pages/FinancePage';
 import { OrdersPage } from '../Pages/OrdersPage';
 import { useAppContext } from '../../VCC/AppContext';
+import { authApi } from '../../../services/api';
+import { clearStoredAuthTokens } from '../../../services/authSession';
 
 const AdminSidebar = () => {
   const { user, setUser } = useAppContext();
@@ -19,10 +21,16 @@ const AdminSidebar = () => {
     { to: "/admin/ai", icon: Bot, label: "AI 管家配置" },
   ];
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    setUser(null);
-    navigate('/admin/login');
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // Best-effort logout for admin area as well.
+    } finally {
+      clearStoredAuthTokens(window.localStorage);
+      setUser(null);
+      navigate('/admin/login');
+    }
   };
 
   return (

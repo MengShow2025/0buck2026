@@ -23,15 +23,17 @@ def get_current_user(
     v3.5.1: Secure JWT-based current user dependency.
     Checks for token in BOTH Bearer header AND HttpOnly cookies.
     """
-    final_token = token
+    # Prefer cookie-based auth for web flows so a stale Bearer token
+    # in localStorage cannot override a freshly issued login cookie.
+    final_token = request.cookies.get("access_token")
+
+    if not final_token:
+        final_token = token
+
     if not final_token:
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             final_token = auth_header.split(" ")[1]
-
-    if not final_token:
-        # Check Cookies (v3.5 preferred for web)
-        final_token = request.cookies.get("access_token")
 
     if not final_token:
         # Check query params as a fallback (some frontends pass it in the query string)
@@ -65,15 +67,13 @@ def get_current_user_optional(
     """
     v5.7.37: Optional user dependency for guest access.
     """
-    final_token = None
-    
-    # Check Authorization header directly
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        final_token = auth_header.split(" ")[1]
-        
+    final_token = request.cookies.get("access_token")
+
     if not final_token:
-        final_token = request.cookies.get("access_token")
+        # Check Authorization header directly
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            final_token = auth_header.split(" ")[1]
 
     if not final_token:
         final_token = request.query_params.get("access_token")
