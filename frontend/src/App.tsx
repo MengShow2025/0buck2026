@@ -68,7 +68,16 @@ function MainApp() {
     // Handle OAuth success redirect
     const params = new URLSearchParams(window.location.search);
     if (params.get('auth_success') === 'true') {
+      const accessToken = params.get('access_token');
+      if (accessToken) {
+        localStorage.setItem('access_token', accessToken);
+        // Dispatch custom event to trigger user refresh globally if needed
+        window.dispatchEvent(new Event('oauth-login-success'));
+      }
+      
       params.delete('auth_success');
+      params.delete('access_token');
+      params.delete('email'); // Optional: cleanup email parameter
       const newSearch = params.toString();
       const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '');
       window.history.replaceState({}, document.title, newUrl);

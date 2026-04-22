@@ -255,6 +255,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     refreshUser();
+    
+    const handleOauthSuccess = () => {
+      refreshUser();
+    };
+    
+    window.addEventListener('oauth-login-success', handleOauthSuccess);
+    return () => window.removeEventListener('oauth-login-success', handleOauthSuccess);
   }, [refreshUser]);
 
   const [pendingAuthAction, setPendingAuthAction] = useState<(() => void) | null>(null);

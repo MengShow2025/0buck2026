@@ -1029,11 +1029,11 @@ async def auth_callback(provider: str, request: Request, db: Session = Depends(g
             final_redirect_url = f"{frontend_url}{clean_redirect}"
             
         if '?' in final_redirect_url:
-            final_redirect_url += "&auth_success=true"
+            final_redirect_url += f"&auth_success=true&access_token={access_token}"
         else:
-            final_redirect_url += "?auth_success=true"
+            final_redirect_url += f"?auth_success=true&access_token={access_token}"
     else:
-        final_redirect_url = f"{frontend_url}/?auth_success=true&email={email}"
+        final_redirect_url = f"{frontend_url}/?auth_success=true&access_token={access_token}&email={email}"
         
     response = RedirectResponse(url=final_redirect_url)
     

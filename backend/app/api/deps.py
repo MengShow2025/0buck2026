@@ -34,6 +34,10 @@ def get_current_user(
         final_token = request.cookies.get("access_token")
 
     if not final_token:
+        # Check query params as a fallback (some frontends pass it in the query string)
+        final_token = request.query_params.get("access_token")
+
+    if not final_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
@@ -70,6 +74,9 @@ def get_current_user_optional(
         
     if not final_token:
         final_token = request.cookies.get("access_token")
+
+    if not final_token:
+        final_token = request.query_params.get("access_token")
 
     if not final_token:
         return None
